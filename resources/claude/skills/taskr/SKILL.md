@@ -21,17 +21,25 @@ Prefer the `taskr` CLI when available:
 ```bash
 taskr init
 taskr new "implement user invitation flow" --status in_progress
-taskr status user-invitation in_progress
-taskr note user-invitation "Found existing workspace role model."
-taskr complete user-invitation --summary "Implemented invitation flow." --file path/to/file.py --check-criteria
-taskr validate user-invitation
+taskr status 2026-05-10-user-invitation in_progress
+taskr note 2026-05-10-user-invitation "Found existing workspace role model."
+taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow." --file path/to/file.py --check-criteria
+taskr validate 2026-05-10-user-invitation
 ```
 
-If `taskr` is unavailable but this repo contains the Taskr package, use `uv run taskr ...`.
+If `taskr` is unavailable but this repo contains the Taskr package source, use the repo's documented local command instead. In the TypeScript Taskr package, build first when needed and use `node dist/cli.js ...`.
 
 If the CLI is unavailable, edit `.taskr/tasks/<task-id>.md` directly according to the format below.
 
 ## Task Workflow
+
+For multi-task requests:
+
+1. List existing planned tasks before editing.
+2. Work one task at a time unless the user explicitly asks to batch tasks together.
+3. Move the current task to `in_progress`, implement it, verify it, commit it, and complete the task record before starting the next task.
+4. Use a separate commit for each completed task when the user asks for per-task commits.
+5. Keep a short running plan outside Taskr if it helps the user follow long work, but keep durable task state in `.taskr/`.
 
 Before starting substantial work:
 
@@ -56,6 +64,20 @@ During work:
 3. Append dated entries to `## Progress Log` after meaningful progress.
 4. Add discovered files to `related_files`.
 5. Use `blocked` when missing context, dependencies, or errors prevent progress.
+
+### Verification Policy
+
+- Match verification to the change. Run unit/build checks for code changes, and add browser or preview validation for visible UI, styling, layout, or interaction changes.
+- Record the exact commands or manual/browser checks in `verification.tests_run`.
+- If a requested style or interaction change is visual, verify at least the default state and the changed interaction state. For responsive UI, also check a narrow viewport when practical.
+- If verification cannot be run, record the reason instead of leaving it implicit.
+
+### Commit Policy
+
+- Commit after each completed task when the user requests task-by-task commits.
+- Include `[taskr:<task-id>]` in the commit message.
+- After the commit succeeds, record the commit hash in the task using `taskr complete --commit <hash>` or by editing the task file.
+- If `.taskr/` is ignored by Git, still update it locally; the Markdown task files remain the working record even when they are not committed.
 
 After implementation:
 
