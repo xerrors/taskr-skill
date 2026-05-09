@@ -8,7 +8,7 @@ import {
   taskStatus,
   taskTitle,
   VALID_STATUSES,
-  type TaskDocument
+  type TaskDocument,
 } from "./protocol.js";
 
 export interface BoardTask {
@@ -56,7 +56,7 @@ export function createBoardModel(repoRoot: string): BoardModel {
     generatedAt: new Date().toISOString(),
     repoRoot,
     statuses: [...VALID_STATUSES, ...new Set(unknownStatuses)],
-    tasks
+    tasks,
   };
 }
 
@@ -732,7 +732,10 @@ export function renderBoardHtml(model: BoardModel): string {
 </html>`;
 }
 
-export function startBoardServer(repoRoot: string, options: BoardServerOptions): Promise<BoardServer> {
+export function startBoardServer(
+  repoRoot: string,
+  options: BoardServerOptions,
+): Promise<BoardServer> {
   const server = createServer((request, response) => {
     if (request.url === "/api/tasks") {
       const body = JSON.stringify(createBoardModel(repoRoot), null, 2);
@@ -780,7 +783,7 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
     relatedFiles: asStringArray(document.metadata.related_files),
     verification: document.metadata.verification ?? null,
     sections,
-    criteria: countCriteria(sections["Acceptance Criteria"] ?? "")
+    criteria: countCriteria(sections["Acceptance Criteria"] ?? ""),
   };
 }
 
@@ -788,7 +791,7 @@ function countCriteria(value: string): { checked: number; total: number } {
   const matches = [...value.matchAll(/- \[([ xX])\]/g)];
   return {
     checked: matches.filter((match) => match[1].toLowerCase() === "x").length,
-    total: matches.length
+    total: matches.length,
   };
 }
 
@@ -801,7 +804,8 @@ function escapeScriptJson(value: unknown): string {
 }
 
 function openUrl(url: string): void {
-  const command = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const command =
+    process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
   const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
   try {
     const child = spawn(command, args, { detached: true, stdio: "ignore" });

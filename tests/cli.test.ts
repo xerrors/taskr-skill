@@ -39,8 +39,8 @@ describe("Taskr CLI", () => {
         "npm test",
         "--result",
         "passed",
-        "--check-criteria"
-      ])
+        "--check-criteria",
+      ]),
     ).toBe(0);
     expect(run(["validate", "implement-user-invitation-flow"])).toBe(0);
     expect(existsSync(resolve(repo, ".claude/skills/taskr/SKILL.md"))).toBe(true);

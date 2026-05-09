@@ -6,7 +6,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
-  writeFileSync
+  writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { relative as pathRelative, resolve } from "node:path";
@@ -24,20 +24,16 @@ export const VALID_STATUSES = [
   "in_progress",
   "blocked",
   "implemented",
-  "closed"
+  "closed",
 ] as const;
-export const VALID_COMMIT_STATUSES = [
-  "created",
-  "not_created",
-  "not_applicable"
-] as const;
+export const VALID_COMMIT_STATUSES = ["created", "not_created", "not_applicable"] as const;
 export const REQUIRED_SECTIONS = [
   "Request",
   "Acceptance Criteria",
   "Implementation Plan",
   "Progress Log",
   "Agent Notes",
-  "Completion Summary"
+  "Completion Summary",
 ] as const;
 
 export type TaskStatus = (typeof VALID_STATUSES)[number];
@@ -84,7 +80,7 @@ export function findRepoRoot(start = process.cwd()): string {
     const output = execFileSync("git", ["rev-parse", "--show-toplevel"], {
       cwd,
       encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
+      stdio: ["ignore", "pipe", "ignore"],
     });
     return resolve(output.trim());
   } catch {
@@ -139,19 +135,19 @@ export function defaultConfig(): TaskMetadata {
     tasks_dir: ".taskr/tasks",
     id: {
       style: "kebab-case",
-      generated_by: "agent"
+      generated_by: "agent",
     },
     statuses: [...VALID_STATUSES],
     commit: {
       required_for_implemented: false,
-      convention: "[taskr:{id}]"
+      convention: "[taskr:{id}]",
     },
     agent: {
       preferred_update_method: "cli_or_direct_file",
       default_status_after_code_change: "implemented",
       require_completion_summary: true,
-      require_related_files: true
-    }
+      require_related_files: true,
+    },
   };
 }
 
@@ -170,12 +166,12 @@ export function defaultSchema(): TaskMetadata {
         "commits",
         "commit_status",
         "related_files",
-        "verification"
+        "verification",
       ],
       statuses: [...VALID_STATUSES],
-      commit_statuses: [...VALID_COMMIT_STATUSES]
+      commit_statuses: [...VALID_COMMIT_STATUSES],
     },
-    task_sections: [...REQUIRED_SECTIONS]
+    task_sections: [...REQUIRED_SECTIONS],
   };
 }
 
@@ -236,7 +232,7 @@ export function initProtocol(repoRoot: string, force = false): string[] {
   const files = new Map<string, string>([
     [resolve(root, "config.yaml"), dumpYaml(defaultConfig())],
     [resolve(root, "schema.yaml"), dumpYaml(defaultSchema())],
-    [resolve(root, TEMPLATES_DIR, TASK_TEMPLATE), taskTemplatePlaceholder()]
+    [resolve(root, TEMPLATES_DIR, TASK_TEMPLATE), taskTemplatePlaceholder()],
   ]);
 
   for (const [path, content] of files.entries()) {
@@ -255,7 +251,7 @@ export function dumpYaml(data: TaskMetadata): string {
     schema: JSON_SCHEMA,
     lineWidth: -1,
     noRefs: true,
-    sortKeys: false
+    sortKeys: false,
   });
 }
 
@@ -263,7 +259,7 @@ export function renderTask({
   taskId,
   title,
   request,
-  status = "planned"
+  status = "planned",
 }: {
   taskId: string;
   title: string;
@@ -289,8 +285,8 @@ export function renderTask({
     verification: {
       tests_run: [],
       result: "not_run",
-      reason: "Not run yet."
-    }
+      reason: "Not run yet.",
+    },
   };
   const createdLine = `- ${logTimestamp()} - Task created.`;
   return `---
@@ -335,12 +331,12 @@ export function createTask(
   {
     taskId: explicitTaskId,
     status = "planned",
-    request
+    request,
   }: {
     taskId?: string;
     status?: TaskStatus;
     request?: string;
-  } = {}
+  } = {},
 ): string {
   const root = taskrRoot(repoRoot);
   if (!existsSync(root)) {
@@ -361,9 +357,9 @@ export function createTask(
       taskId: resolvedId,
       title,
       request: request ?? title,
-      status
+      status,
     }),
-    "utf8"
+    "utf8",
   );
   return path;
 }
@@ -423,7 +419,7 @@ export function listTasks(repoRoot: string): TaskDocument[] {
     .sort()
     .map((name) => loadTask(resolve(root, name)));
   return tasks.sort((left, right) =>
-    String(right.metadata.updated_at ?? "").localeCompare(String(left.metadata.updated_at ?? ""))
+    String(right.metadata.updated_at ?? "").localeCompare(String(left.metadata.updated_at ?? "")),
   );
 }
 
@@ -434,7 +430,8 @@ export function extractSections(body: string): Record<string, string> {
     const match = matches[index];
     const title = match[1].trim();
     const start = (match.index ?? 0) + match[0].length;
-    const end = index + 1 < matches.length ? matches[index + 1].index ?? body.length : body.length;
+    const end =
+      index + 1 < matches.length ? (matches[index + 1].index ?? body.length) : body.length;
     sections[title] = body.slice(start, end).trim();
   }
   return sections;
@@ -448,7 +445,8 @@ export function replaceSection(body: string, section: string, content: string): 
       continue;
     }
     const start = (match.index ?? 0) + match[0].length;
-    const end = index + 1 < matches.length ? matches[index + 1].index ?? body.length : body.length;
+    const end =
+      index + 1 < matches.length ? (matches[index + 1].index ?? body.length) : body.length;
     const replacement = `\n${content.trim()}\n\n`;
     return body.slice(0, start) + replacement + body.slice(end);
   }
@@ -474,7 +472,7 @@ export function setStatus(repoRoot: string, id: string, status: TaskStatus): Tas
   document.body = appendToSection(
     document.body,
     "Progress Log",
-    `- ${logTimestamp()} - Status changed to \`${status}\`.`
+    `- ${logTimestamp()} - Status changed to \`${status}\`.`,
   );
   writeTask(document);
   return document;
@@ -486,7 +484,7 @@ export function addNote(repoRoot: string, id: string, note: string): TaskDocumen
   document.body = appendToSection(
     document.body,
     "Progress Log",
-    `- ${logTimestamp()} - Added agent note.`
+    `- ${logTimestamp()} - Added agent note.`,
   );
   writeTask(document);
   return document;
@@ -502,7 +500,7 @@ export function completeTask(
     testsRun,
     verificationResult,
     commitStatus,
-    checkCriteria = false
+    checkCriteria = false,
   }: {
     summary: string;
     commits?: string[];
@@ -511,7 +509,7 @@ export function completeTask(
     verificationResult?: string;
     commitStatus?: CommitStatus;
     checkCriteria?: boolean;
-  }
+  },
 ): TaskDocument {
   if (commitStatus !== undefined && !isCommitStatus(commitStatus)) {
     throw new TaskrError(`Invalid commit status: ${commitStatus}`);
@@ -533,7 +531,8 @@ export function completeTask(
     document.metadata.verification = {
       tests_run: testsRun ?? [],
       result:
-        verificationResult ?? (testsRun === undefined || testsRun.length === 0 ? "not_run" : "recorded")
+        verificationResult ??
+        (testsRun === undefined || testsRun.length === 0 ? "not_run" : "recorded"),
     };
   }
   if (checkCriteria) {
@@ -549,7 +548,7 @@ export function completeTask(
   document.body = appendToSection(
     document.body,
     "Progress Log",
-    `- ${logTimestamp()} - Marked implemented.`
+    `- ${logTimestamp()} - Marked implemented.`,
   );
   writeTask(document);
   return document;
@@ -592,7 +591,7 @@ export function validateTaskFile(path: string): ValidationIssue[] {
   if (!isCommitStatus(commitStatus)) {
     issues.push({
       path,
-      message: `\`commit_status\` must be one of ${VALID_COMMIT_STATUSES.join(", ")}.`
+      message: `\`commit_status\` must be one of ${VALID_COMMIT_STATUSES.join(", ")}.`,
     });
   }
 
@@ -626,7 +625,7 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     if (relatedFiles.length === 0 && !noFilesReason) {
       issues.push({
         path,
-        message: "`implemented` tasks need `related_files` or `no_related_files_reason`."
+        message: "`implemented` tasks need `related_files` or `no_related_files_reason`.",
       });
     }
 
@@ -635,7 +634,10 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     if (checkboxMatches.length === 0) {
       issues.push({ path, message: "Acceptance Criteria must include checklist items." });
     } else if (!checkboxMatches.some((match) => match[1].toLowerCase() === "x")) {
-      issues.push({ path, message: "`implemented` tasks should mark checked Acceptance Criteria." });
+      issues.push({
+        path,
+        message: "`implemented` tasks should mark checked Acceptance Criteria.",
+      });
     }
   }
 
@@ -663,11 +665,11 @@ export function installClaudeSkill(
   repoRoot: string,
   {
     scope = "project",
-    force = false
+    force = false,
   }: {
     scope?: "project" | "user";
     force?: boolean;
-  } = {}
+  } = {},
 ): string {
   if (scope !== "project" && scope !== "user") {
     throw new TaskrError("Skill scope must be `project` or `user`.");
@@ -685,7 +687,7 @@ export function installClaudeSkill(
   }
 
   const source = fileURLToPath(
-    new URL("../resources/claude/skills/taskr/SKILL.md", import.meta.url)
+    new URL("../resources/claude/skills/taskr/SKILL.md", import.meta.url),
   );
   copyFileSync(source, target);
   return target;

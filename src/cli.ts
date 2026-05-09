@@ -19,7 +19,7 @@ import {
   taskTitle,
   validate,
   VALID_COMMIT_STATUSES,
-  VALID_STATUSES
+  VALID_STATUSES,
 } from "./protocol.js";
 
 const VERSION = "0.1.0";
@@ -53,7 +53,7 @@ export function run(argv = process.argv.slice(2)): number {
   try {
     if (command === "init") {
       const parsed = parseArgs(argv.slice(1), {
-        force: {}
+        force: {},
       });
       requireNoPositionals(parsed);
       const changed = initProtocol(repoRoot, parsed.flags.has("force"));
@@ -70,7 +70,7 @@ export function run(argv = process.argv.slice(2)): number {
     if (command === "install-skill") {
       const parsed = parseArgs(argv.slice(1), {
         scope: { takesValue: true },
-        force: {}
+        force: {},
       });
       const target = requiredPositional(parsed, 0, "target");
       requireChoices(target, ["claude"], "target");
@@ -79,7 +79,7 @@ export function run(argv = process.argv.slice(2)): number {
       requireChoices(scope, ["project", "user"], "scope");
       const installed = installClaudeSkill(repoRoot, {
         scope: scope as "project" | "user",
-        force: parsed.flags.has("force")
+        force: parsed.flags.has("force"),
       });
       console.log(`installed ${scope === "project" ? relative(installed, repoRoot) : installed}`);
       return 0;
@@ -89,7 +89,7 @@ export function run(argv = process.argv.slice(2)): number {
       const parsed = parseArgs(argv.slice(1), {
         id: { takesValue: true },
         status: { takesValue: true },
-        request: { takesValue: true }
+        request: { takesValue: true },
       });
       const title = requiredPositional(parsed, 0, "title");
       requirePositionalCount(parsed, 1);
@@ -98,7 +98,7 @@ export function run(argv = process.argv.slice(2)): number {
       const path = createTask(repoRoot, title, {
         taskId: parsed.values.id,
         status: status as (typeof VALID_STATUSES)[number],
-        request: parsed.values.request
+        request: parsed.values.request,
       });
       console.log(`created ${relative(path, repoRoot)}`);
       return 0;
@@ -106,7 +106,7 @@ export function run(argv = process.argv.slice(2)): number {
 
     if (command === "list") {
       const parsed = parseArgs(argv.slice(1), {
-        status: { takesValue: true }
+        status: { takesValue: true },
       });
       requireNoPositionals(parsed);
       if (parsed.values.status !== undefined) {
@@ -123,7 +123,7 @@ export function run(argv = process.argv.slice(2)): number {
       const width = Math.max(...tasks.map((task) => taskId(task).length));
       for (const task of tasks) {
         console.log(
-          `${taskId(task).padEnd(width)}  ${taskStatus(task).padEnd(11)}  ${taskTitle(task)}`
+          `${taskId(task).padEnd(width)}  ${taskStatus(task).padEnd(11)}  ${taskTitle(task)}`,
         );
       }
       return 0;
@@ -143,7 +143,7 @@ export function run(argv = process.argv.slice(2)): number {
         host: { takesValue: true },
         port: { takesValue: true },
         open: {},
-        html: {}
+        html: {},
       });
       requireNoPositionals(parsed);
       const host = parsed.values.host ?? "127.0.0.1";
@@ -155,7 +155,7 @@ export function run(argv = process.argv.slice(2)): number {
       startBoardServer(repoRoot, {
         host,
         port,
-        open: parsed.flags.has("open")
+        open: parsed.flags.has("open"),
       })
         .then(({ url }) => {
           console.log(`Taskr board: ${url}`);
@@ -212,7 +212,7 @@ export function run(argv = process.argv.slice(2)): number {
         file: { takesValue: true, multiple: true },
         test: { takesValue: true, multiple: true },
         result: { takesValue: true },
-        "check-criteria": {}
+        "check-criteria": {},
       });
       const id = requiredPositional(parsed, 0, "task_id");
       requirePositionalCount(parsed, 1);
@@ -231,7 +231,7 @@ export function run(argv = process.argv.slice(2)): number {
         testsRun: parsed.lists.test,
         verificationResult: parsed.values.result,
         commitStatus: commitStatus as (typeof VALID_COMMIT_STATUSES)[number] | undefined,
-        checkCriteria: parsed.flags.has("check-criteria")
+        checkCriteria: parsed.flags.has("check-criteria"),
       });
       console.log(`updated ${relative(task.path, repoRoot)}`);
       return 0;
@@ -253,7 +253,7 @@ function parseArgs(argv: string[], specs: Record<string, OptionSpec>): ParsedArg
     positionals: [],
     values: {},
     lists: {},
-    flags: new Set()
+    flags: new Set(),
   };
 
   for (let index = 0; index < argv.length; index += 1) {

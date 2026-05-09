@@ -69,10 +69,15 @@ Required sections:
 
 ```md
 ## Request
+
 ## Acceptance Criteria
+
 ## Implementation Plan
+
 ## Progress Log
+
 ## Agent Notes
+
 ## Completion Summary
 ```
 

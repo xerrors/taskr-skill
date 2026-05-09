@@ -10,7 +10,7 @@ import {
   loadTask,
   slugify,
   taskPath,
-  validate
+  validate,
 } from "../src/protocol.js";
 
 describe("Taskr protocol", () => {
@@ -29,7 +29,7 @@ describe("Taskr protocol", () => {
     expect(changed.map((path) => path.slice(repo.length + 1))).toEqual([
       ".taskr/config.yaml",
       ".taskr/schema.yaml",
-      ".taskr/templates/task.md"
+      ".taskr/templates/task.md",
     ]);
     expect(existsSync(resolve(repo, ".taskr/index.json"))).toBe(false);
   });
@@ -62,7 +62,7 @@ describe("Taskr protocol", () => {
 
     expect(messages).toContain("`implemented` tasks need a Completion Summary.");
     expect(messages).toContain(
-      "`implemented` tasks need `related_files` or `no_related_files_reason`."
+      "`implemented` tasks need `related_files` or `no_related_files_reason`.",
     );
   });
 
@@ -76,7 +76,7 @@ describe("Taskr protocol", () => {
       relatedFiles: ["src/billing.ts"],
       testsRun: ["npm test"],
       verificationResult: "passed",
-      checkCriteria: true
+      checkCriteria: true,
     });
 
     expect(validate(repo, "implement-billing-webhook")).toEqual([]);
