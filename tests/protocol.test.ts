@@ -10,6 +10,7 @@ import {
   loadTask,
   slugify,
   taskPath,
+  VALID_STATUSES,
   validate,
 } from "../src/protocol.js";
 
@@ -20,6 +21,10 @@ describe("Taskr protocol", () => {
 
   it("falls back for non-ASCII task ids", () => {
     expect(slugify("实现用户邀请功能")).toMatch(/^task-/);
+  });
+
+  it("defines the four canonical task statuses", () => {
+    expect([...VALID_STATUSES]).toEqual(["planned", "in_progress", "implemented", "blocked"]);
   });
 
   it("initializes the protocol without an index cache", () => {

@@ -99,12 +99,13 @@ The board groups tasks by Taskr status and expands a task detail drawer when you
 ```text
 planned
 in_progress
-blocked
 implemented
-closed
+blocked
 ```
 
 `implemented` means an agent completed a round of implementation. It does not imply the change has been reviewed, merged, deployed, or even fully tested.
+
+The board shows these states as four columns: Planned, In Progress, Implemented, and Blocked. Legacy `closed` task files are treated as completed in the board view, but `closed` is no longer a valid protocol status.
 
 ## Commit Convention
 

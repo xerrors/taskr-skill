@@ -19,13 +19,7 @@ export const TEMPLATES_DIR = "templates";
 export const TASK_TEMPLATE = "task.md";
 
 export const SCHEMA_VERSION = 1;
-export const VALID_STATUSES = [
-  "planned",
-  "in_progress",
-  "blocked",
-  "implemented",
-  "closed",
-] as const;
+export const VALID_STATUSES = ["planned", "in_progress", "implemented", "blocked"] as const;
 export const VALID_COMMIT_STATUSES = ["created", "not_created", "not_applicable"] as const;
 export const REQUIRED_SECTIONS = [
   "Request",

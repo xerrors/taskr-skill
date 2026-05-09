@@ -12,7 +12,7 @@ Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep imple
 - If `.taskr/` exists, use Taskr for substantial implementation, fix, refactor, investigation, and planning work in the repo.
 - If `.taskr/` does not exist, initialize it only when the user explicitly mentions Taskr or invokes `/taskr`.
 - Do not create a task for trivial edits unless the user asks to track them.
-- Do not mark a task `closed` unless the user explicitly confirms.
+- Do not use `closed`; Taskr tracks only planned, in-progress, implemented, and blocked work.
 
 ## CLI Policy
 
@@ -86,12 +86,11 @@ Required statuses:
 ```text
 planned
 in_progress
-blocked
 implemented
-closed
+blocked
 ```
 
-Use `implemented` for completed agent work. Reserve `closed` for user confirmation, merge, or explicit abandonment.
+Use `implemented` for completed agent work. Use `blocked` when missing context, dependencies, or errors prevent progress.
 
 Required commit statuses:
 
