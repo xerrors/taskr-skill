@@ -6,6 +6,7 @@ import { createBoardModel, renderBoardHtml, startBoardServer } from "../src/boar
 import {
   completeTask,
   createTask,
+  defaultTaskId,
   initProtocol,
   loadTask,
   slugify,
@@ -46,18 +47,28 @@ describe("Taskr protocol", () => {
     const path = createTask(repo, "Implement user invitation flow", { status: "in_progress" });
     const document = loadTask(path);
 
-    expect(path).toBe(resolve(repo, ".taskr/tasks/implement-user-invitation-flow.md"));
-    expect(document.metadata.id).toBe("implement-user-invitation-flow");
+    expect(path).toMatch(
+      /\/\.taskr\/tasks\/\d{4}-\d{2}-\d{2}-implement-user-invitation-flow\.md$/,
+    );
+    expect(document.metadata.id).toMatch(
+      /^\d{4}-\d{2}-\d{2}-implement-user-invitation-flow$/,
+    );
     expect(document.metadata.schema_version).toBe(1);
     expect(document.metadata.status).toBe("in_progress");
     expect(document.body).toContain("## Acceptance Criteria");
     expect(validate(repo)).toEqual([]);
   });
 
+  it("prefixes generated task ids with the local date", () => {
+    expect(defaultTaskId("Implement user invitation flow")).toMatch(
+      /^\d{4}-\d{2}-\d{2}-implement-user-invitation-flow$/,
+    );
+  });
+
   it("requires summary and files for implemented tasks", () => {
     const repo = tempRepo();
     initProtocol(repo);
-    createTask(repo, "Implement billing webhook");
+    createTask(repo, "Implement billing webhook", { taskId: "implement-billing-webhook" });
 
     const path = taskPath(repo, "implement-billing-webhook");
     const content = readFileSync(path, "utf8").replace("status: planned", "status: implemented");
@@ -74,7 +85,7 @@ describe("Taskr protocol", () => {
   it("can produce a valid implemented task", () => {
     const repo = tempRepo();
     initProtocol(repo);
-    createTask(repo, "Implement billing webhook");
+    createTask(repo, "Implement billing webhook", { taskId: "implement-billing-webhook" });
 
     completeTask(repo, "implement-billing-webhook", {
       summary: "Implemented the billing webhook handler.",
@@ -90,7 +101,10 @@ describe("Taskr protocol", () => {
   it("renders a board model as a Kanban HTML page", () => {
     const repo = tempRepo();
     initProtocol(repo);
-    createTask(repo, "Implement board visualization", { status: "in_progress" });
+    createTask(repo, "Implement board visualization", {
+      taskId: "implement-board-visualization",
+      status: "in_progress",
+    });
 
     const model = createBoardModel(repo);
     const html = renderBoardHtml(model);
@@ -112,8 +126,8 @@ describe("Taskr protocol", () => {
   it("maps legacy and unknown statuses into the four board columns", () => {
     const repo = tempRepo();
     initProtocol(repo);
-    createTask(repo, "Inspect closed task");
-    createTask(repo, "Inspect odd task state");
+    createTask(repo, "Inspect closed task", { taskId: "inspect-closed-task" });
+    createTask(repo, "Inspect odd task state", { taskId: "inspect-odd-task-state" });
     const closedPath = taskPath(repo, "inspect-closed-task");
     const oddPath = taskPath(repo, "inspect-odd-task-state");
     writeFileSync(
@@ -141,7 +155,7 @@ describe("Taskr protocol", () => {
   it("saves task sections through the board API", async () => {
     const repo = tempRepo();
     initProtocol(repo);
-    createTask(repo, "Edit task sections");
+    createTask(repo, "Edit task sections", { taskId: "edit-task-sections" });
 
     const { server, url } = await startBoardServer(repo, {
       host: "127.0.0.1",

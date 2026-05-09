@@ -24,13 +24,24 @@ describe("Taskr CLI", () => {
 
     expect(run(["init"])).toBe(0);
     expect(run(["install-skill", "claude"])).toBe(0);
-    expect(run(["new", "implement user invitation flow", "--status", "in_progress"])).toBe(0);
-    expect(run(["status", "implement-user-invitation-flow", "blocked"])).toBe(0);
-    expect(run(["note", "implement-user-invitation-flow", "Waiting on API contract."])).toBe(0);
+    expect(
+      run([
+        "new",
+        "implement user invitation flow",
+        "--id",
+        "2026-05-10-implement-user-invitation-flow",
+        "--status",
+        "in_progress",
+      ]),
+    ).toBe(0);
+    expect(run(["status", "2026-05-10-implement-user-invitation-flow", "blocked"])).toBe(0);
+    expect(
+      run(["note", "2026-05-10-implement-user-invitation-flow", "Waiting on API contract."]),
+    ).toBe(0);
     expect(
       run([
         "complete",
-        "implement-user-invitation-flow",
+        "2026-05-10-implement-user-invitation-flow",
         "--summary",
         "Implemented the invitation flow.",
         "--file",
@@ -42,7 +53,7 @@ describe("Taskr CLI", () => {
         "--check-criteria",
       ]),
     ).toBe(0);
-    expect(run(["validate", "implement-user-invitation-flow"])).toBe(0);
+    expect(run(["validate", "2026-05-10-implement-user-invitation-flow"])).toBe(0);
     expect(existsSync(resolve(repo, ".claude/skills/taskr/SKILL.md"))).toBe(true);
   });
 });

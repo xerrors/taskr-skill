@@ -319,6 +319,10 @@ Empty.
 `;
 }
 
+export function defaultTaskId(title: string): string {
+  return `${localDatePrefix(new Date())}-${slugify(title)}`;
+}
+
 export function createTask(
   repoRoot: string,
   title: string,
@@ -340,7 +344,7 @@ export function createTask(
     throw new TaskrError("Task id must use lower-kebab-case.");
   }
 
-  const resolvedId = explicitTaskId ?? ensureUniqueTaskId(repoRoot, title);
+  const resolvedId = explicitTaskId ?? ensureUniqueTaskId(repoRoot, defaultTaskId(title));
   const path = taskPath(repoRoot, resolvedId);
   if (existsSync(path)) {
     throw new TaskrError(`Task already exists: ${resolvedId}`);
@@ -740,6 +744,13 @@ function formatLocalDateTime(date: Date, separator: "T" | " ", includeSeconds: b
     return `${year}-${month}-${day}${separator}${hour}:${minute}:${second}${offset}`;
   }
   return `${year}-${month}-${day}${separator}${hour}:${minute} ${offset}`;
+}
+
+function localDatePrefix(date: Date): string {
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  return `${year}-${month}-${day}`;
 }
 
 function timezoneOffset(date: Date): string {

@@ -38,9 +38,10 @@ Before starting substantial work:
 1. Check whether `.taskr/` exists.
 2. If Taskr is active, create or update one task under `.taskr/tasks/`.
 3. Use a lower-kebab-case task id.
-4. Record the user's original request in `## Request`.
-5. Add concrete acceptance criteria and a short implementation plan.
-6. Set status to `in_progress` before making code changes.
+4. Prefix new task file ids with the local date, at least `YYYY-MM-DD`, for example `2026-05-10-implement-user-invitation-flow.md`. Keep the date prefix lower-kebab-case compatible and human-readable. Existing task files without a date prefix may remain unchanged.
+5. Record the user's original request in `## Request`.
+6. Add concrete acceptance criteria and a short implementation plan.
+7. Set status to `in_progress` before making code changes.
 
 During work:
 
