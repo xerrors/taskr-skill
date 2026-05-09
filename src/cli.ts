@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { createBoardModel, renderBoardHtml, startBoardServer } from "./board.js";
 import {
   addNote,
   completeTask,
@@ -134,6 +135,37 @@ export function run(argv = process.argv.slice(2)): number {
       requirePositionalCount(parsed, 1);
       const task = loadTaskById(repoRoot, id);
       process.stdout.write(readTaskFile(task.path));
+      return 0;
+    }
+
+    if (command === "board") {
+      const parsed = parseArgs(argv.slice(1), {
+        host: { takesValue: true },
+        port: { takesValue: true },
+        open: {},
+        html: {}
+      });
+      requireNoPositionals(parsed);
+      const host = parsed.values.host ?? "127.0.0.1";
+      const port = parsePort(parsed.values.port ?? "4317");
+      if (parsed.flags.has("html")) {
+        process.stdout.write(renderBoardHtml(createBoardModel(repoRoot)));
+        return 0;
+      }
+      startBoardServer(repoRoot, {
+        host,
+        port,
+        open: parsed.flags.has("open")
+      })
+        .then(({ url }) => {
+          console.log(`Taskr board: ${url}`);
+          console.log("Press Ctrl+C to stop.");
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(`taskr: ${message}`);
+          process.exitCode = 1;
+        });
       return 0;
     }
 
@@ -287,6 +319,14 @@ function requireChoices(value: string, choices: string[], name: string): void {
   }
 }
 
+function parsePort(value: string): number {
+  const port = Number(value);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new TaskrError("port must be an integer between 0 and 65535.");
+  }
+  return port;
+}
+
 function readTaskFile(path: string): string {
   return readFileSync(path, "utf8");
 }
@@ -302,6 +342,7 @@ Commands:
   new <title>                  Create a task file.
   list                         List tasks.
   show <task_id>               Print a task file.
+  board                        Serve a read-only Kanban board.
   validate [task_id]           Validate Taskr task files.
   status <task_id> <status>    Update a task status.
   note <task_id> <note>        Append an agent note to a task.

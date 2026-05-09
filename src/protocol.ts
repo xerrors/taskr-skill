@@ -236,11 +236,7 @@ export function initProtocol(repoRoot: string, force = false): string[] {
   const files = new Map<string, string>([
     [resolve(root, "config.yaml"), dumpYaml(defaultConfig())],
     [resolve(root, "schema.yaml"), dumpYaml(defaultSchema())],
-    [resolve(root, TEMPLATES_DIR, TASK_TEMPLATE), taskTemplatePlaceholder()],
-    [
-      resolve(root, "index.json"),
-      `${JSON.stringify({ version: SCHEMA_VERSION, generated_at: nowIso(), tasks: [] }, null, 2)}\n`
-    ]
+    [resolve(root, TEMPLATES_DIR, TASK_TEMPLATE), taskTemplatePlaceholder()]
   ]);
 
   for (const [path, content] of files.entries()) {

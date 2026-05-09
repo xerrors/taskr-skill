@@ -1,7 +1,8 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createBoardModel, renderBoardHtml } from "../src/board.js";
 import {
   completeTask,
   createTask,
@@ -19,6 +20,18 @@ describe("Taskr protocol", () => {
 
   it("falls back for non-ASCII task ids", () => {
     expect(slugify("实现用户邀请功能")).toMatch(/^task-/);
+  });
+
+  it("initializes the protocol without an index cache", () => {
+    const repo = tempRepo();
+    const changed = initProtocol(repo);
+
+    expect(changed.map((path) => path.slice(repo.length + 1))).toEqual([
+      ".taskr/config.yaml",
+      ".taskr/schema.yaml",
+      ".taskr/templates/task.md"
+    ]);
+    expect(existsSync(resolve(repo, ".taskr/index.json"))).toBe(false);
   });
 
   it("creates a valid planned task", () => {
@@ -67,6 +80,38 @@ describe("Taskr protocol", () => {
     });
 
     expect(validate(repo, "implement-billing-webhook")).toEqual([]);
+  });
+
+  it("renders a board model as a Kanban HTML page", () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Implement board visualization", { status: "in_progress" });
+
+    const model = createBoardModel(repo);
+    const html = renderBoardHtml(model);
+
+    expect(model.statuses).toContain("in_progress");
+    expect(model.tasks).toHaveLength(1);
+    expect(model.tasks[0].id).toBe("implement-board-visualization");
+    expect(model.tasks[0].sections.Request).toContain("Implement board visualization");
+    expect(html).toContain("Taskr Board");
+    expect(html).toContain("Taskr Kanban board");
+    expect(html).toContain("Click any card to open its task detail.");
+    expect(html).toContain('task.relatedFiles.join("\\n")');
+  });
+
+  it("keeps tasks with unknown statuses visible on the board", () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Inspect odd task state");
+    const path = taskPath(repo, "inspect-odd-task-state");
+    const content = readFileSync(path, "utf8").replace("status: planned", "status: reviewing");
+    writeFileSync(path, content, "utf8");
+
+    const model = createBoardModel(repo);
+
+    expect(model.statuses).toContain("reviewing");
+    expect(model.tasks[0].status).toBe("reviewing");
   });
 });
 

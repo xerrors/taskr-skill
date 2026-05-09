@@ -19,6 +19,7 @@ node dist/cli.js init
 node dist/cli.js install-skill claude
 node dist/cli.js new "implement user invitation flow" --status in_progress
 node dist/cli.js list
+node dist/cli.js board
 node dist/cli.js validate
 ```
 
@@ -72,9 +73,8 @@ The npm package is scoped to the `xerrors` npm account and exposes a `taskr` bin
 ├── schema.yaml
 ├── templates/
 │   └── task.md
-├── tasks/
-│   └── implement-user-invitation-flow.md
-└── index.json
+└── tasks/
+    └── implement-user-invitation-flow.md
 
 .claude/
 └── skills/
@@ -82,7 +82,17 @@ The npm package is scoped to the `xerrors` npm account and exposes a `taskr` bin
         └── SKILL.md
 ```
 
-`taskr` treats `.taskr/tasks/*.md` as the source of truth. `index.json` is only a cache placeholder.
+`taskr` treats `.taskr/tasks/*.md` as the source of truth. The board reads task Markdown files directly and does not require an index cache.
+
+## Board
+
+Use `taskr board` to serve a read-only repo-local Kanban view of `.taskr/tasks/*.md`.
+
+```bash
+node dist/cli.js board --open
+```
+
+The board groups tasks by Taskr status and expands a task detail drawer when you click a card. The MVP intentionally does not include drag-and-drop, editing, or full Markdown rendering.
 
 ## Task States
 
