@@ -65,6 +65,20 @@ describe("Taskr protocol", () => {
     );
   });
 
+  it("localizes generated task body copy for Chinese requests", () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+
+    const path = createTask(repo, "实现用户邀请功能", { request: "实现用户邀请功能" });
+    const document = loadTask(path);
+
+    expect(document.body).toContain("## Acceptance Criteria");
+    expect(document.body).toContain("- [ ] 确认用户请求的行为已经实现。");
+    expect(document.body).toContain("- [ ] 检查相关代码和既有模式。");
+    expect(document.body).toContain("暂无。");
+    expect(validate(repo)).toEqual([]);
+  });
+
   it("requires summary and files for implemented tasks", () => {
     const repo = tempRepo();
     initProtocol(repo);

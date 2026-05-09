@@ -43,6 +43,12 @@ Before starting substantial work:
 6. Add concrete acceptance criteria and a short implementation plan.
 7. Set status to `in_progress` before making code changes.
 
+### Language Policy
+
+- Match human-facing task content to the user's language when it does not affect parsing. For Chinese requests, write the request body, checklist text, progress notes, agent notes, and completion summary in Chinese. For English requests, use English.
+- Keep parse-sensitive protocol fields stable unless the Taskr parser explicitly supports alternatives: YAML frontmatter keys, status values, commit status values, task ids, and required section headings such as `## Request`, `## Acceptance Criteria`, `## Implementation Plan`, `## Progress Log`, `## Agent Notes`, and `## Completion Summary`.
+- If localized section headings are added in the future, update parsing, board rendering, validation, and tests in the same change.
+
 During work:
 
 1. Re-read the task before significant edits.

@@ -265,6 +265,8 @@ export function renderTask({
   }
 
   const timestamp = nowIso();
+  const language = taskLanguage(`${title}\n${request}`);
+  const copy = taskTemplateCopy(language);
   const metadata: TaskMetadata = {
     schema_version: SCHEMA_VERSION,
     id: taskId,
@@ -294,16 +296,11 @@ ${request.trim() || title}
 
 ## Acceptance Criteria
 
-- [ ] Confirm the requested behavior is implemented.
-- [ ] Update or add focused validation where practical.
-- [ ] Summarize changed files and any verification performed.
+${copy.acceptanceCriteria.map((item) => `- [ ] ${item}`).join("\n")}
 
 ## Implementation Plan
 
-- [ ] Inspect the relevant code and existing patterns.
-- [ ] Implement the smallest useful change.
-- [ ] Run appropriate validation or record why it was not run.
-- [ ] Update this task with progress, related files, and completion notes.
+${copy.implementationPlan.map((item) => `- [ ] ${item}`).join("\n")}
 
 ## Progress Log
 
@@ -311,11 +308,11 @@ ${createdLine}
 
 ## Agent Notes
 
-Empty.
+${copy.empty}
 
 ## Completion Summary
 
-Empty.
+${copy.empty}
 `;
 }
 
@@ -717,6 +714,49 @@ function isCommitStatus(value: unknown): value is CommitStatus {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+type TaskLanguage = "en" | "zh";
+
+function taskLanguage(value: string): TaskLanguage {
+  return /[\u3400-\u9fff]/.test(value) ? "zh" : "en";
+}
+
+function taskTemplateCopy(language: TaskLanguage): {
+  acceptanceCriteria: string[];
+  implementationPlan: string[];
+  empty: string;
+} {
+  if (language === "zh") {
+    return {
+      acceptanceCriteria: [
+        "确认用户请求的行为已经实现。",
+        "在可行范围内更新或增加聚焦验证。",
+        "总结变更文件和已执行的验证。",
+      ],
+      implementationPlan: [
+        "检查相关代码和既有模式。",
+        "实现最小且有用的改动。",
+        "运行合适的验证，或记录无法运行的原因。",
+        "更新本任务的进展、相关文件和完成说明。",
+      ],
+      empty: "暂无。",
+    };
+  }
+  return {
+    acceptanceCriteria: [
+      "Confirm the requested behavior is implemented.",
+      "Update or add focused validation where practical.",
+      "Summarize changed files and any verification performed.",
+    ],
+    implementationPlan: [
+      "Inspect the relevant code and existing patterns.",
+      "Implement the smallest useful change.",
+      "Run appropriate validation or record why it was not run.",
+      "Update this task with progress, related files, and completion notes.",
+    ],
+    empty: "Empty.",
+  };
 }
 
 function unique(values: string[]): string[] {
