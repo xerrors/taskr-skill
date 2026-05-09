@@ -360,17 +360,24 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .refresh-button {
       min-width: 96px;
-      color: var(--ink-strong);
-      background: linear-gradient(180deg, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.08));
-      border-color: rgba(56, 189, 248, 0.28);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+      background: rgba(20, 28, 37, 0.88);
+      border-color: var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
 
     .refresh-button:hover {
       color: var(--ink-strong);
-      background: linear-gradient(180deg, rgba(56, 189, 248, 0.24), rgba(56, 189, 248, 0.12));
-      border-color: rgba(56, 189, 248, 0.44);
-      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      background: var(--panel-raised);
+      border-color: var(--line-strong);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .refresh-button[disabled] {
+      color: var(--faint);
+      background: rgba(20, 28, 37, 0.62);
+      border-color: var(--line);
+      box-shadow: none;
     }
 
     .icon-button:focus-visible, .section-action:focus-visible {
