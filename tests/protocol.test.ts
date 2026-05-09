@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -139,7 +140,41 @@ describe("Taskr protocol", () => {
     expect(html).toContain("compact-meta");
     expect(html).toContain("progressbar");
     expect(html).toContain("formatTimestamp");
-    expect(html).toContain('task.relatedFiles.join("\\n")');
+    expect(html).toContain("commit-panel");
+    expect(html).toContain("commitDetails");
+    expect(html).toContain("commitStatusLabel");
+  });
+
+  it("loads diff stats for task commits in the board model", () => {
+    const repo = tempRepo();
+    initGitRepo(repo);
+    writeFileSync(resolve(repo, "feature.txt"), "old\nremove\n", "utf8");
+    git(repo, "add", "feature.txt");
+    git(repo, "commit", "-m", "baseline");
+    writeFileSync(resolve(repo, "feature.txt"), "old\nnew\n", "utf8");
+    git(repo, "add", "feature.txt");
+    git(repo, "commit", "-m", "update feature");
+    const commit = git(repo, "rev-parse", "HEAD");
+
+    initProtocol(repo);
+    createTask(repo, "Display commit stats", { taskId: "display-commit-stats" });
+    completeTask(repo, "display-commit-stats", {
+      summary: "Displayed commit stats.",
+      commits: [commit],
+      relatedFiles: ["src/board.ts"],
+      checkCriteria: true,
+    });
+
+    const model = createBoardModel(repo);
+    const detail = model.tasks[0].commitDetails[0];
+
+    expect(detail.hash).toBe(commit);
+    expect(detail.shortHash).toBe(commit.slice(0, 12));
+    expect(detail.subject).toBe("update feature");
+    expect(detail.additions).toBe(1);
+    expect(detail.deletions).toBe(1);
+    expect(detail.filesChanged).toBe(1);
+    expect(detail.error).toBeNull();
   });
 
   it("maps legacy and unknown statuses into the four board columns", () => {
@@ -204,4 +239,14 @@ describe("Taskr protocol", () => {
 
 function tempRepo(): string {
   return mkdtempSync(resolve(tmpdir(), "taskr-"));
+}
+
+function initGitRepo(repo: string): void {
+  git(repo, "init");
+  git(repo, "config", "user.email", "taskr@example.test");
+  git(repo, "config", "user.name", "Taskr Test");
+}
+
+function git(repo: string, ...args: string[]): string {
+  return execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
 }

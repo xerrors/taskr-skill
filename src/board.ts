@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import {
   extractSections,
   listTasks,
@@ -25,6 +25,7 @@ export interface BoardTask {
   branch: string | null;
   commitStatus: string;
   commits: string[];
+  commitDetails: BoardCommitDetail[];
   relatedFiles: string[];
   verification: unknown;
   sections: Record<string, string>;
@@ -32,6 +33,16 @@ export interface BoardTask {
     checked: number;
     total: number;
   };
+}
+
+export interface BoardCommitDetail {
+  hash: string;
+  shortHash: string;
+  subject: string;
+  additions: number | null;
+  deletions: number | null;
+  filesChanged: number | null;
+  error: string | null;
 }
 
 export interface BoardModel {
@@ -837,6 +848,89 @@ export function renderBoardHtml(model: BoardModel): string {
       margin-bottom: 4px;
     }
 
+    .commit-panel {
+      margin-bottom: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(20, 28, 37, 0.56);
+      overflow: hidden;
+    }
+
+    .commit-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .commit-panel-title {
+      margin: 0;
+      color: #7dd3fc;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-size: 0.72rem;
+      font-weight: 750;
+    }
+
+    .commit-panel-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .commit-list {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+    }
+
+    .commit-row {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 8px;
+      background: rgba(9, 13, 18, 0.32);
+    }
+
+    .commit-row-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .commit-id {
+      color: var(--ink-strong);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.86rem;
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    .commit-subject {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .commit-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .diff-add {
+      color: #86efac;
+    }
+
+    .diff-delete {
+      color: #fda4af;
+    }
+
     .progress-row {
       display: flex;
       align-items: center;
@@ -1002,6 +1096,14 @@ export function renderBoardHtml(model: BoardModel): string {
       }
       .column { min-height: 0; }
       .meta-grid { grid-template-columns: 1fr; }
+      .commit-panel-header,
+      .commit-row-main {
+        display: grid;
+        justify-content: stretch;
+      }
+      .commit-panel-summary {
+        justify-content: flex-start;
+      }
       .detail {
         top: 8px;
         right: 8px;
@@ -1130,9 +1232,20 @@ export function renderBoardHtml(model: BoardModel): string {
         empty: "Empty.",
         commitUnknown: "commit unknown",
         originalStatus: "was",
+        linesAdded: "+{count}",
+        linesDeleted: "-{count}",
+        filesChanged: {
+          one: "1 changed file",
+          many: "{count} changed files"
+        },
         files: {
           one: "1 file",
           many: "{count} files"
+        },
+        commitStatuses: {
+          created: "Created",
+          not_created: "Not created",
+          not_applicable: "Not applicable"
         },
         tableHeaders: ["Task", "Status", "Criteria", "Updated", "Files", "Commit"],
         statuses: {
@@ -1149,7 +1262,10 @@ export function renderBoardHtml(model: BoardModel): string {
           branch: "Branch",
           criteria: "Criteria",
           relatedFiles: "Related files",
-          commits: "Commits"
+          commits: "Commits",
+          commitId: "Commit ID",
+          diff: "Diff",
+          unavailable: "Unavailable"
         },
         sections: {
           "Request": "Request",
@@ -1215,9 +1331,20 @@ export function renderBoardHtml(model: BoardModel): string {
         empty: "空。",
         commitUnknown: "commit 未知",
         originalStatus: "原为",
+        linesAdded: "+{count}",
+        linesDeleted: "-{count}",
+        filesChanged: {
+          one: "1 个变更文件",
+          many: "{count} 个变更文件"
+        },
         files: {
           one: "1 个文件",
           many: "{count} 个文件"
+        },
+        commitStatuses: {
+          created: "Created",
+          not_created: "Not created",
+          not_applicable: "Not applicable"
         },
         tableHeaders: ["任务", "状态", "验收项", "更新于", "文件", "提交"],
         statuses: {
@@ -1234,7 +1361,10 @@ export function renderBoardHtml(model: BoardModel): string {
           branch: "分支",
           criteria: "验收项",
           relatedFiles: "相关文件",
-          commits: "提交"
+          commits: "提交",
+          commitId: "提交 ID",
+          diff: "增删行",
+          unavailable: "不可用"
         },
         sections: {
           "Request": "需求",
@@ -1296,6 +1426,10 @@ export function renderBoardHtml(model: BoardModel): string {
       return translateRecord("statuses", status, status);
     }
 
+    function commitStatusLabel(status) {
+      return translateRecord("commitStatuses", status, status || t("unknown"));
+    }
+
     function sectionLabel(sectionName) {
       return translateRecord("sections", sectionName, sectionName);
     }
@@ -1303,6 +1437,11 @@ export function renderBoardHtml(model: BoardModel): string {
     function formatFileCount(count) {
       if (count === 1) return t("files.one");
       return t("files.many").replace("{count}", String(count));
+    }
+
+    function formatChangedFileCount(count) {
+      if (count === 1) return t("filesChanged.one");
+      return t("filesChanged.many").replace("{count}", String(count));
     }
 
     function applyLanguage() {
@@ -1432,7 +1571,7 @@ export function renderBoardHtml(model: BoardModel): string {
       files.textContent = String(task.relatedFiles.length);
 
       const commit = document.createElement("td");
-      commit.textContent = task.commitStatus || t("unknown");
+      commit.textContent = commitSummary(task);
 
       row.append(title, status, criteria, updated, files, commit);
       return row;
@@ -1536,7 +1675,7 @@ export function renderBoardHtml(model: BoardModel): string {
       footer.className = "card-footer";
       footer.append(
         criteriaPill(task),
-        pill(task.commitStatus || t("commitUnknown")),
+        pill(commitSummary(task)),
         pill(formatFileCount(task.relatedFiles.length))
       );
 
@@ -1581,19 +1720,94 @@ export function renderBoardHtml(model: BoardModel): string {
       meta.append(
         metaItem(t("meta.status"), statusLabel(task.status)),
         metaItem(t("meta.updated"), formatTimestamp(task.updatedAt)),
-        metaItem(t("meta.commitStatus"), task.commitStatus || t("unknown")),
         metaItem(t("meta.path"), task.path),
-        metaItem(t("meta.branch"), task.branch || t("none")),
         progressMeta(task),
-        metaItem(t("meta.relatedFiles"), task.relatedFiles.length ? task.relatedFiles.join("\\n") : t("none")),
-        metaItem(t("meta.commits"), task.commits.length ? task.commits.join("\\n") : t("none"))
+        metaItem(t("meta.relatedFiles"), task.relatedFiles.length ? task.relatedFiles.join("\\n") : t("none"))
       );
       fragment.append(meta);
+      fragment.append(commitPanel(task));
 
       for (const name of ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"]) {
         fragment.append(section(name, task.sections[name] || t("empty")));
       }
       return fragment;
+    }
+
+    function commitPanel(task) {
+      const wrapper = document.createElement("section");
+      wrapper.className = "commit-panel";
+
+      const head = document.createElement("div");
+      head.className = "commit-panel-header";
+      const heading = document.createElement("h3");
+      heading.className = "commit-panel-title";
+      heading.textContent = t("meta.commits");
+      const summary = document.createElement("div");
+      summary.className = "commit-panel-summary";
+      summary.append(
+        pill(t("meta.commitStatus") + ": " + commitStatusLabel(task.commitStatus)),
+        pill(t("meta.branch") + ": " + (task.branch || t("none")))
+      );
+      head.append(heading, summary);
+
+      const list = document.createElement("div");
+      list.className = "commit-list";
+      if (task.commitDetails.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = t("none");
+        list.append(empty);
+      } else {
+        list.append(...task.commitDetails.map(commitRow));
+      }
+
+      wrapper.append(head, list);
+      return wrapper;
+    }
+
+    function commitRow(commit) {
+      const row = document.createElement("div");
+      row.className = "commit-row";
+
+      const main = document.createElement("div");
+      main.className = "commit-row-main";
+      const id = document.createElement("div");
+      id.className = "commit-id";
+      id.textContent = commit.shortHash || commit.hash;
+      id.title = commit.hash;
+      const stats = document.createElement("div");
+      stats.className = "commit-stats";
+      stats.append(...commitStatPills(commit));
+      main.append(id, stats);
+      row.append(main);
+
+      if (commit.subject) {
+        const subject = document.createElement("div");
+        subject.className = "commit-subject";
+        subject.textContent = commit.subject;
+        row.append(subject);
+      }
+
+      if (commit.error) {
+        const error = document.createElement("div");
+        error.className = "commit-subject";
+        error.textContent = t("meta.unavailable");
+        row.append(error);
+      }
+
+      return row;
+    }
+
+    function commitStatPills(commit) {
+      if (commit.additions === null || commit.deletions === null || commit.filesChanged === null) {
+        return [pill(t("meta.diff") + ": " + t("meta.unavailable"))];
+      }
+
+      const added = pill(t("linesAdded").replace("{count}", String(commit.additions)));
+      added.classList.add("diff-add");
+      const deleted = pill(t("linesDeleted").replace("{count}", String(commit.deletions)));
+      deleted.classList.add("diff-delete");
+      return [added, deleted, pill(formatChangedFileCount(commit.filesChanged))];
     }
 
     function section(title, content) {
@@ -1722,6 +1936,12 @@ export function renderBoardHtml(model: BoardModel): string {
       return element;
     }
 
+    function commitSummary(task) {
+      const status = commitStatusLabel(task.commitStatus);
+      if (!task.commits.length) return status || t("commitUnknown");
+      return status + " · " + task.commits[0].slice(0, 12);
+    }
+
     function formatTimestamp(value) {
       if (!value) return t("unknown");
       const normalized = String(value).replace(/([+-]\\d{2})(\\d{2})$/, "$1:$2");
@@ -1749,6 +1969,7 @@ export function renderBoardHtml(model: BoardModel): string {
         task.title,
         task.path,
         task.sections.Request,
+        task.commits.join(" "),
         task.relatedFiles.join(" ")
       ].join(" ").toLowerCase().includes(query);
     }
@@ -1986,6 +2207,7 @@ function sendJson(response: ServerResponse, status: number, value: unknown): voi
 function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
   const sections = extractSections(document.body);
   const originalStatus = taskStatus(document) || "planned";
+  const commits = asStringArray(document.metadata.commits);
   return {
     id: taskId(document),
     title: taskTitle(document),
@@ -1995,12 +2217,71 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
     updatedAt: String(document.metadata.updated_at ?? ""),
     branch: document.metadata.branch === null ? null : String(document.metadata.branch ?? ""),
     commitStatus: String(document.metadata.commit_status ?? "not_created"),
-    commits: asStringArray(document.metadata.commits),
+    commits,
+    commitDetails: commits.map((commit) => commitDetail(repoRoot, commit)),
     relatedFiles: asStringArray(document.metadata.related_files),
     verification: document.metadata.verification ?? null,
     sections,
     criteria: countCriteria(sections["Acceptance Criteria"] ?? ""),
   };
+}
+
+function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
+  try {
+    if (!commit.trim() || commit.startsWith("-")) {
+      throw new Error("Invalid commit id.");
+    }
+    const output = execFileSync(
+      "git",
+      ["show", "--numstat", "--format=%H%n%s", "--no-renames", commit],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    const lines = output.trimEnd().split("\n");
+    const hash = lines[0] || commit;
+    const subject = lines[1] || "";
+    let additions = 0;
+    let deletions = 0;
+    let filesChanged = 0;
+
+    for (const line of lines.slice(2)) {
+      if (!line.trim()) {
+        continue;
+      }
+      const [added, deleted] = line.split("\t");
+      filesChanged += 1;
+      additions += numericDiffStat(added);
+      deletions += numericDiffStat(deleted);
+    }
+
+    return {
+      hash,
+      shortHash: hash.slice(0, 12),
+      subject,
+      additions,
+      deletions,
+      filesChanged,
+      error: null,
+    };
+  } catch (error) {
+    return {
+      hash: commit,
+      shortHash: commit.slice(0, 12),
+      subject: "",
+      additions: null,
+      deletions: null,
+      filesChanged: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function numericDiffStat(value: string | undefined): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function boardStatus(status: string): string {

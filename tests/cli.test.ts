@@ -24,6 +24,7 @@ describe("Taskr CLI", () => {
 
     expect(run(["init"])).toBe(0);
     expect(run(["install-skill", "claude"])).toBe(0);
+    expect(run(["install-skill", "codex"])).toBe(0);
     expect(
       run([
         "new",
@@ -55,5 +56,6 @@ describe("Taskr CLI", () => {
     ).toBe(0);
     expect(run(["validate", "2026-05-10-implement-user-invitation-flow"])).toBe(0);
     expect(existsSync(resolve(repo, ".claude/skills/taskr/SKILL.md"))).toBe(true);
+    expect(existsSync(resolve(repo, ".codex/skills/taskr/SKILL.md"))).toBe(true);
   });
 });

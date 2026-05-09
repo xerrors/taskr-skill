@@ -21,6 +21,7 @@ export const TASK_TEMPLATE = "task.md";
 export const SCHEMA_VERSION = 1;
 export const VALID_STATUSES = ["planned", "in_progress", "implemented", "blocked"] as const;
 export const VALID_COMMIT_STATUSES = ["created", "not_created", "not_applicable"] as const;
+export const SKILL_TARGETS = ["claude", "codex"] as const;
 export const REQUIRED_SECTIONS = [
   "Request",
   "Acceptance Criteria",
@@ -32,6 +33,8 @@ export const REQUIRED_SECTIONS = [
 
 export type TaskStatus = (typeof VALID_STATUSES)[number];
 export type CommitStatus = (typeof VALID_COMMIT_STATUSES)[number];
+export type SkillTarget = (typeof SKILL_TARGETS)[number];
+export type SkillScope = "project" | "user";
 export type TaskMetadata = Record<string, unknown>;
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -662,30 +665,60 @@ export function installClaudeSkill(
     scope = "project",
     force = false,
   }: {
-    scope?: "project" | "user";
+    scope?: SkillScope;
     force?: boolean;
   } = {},
 ): string {
+  return installAgentSkill(repoRoot, { target: "claude", scope, force });
+}
+
+export function installAgentSkill(
+  repoRoot: string,
+  {
+    target,
+    scope = "project",
+    force = false,
+  }: {
+    target: SkillTarget;
+    scope?: SkillScope;
+    force?: boolean;
+  },
+): string {
+  if (!SKILL_TARGETS.includes(target)) {
+    throw new TaskrError(`Skill target must be one of ${SKILL_TARGETS.join(", ")}.`);
+  }
   if (scope !== "project" && scope !== "user") {
     throw new TaskrError("Skill scope must be `project` or `user`.");
   }
 
-  const destination =
-    scope === "project"
-      ? resolve(repoRoot, ".claude", "skills", "taskr")
-      : resolve(homedir(), ".claude", "skills", "taskr");
+  const destination = skillDestination(repoRoot, target, scope);
 
   mkdirSync(destination, { recursive: true });
-  const target = resolve(destination, "SKILL.md");
-  if (existsSync(target) && !force) {
-    throw new TaskrError(`Skill already exists: ${target}. Use --force to replace it.`);
+  const skillFile = resolve(destination, "SKILL.md");
+  if (existsSync(skillFile) && !force) {
+    throw new TaskrError(`Skill already exists: ${skillFile}. Use --force to replace it.`);
   }
 
   const source = fileURLToPath(
     new URL("../resources/claude/skills/taskr/SKILL.md", import.meta.url),
   );
-  copyFileSync(source, target);
-  return target;
+  copyFileSync(source, skillFile);
+  return skillFile;
+}
+
+export function skillDestination(repoRoot: string, target: SkillTarget, scope: SkillScope): string {
+  if (target === "claude") {
+    return scope === "project"
+      ? resolve(repoRoot, ".claude", "skills", "taskr")
+      : resolve(homedir(), ".claude", "skills", "taskr");
+  }
+
+  const codexHome = process.env.CODEX_HOME
+    ? resolve(process.env.CODEX_HOME)
+    : resolve(homedir(), ".codex");
+  return scope === "project"
+    ? resolve(repoRoot, ".codex", "skills", "taskr")
+    : resolve(codexHome, "skills", "taskr");
 }
 
 export function relative(path: string, root: string): string {

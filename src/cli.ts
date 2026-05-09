@@ -8,11 +8,12 @@ import {
   createTask,
   findRepoRoot,
   initProtocol,
-  installClaudeSkill,
+  installAgentSkill,
   listTasks,
   loadTaskById,
   relative,
   setStatus,
+  SKILL_TARGETS,
   TaskrError,
   taskId,
   taskStatus,
@@ -73,11 +74,12 @@ export function run(argv = process.argv.slice(2)): number {
         force: {},
       });
       const target = requiredPositional(parsed, 0, "target");
-      requireChoices(target, ["claude"], "target");
+      requireChoices(target, [...SKILL_TARGETS], "target");
       requirePositionalCount(parsed, 1);
       const scope = parsed.values.scope ?? "project";
       requireChoices(scope, ["project", "user"], "scope");
-      const installed = installClaudeSkill(repoRoot, {
+      const installed = installAgentSkill(repoRoot, {
+        target: target as (typeof SKILL_TARGETS)[number],
         scope: scope as "project" | "user",
         force: parsed.flags.has("force"),
       });
@@ -338,7 +340,7 @@ Repo-local task protocol for AI-assisted software development.
 
 Commands:
   init                         Initialize .taskr/ in this repo.
-  install-skill claude         Install a Taskr agent skill.
+  install-skill <target>       Install a Taskr agent skill. Targets: claude, codex.
   new <title>                  Create a task file.
   list                         List tasks.
   show <task_id>               Print a task file.

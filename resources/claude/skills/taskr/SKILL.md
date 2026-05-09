@@ -1,11 +1,30 @@
 ---
 name: taskr
-description: Repo-local task tracking workflow for Claude Code implementation work. Use when the user invokes /taskr or asks to track, implement, fix, refactor, investigate, or plan code changes with Taskr in a Git repository; if .taskr exists, use it for substantial code changes.
+description: Repo-local task tracking workflow for agent implementation work. Use when the user invokes /taskr or asks to track, implement, fix, refactor, investigate, or plan code changes with Taskr in a Git repository; if .taskr exists, use it for substantial code changes.
 ---
 
 # Taskr
 
 Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep implementation intent, progress, related files, verification, and commits in human-readable Markdown.
+
+## Installation Policy
+
+Taskr uses one Skill body across supported agent platforms. Do not maintain separate Claude and Codex versions of this Skill unless the platform formats diverge in a way the shared Markdown cannot express. The normal difference is the destination path:
+
+- Claude project install: `.claude/skills/taskr/SKILL.md`
+- Claude user install: `~/.claude/skills/taskr/SKILL.md`
+- Codex project install: `.codex/skills/taskr/SKILL.md`
+- Codex user install: `$CODEX_HOME/skills/taskr/SKILL.md` when `CODEX_HOME` is set, otherwise `~/.codex/skills/taskr/SKILL.md`
+
+Prefer `taskr install-skill <target>` when the CLI is available:
+
+```bash
+taskr install-skill claude
+taskr install-skill codex
+taskr install-skill codex --scope user
+```
+
+If the CLI is unavailable, copy this same `SKILL.md` to the platform-specific path above.
 
 ## Trigger Policy
 
