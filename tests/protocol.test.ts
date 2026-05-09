@@ -134,6 +134,8 @@ describe("Taskr protocol", () => {
     expect(html).toContain("Refresh");
     expect(html).toContain("Taskr task table");
     expect(html).toContain('let currentView = "table"');
+    expect(html).toContain("window.scrollY > 88");
+    expect(html).toContain("window.scrollY > 16");
     expect(html).toContain("progressbar");
     expect(html).toContain("formatTimestamp");
     expect(html).toContain('task.relatedFiles.join("\\n")');

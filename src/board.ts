@@ -1036,6 +1036,8 @@ export function renderBoardHtml(model: BoardModel): string {
     let activeId = null;
     let currentView = "table";
     let statusTimer = null;
+    let headerCompact = false;
+    let headerFrame = null;
 
     const labels = {
       planned: "Planned",
@@ -1537,7 +1539,14 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     function syncHeader() {
-      masthead.classList.toggle("is-compact", window.scrollY > 44);
+      if (headerFrame !== null) return;
+      headerFrame = requestAnimationFrame(() => {
+        headerFrame = null;
+        const shouldCompact = headerCompact ? window.scrollY > 16 : window.scrollY > 88;
+        if (shouldCompact === headerCompact) return;
+        headerCompact = shouldCompact;
+        masthead.classList.toggle("is-compact", headerCompact);
+      });
     }
 
     closeButton.addEventListener("click", closeDetail);
