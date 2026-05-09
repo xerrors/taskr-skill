@@ -71,34 +71,39 @@ export function renderBoardHtml(model: BoardModel): string {
   <style>
     :root {
       color-scheme: dark;
-      --ink: #eee7d5;
-      --muted: #9f998d;
-      --faint: #615b50;
-      --paper: #191714;
-      --panel: #211f1a;
-      --card: #f0e3c4;
-      --card-ink: #21180f;
-      --rail: #302d27;
-      --line: rgba(238, 231, 213, 0.16);
-      --accent: #f58b43;
-      --accent-2: #96d6bf;
-      --blocked: #ef6f6c;
-      --implemented: #a5e065;
-      --closed: #9ea7ff;
-      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
-      font-family: "Avenir Next Condensed", "DIN Condensed", "Gill Sans", sans-serif;
+      --ink: #e7e2d8;
+      --ink-strong: #f7f2e8;
+      --muted: #a39c91;
+      --faint: #6c665d;
+      --background: #101316;
+      --panel: #171b20;
+      --panel-raised: #1c2228;
+      --card: #20262d;
+      --card-hover: #242b33;
+      --line: rgba(231, 226, 216, 0.12);
+      --line-strong: rgba(231, 226, 216, 0.22);
+      --accent: #d37b45;
+      --accent-soft: rgba(211, 123, 69, 0.14);
+      --accent-2: #76b6a8;
+      --focus: 0 0 0 3px rgba(118, 182, 168, 0.24);
+      --blocked: #d66b68;
+      --implemented: #88bd63;
+      --closed: #8f99e8;
+      --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.18);
+      --shadow-md: 0 16px 42px rgba(0, 0, 0, 0.28);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100dvh;
       color: var(--ink);
+      line-height: 1.5;
       background:
-        radial-gradient(circle at 12% 8%, rgba(245, 139, 67, 0.18), transparent 34rem),
-        radial-gradient(circle at 88% 12%, rgba(150, 214, 191, 0.12), transparent 28rem),
-        linear-gradient(135deg, #11100e 0%, #1f1b16 46%, #0f0e0c 100%);
+        linear-gradient(180deg, rgba(118, 182, 168, 0.045), transparent 360px),
+        var(--background);
       overflow-x: hidden;
     }
 
@@ -107,96 +112,97 @@ export function renderBoardHtml(model: BoardModel): string {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.18;
+      opacity: 0.08;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: linear-gradient(to bottom, black, transparent 82%);
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 70%);
     }
 
     button, input { font: inherit; }
 
     .shell {
-      width: min(1680px, calc(100vw - 32px));
+      width: min(1560px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 28px 0 36px;
+      padding: 20px 0 28px;
     }
 
     .masthead {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 24px;
-      align-items: end;
-      padding: 28px;
+      gap: 20px;
+      align-items: center;
+      padding: 22px;
       border: 1px solid var(--line);
-      border-radius: 30px;
-      background: rgba(25, 23, 20, 0.72);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
+      border-radius: 14px;
+      background: rgba(23, 27, 32, 0.94);
+      box-shadow: var(--shadow-md);
     }
 
     .eyebrow {
-      margin: 0 0 8px;
+      margin: 0 0 6px;
       color: var(--accent-2);
-      letter-spacing: 0.24em;
       text-transform: uppercase;
-      font-size: 0.82rem;
+      letter-spacing: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
     }
 
     h1 {
       margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(3.4rem, 7vw, 8.5rem);
-      line-height: 0.82;
-      letter-spacing: -0.08em;
-      font-weight: 900;
+      color: var(--ink-strong);
+      font-size: 3.15rem;
+      line-height: 1.05;
+      letter-spacing: 0;
+      font-weight: 720;
     }
 
     .repo {
       max-width: 62rem;
-      margin: 18px 0 0;
+      margin: 10px 0 0;
       color: var(--muted);
-      font-size: 0.96rem;
+      font-size: 0.9rem;
       word-break: break-all;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(92px, 1fr));
-      gap: 10px;
-      min-width: 340px;
+      gap: 8px;
+      min-width: 320px;
     }
 
     .stat {
-      padding: 18px;
-      border-radius: 22px;
-      background: #0f0e0c;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--panel-raised);
       border: 1px solid var(--line);
     }
 
     .stat strong {
       display: block;
-      font-size: 2.4rem;
+      font-size: 1.75rem;
       line-height: 1;
       color: var(--accent);
-      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 720;
     }
 
     .stat span {
       display: block;
-      margin-top: 8px;
+      margin-top: 5px;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.13em;
-      font-size: 0.72rem;
+      letter-spacing: 0;
+      font-size: 0.7rem;
+      font-weight: 600;
     }
 
     .toolbar {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       align-items: center;
-      margin: 18px 0;
+      margin: 14px 0;
     }
 
     .search {
@@ -204,29 +210,43 @@ export function renderBoardHtml(model: BoardModel): string {
       color: var(--ink);
       border: 1px solid var(--line);
       outline: none;
-      border-radius: 999px;
-      background: rgba(15, 14, 12, 0.78);
-      padding: 14px 18px;
+      border-radius: 10px;
+      background: rgba(28, 34, 40, 0.9);
+      min-height: 44px;
+      padding: 10px 12px;
+      transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
     }
 
-    .hint { color: var(--muted); }
+    .search::placeholder { color: var(--faint); }
+
+    .search:focus-visible {
+      border-color: var(--accent-2);
+      box-shadow: var(--focus);
+      background: var(--panel-raised);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
 
     .board {
       display: grid;
       grid-template-columns: repeat(5, minmax(260px, 1fr));
-      gap: 16px;
+      gap: 12px;
       align-items: start;
       overflow-x: auto;
-      padding-bottom: 18px;
+      padding-bottom: 16px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .column {
       min-height: 540px;
       border: 1px solid var(--line);
-      border-radius: 26px;
-      background: rgba(33, 31, 26, 0.74);
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
-      padding: 14px;
+      border-radius: 12px;
+      background: rgba(23, 27, 32, 0.96);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+      padding: 12px;
     }
 
     .column-header {
@@ -234,8 +254,8 @@ export function renderBoardHtml(model: BoardModel): string {
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 12px;
-      padding: 10px 8px 14px;
+      margin-bottom: 10px;
+      padding: 6px 4px 12px;
       border-bottom: 1px solid var(--line);
     }
 
@@ -245,8 +265,9 @@ export function renderBoardHtml(model: BoardModel): string {
       align-items: center;
       margin: 0;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      font-size: 0.86rem;
+      letter-spacing: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
     }
 
     .dot {
@@ -254,76 +275,77 @@ export function renderBoardHtml(model: BoardModel): string {
       height: 10px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 0 5px rgba(245, 139, 67, 0.12);
     }
 
-    .column[data-status="blocked"] .dot { background: var(--blocked); box-shadow: 0 0 0 5px rgba(239, 111, 108, 0.14); }
-    .column[data-status="implemented"] .dot { background: var(--implemented); box-shadow: 0 0 0 5px rgba(165, 224, 101, 0.14); }
-    .column[data-status="closed"] .dot { background: var(--closed); box-shadow: 0 0 0 5px rgba(158, 167, 255, 0.14); }
-    .column[data-status="in_progress"] .dot { background: var(--accent-2); box-shadow: 0 0 0 5px rgba(150, 214, 191, 0.14); }
+    .column[data-status="blocked"] .dot { background: var(--blocked); }
+    .column[data-status="implemented"] .dot { background: var(--implemented); }
+    .column[data-status="closed"] .dot { background: var(--closed); }
+    .column[data-status="in_progress"] .dot { background: var(--accent-2); }
 
     .count {
       color: var(--muted);
       border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 3px 9px;
-      font-size: 0.78rem;
+      min-width: 28px;
+      padding: 2px 8px;
+      text-align: center;
+      font-size: 0.76rem;
     }
 
     .cards {
       display: grid;
-      gap: 12px;
+      gap: 9px;
     }
 
     .card {
       width: 100%;
       display: block;
       text-align: left;
-      color: var(--card-ink);
-      border: 0;
-      border-radius: 22px;
-      padding: 18px;
-      background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.56), transparent 44%),
-        var(--card);
-      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 13px;
+      background: var(--card);
+      box-shadow: none;
       cursor: pointer;
-      transform: rotate(var(--tilt, -0.6deg));
-      transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
     .card:hover, .card:focus-visible {
-      transform: translateY(-4px) rotate(0deg);
-      box-shadow: 0 24px 46px rgba(0, 0, 0, 0.36);
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: var(--card-hover);
+      box-shadow: var(--shadow-sm);
       outline: none;
-      filter: saturate(1.06);
     }
+
+    .card:focus-visible { box-shadow: var(--focus), var(--shadow-sm); }
 
     .card.is-active {
-      box-shadow: 0 0 0 3px var(--accent), 0 24px 46px rgba(0, 0, 0, 0.36);
+      border-color: var(--accent);
+      box-shadow: inset 3px 0 0 var(--accent);
     }
 
-    .card:nth-child(2n) { --tilt: 0.7deg; }
-    .card:nth-child(3n) { --tilt: -1.1deg; }
-
     .card-id {
-      color: rgba(33, 24, 15, 0.54);
-      text-transform: uppercase;
-      letter-spacing: 0.13em;
-      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0;
+      font-size: 0.76rem;
+      font-weight: 600;
     }
 
     .card-title {
-      margin: 8px 0 12px;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 1.42rem;
-      line-height: 1.05;
-      letter-spacing: -0.035em;
+      margin: 7px 0 9px;
+      color: var(--ink-strong);
+      font-size: 1rem;
+      line-height: 1.35;
+      letter-spacing: 0;
+      font-weight: 680;
     }
 
     .card-request {
-      color: rgba(33, 24, 15, 0.74);
-      line-height: 1.38;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.88rem;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -333,28 +355,28 @@ export function renderBoardHtml(model: BoardModel): string {
     .card-footer {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
+      gap: 6px;
+      margin-top: 12px;
     }
 
     .pill {
       border-radius: 999px;
-      padding: 5px 9px;
-      background: rgba(33, 24, 15, 0.09);
-      color: rgba(33, 24, 15, 0.72);
+      padding: 3px 7px;
+      background: rgba(231, 226, 216, 0.06);
+      color: var(--muted);
+      border: 1px solid rgba(231, 226, 216, 0.07);
       font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0;
     }
 
     .empty {
-      min-height: 120px;
+      min-height: 96px;
       display: grid;
       place-items: center;
       color: var(--faint);
-      border: 1px dashed rgba(238, 231, 213, 0.16);
-      border-radius: 18px;
-      font-family: Georgia, "Times New Roman", serif;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      font-size: 0.9rem;
     }
 
     .detail {
@@ -365,103 +387,119 @@ export function renderBoardHtml(model: BoardModel): string {
       width: min(620px, calc(100vw - 36px));
       display: grid;
       grid-template-rows: auto 1fr;
-      border: 1px solid rgba(238, 231, 213, 0.24);
-      border-radius: 30px;
-      background: rgba(15, 14, 12, 0.94);
-      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.62);
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: rgba(17, 21, 25, 0.98);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.52);
       transform: translateX(calc(100% + 28px));
       transition: transform 220ms ease;
-      z-index: 10;
+      z-index: 40;
       overflow: hidden;
-      backdrop-filter: blur(18px);
     }
 
     .detail.is-open { transform: translateX(0); }
 
     .detail-header {
-      padding: 24px;
+      padding: 22px;
       border-bottom: 1px solid var(--line);
-      background: linear-gradient(135deg, rgba(245, 139, 67, 0.14), transparent);
+      background: var(--panel);
     }
 
     .detail-kicker {
       color: var(--accent-2);
       text-transform: uppercase;
-      letter-spacing: 0.16em;
+      letter-spacing: 0;
       font-size: 0.76rem;
+      font-weight: 700;
     }
 
     .detail-title {
-      margin: 10px 0 0;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(2rem, 5vw, 3.3rem);
-      line-height: 0.96;
-      letter-spacing: -0.055em;
+      margin: 8px 56px 0 0;
+      color: var(--ink-strong);
+      font-size: 1.55rem;
+      line-height: 1.25;
+      letter-spacing: 0;
+      font-weight: 720;
     }
 
     .close {
       position: absolute;
-      top: 18px;
-      right: 18px;
-      width: 42px;
-      height: 42px;
+      top: 14px;
+      right: 14px;
+      width: 44px;
+      height: 44px;
       border: 1px solid var(--line);
-      border-radius: 50%;
+      border-radius: 10px;
       color: var(--ink);
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(231, 226, 216, 0.06);
       cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .close:hover {
+      border-color: var(--line-strong);
+      background: rgba(231, 226, 216, 0.1);
+    }
+
+    .close:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
     }
 
     .detail-body {
       overflow: auto;
-      padding: 22px 24px 28px;
+      padding: 18px 22px 24px;
     }
 
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 9px;
+      margin-bottom: 18px;
     }
 
     .meta {
       border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 13px;
-      background: rgba(255, 255, 255, 0.035);
+      border-radius: 10px;
+      padding: 11px;
+      background: rgba(231, 226, 216, 0.035);
+      color: var(--ink);
+      word-break: break-word;
     }
 
     .meta span {
       display: block;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0;
       font-size: 0.7rem;
-      margin-bottom: 5px;
+      font-weight: 700;
+      margin-bottom: 4px;
     }
 
     .section {
-      margin-top: 16px;
+      margin-top: 12px;
       border: 1px solid var(--line);
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.032);
+      border-radius: 10px;
+      background: rgba(231, 226, 216, 0.03);
       overflow: hidden;
     }
 
     .section h3 {
       margin: 0;
-      padding: 13px 16px;
+      padding: 11px 13px;
       color: var(--accent);
       border-bottom: 1px solid var(--line);
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0;
       font-size: 0.78rem;
+      font-weight: 750;
     }
 
     .section pre {
       margin: 0;
-      padding: 16px;
-      color: #d9d1bf;
+      padding: 13px;
+      color: #d8d1c5;
       white-space: pre-wrap;
       word-break: break-word;
       font-family: "SFMono-Regular", Consolas, monospace;
@@ -472,11 +510,11 @@ export function renderBoardHtml(model: BoardModel): string {
     .backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.36);
+      background: rgba(0, 0, 0, 0.5);
       opacity: 0;
       pointer-events: none;
       transition: opacity 180ms ease;
-      z-index: 9;
+      z-index: 30;
     }
 
     .backdrop.is-open {
@@ -491,12 +529,31 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     @media (max-width: 640px) {
-      .shell { width: min(100vw - 20px, 1680px); padding-top: 10px; }
-      .masthead { padding: 20px; border-radius: 22px; }
-      .stats { grid-template-columns: 1fr; }
+      .shell { width: min(100vw - 16px, 1560px); padding-top: 8px; }
+      .masthead { padding: 16px; border-radius: 12px; }
+      h1 { font-size: 2.25rem; }
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stat { padding: 10px; }
+      .stat strong { font-size: 1.35rem; }
       .toolbar { display: block; }
       .hint { margin-top: 10px; }
       .meta-grid { grid-template-columns: 1fr; }
+      .detail {
+        top: 8px;
+        right: 8px;
+        bottom: 8px;
+        width: calc(100vw - 16px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+
+      .card:hover, .card:focus-visible { transform: none; }
     }
   </style>
 </head>
@@ -516,7 +573,7 @@ export function renderBoardHtml(model: BoardModel): string {
     </section>
 
     <div class="toolbar">
-      <input class="search" id="search" type="search" placeholder="Filter by title, id, request, or file..." autocomplete="off">
+      <input class="search" id="search" type="search" aria-label="Filter tasks" placeholder="Filter by title, id, request, or file..." autocomplete="off">
       <div class="hint">Click any card to open its task detail.</div>
     </div>
 
