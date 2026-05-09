@@ -279,6 +279,12 @@ export function renderBoardHtml(model: BoardModel): string {
       background: rgba(9, 13, 18, 0.58);
     }
 
+    .language-button {
+      min-width: 58px;
+      padding: 0 12px;
+      color: var(--accent);
+    }
+
     .search {
       width: 100%;
       color: var(--ink);
@@ -985,6 +991,7 @@ export function renderBoardHtml(model: BoardModel): string {
       .search-wrap { width: 100%; }
       .view-toggle { width: 100%; }
       .view-tab { flex: 1; }
+      .language-button { width: 100%; }
       .hint { margin-top: 10px; }
       .board {
         grid-template-columns: 1fr;
@@ -1017,14 +1024,14 @@ export function renderBoardHtml(model: BoardModel): string {
   <main class="shell">
     <section class="masthead" aria-labelledby="title">
       <div>
-        <p class="eyebrow">Repo-local task memory</p>
+        <p class="eyebrow" id="eyebrow">Repo-local task memory</p>
         <h1 id="title">Taskr Board</h1>
         <p class="repo" id="repo"></p>
       </div>
       <div class="stats" aria-label="Task statistics">
-        <div class="stat"><strong id="totalTasks">0</strong><span>Total</span></div>
-        <div class="stat"><strong id="activeTasks">0</strong><span>Active</span></div>
-        <div class="stat"><strong id="implementedTasks">0</strong><span>Done</span></div>
+        <div class="stat"><strong id="totalTasks">0</strong><span id="totalTasksLabel">Total</span></div>
+        <div class="stat"><strong id="activeTasks">0</strong><span id="activeTasksLabel">Active</span></div>
+        <div class="stat"><strong id="implementedTasks">0</strong><span id="implementedTasksLabel">Done</span></div>
       </div>
     </section>
 
@@ -1037,7 +1044,8 @@ export function renderBoardHtml(model: BoardModel): string {
         <button class="view-tab" id="tableViewButton" type="button" aria-pressed="true">Table</button>
         <button class="view-tab" id="boardViewButton" type="button" aria-pressed="false">Board</button>
       </div>
-      <div class="hint">Click any task to open its detail.</div>
+      <button class="icon-button language-button" id="languageToggle" type="button">中文</button>
+      <div class="hint" id="hint">Click any task to open its detail.</div>
       <div class="toolbar-status" id="toolbarStatus" role="status" aria-live="polite"></div>
     </div>
 
@@ -1069,20 +1077,275 @@ export function renderBoardHtml(model: BoardModel): string {
     const refreshButton = document.querySelector("#refresh");
     const tableViewButton = document.querySelector("#tableViewButton");
     const boardViewButton = document.querySelector("#boardViewButton");
+    const languageToggle = document.querySelector("#languageToggle");
     const toolbarStatus = document.querySelector("#toolbarStatus");
     const masthead = document.querySelector(".masthead");
+    const languageStorageKey = "taskr-board-language";
     let activeId = null;
     let currentView = "table";
+    let language = preferredLanguage();
     let statusTimer = null;
     let headerCompact = false;
     let headerFrame = null;
 
-    const labels = {
-      planned: "Planned",
-      in_progress: "In Progress",
-      implemented: "Implemented",
-      blocked: "Blocked"
+    const copy = {
+      en: {
+        appTitle: "Taskr Board",
+        eyebrow: "Repo-local task memory",
+        statsAria: "Task statistics",
+        stats: {
+          total: "Total",
+          active: "Active",
+          done: "Done"
+        },
+        search: {
+          aria: "Filter tasks",
+          placeholder: "Filter by title, id, request, or file..."
+        },
+        refresh: {
+          label: "Refresh",
+          aria: "Refresh tasks"
+        },
+        view: {
+          aria: "Board view",
+          table: "Table",
+          board: "Board"
+        },
+        languageToggle: {
+          label: "中文",
+          aria: "Switch language to Chinese"
+        },
+        hint: "Click any task to open its detail.",
+        tableAria: "Taskr task table",
+        boardAria: "Taskr Kanban board",
+        closeDetail: "Close task detail",
+        detailKicker: "Task detail",
+        selectTask: "Select a task",
+        deletedTask: "This task no longer exists.",
+        noTasks: "No tasks",
+        noCards: "No cards",
+        noRequest: "No request recorded.",
+        unknown: "Unknown",
+        none: "None",
+        empty: "Empty.",
+        commitUnknown: "commit unknown",
+        originalStatus: "was",
+        files: {
+          one: "1 file",
+          many: "{count} files"
+        },
+        tableHeaders: ["Task", "Status", "Criteria", "Updated", "Files", "Commit"],
+        statuses: {
+          planned: "Planned",
+          in_progress: "In Progress",
+          implemented: "Implemented",
+          blocked: "Blocked"
+        },
+        meta: {
+          status: "Status",
+          updated: "Updated",
+          commitStatus: "Commit status",
+          path: "Path",
+          branch: "Branch",
+          criteria: "Criteria",
+          relatedFiles: "Related files",
+          commits: "Commits"
+        },
+        sections: {
+          "Request": "Request",
+          "Acceptance Criteria": "Acceptance Criteria",
+          "Implementation Plan": "Implementation Plan",
+          "Progress Log": "Progress Log",
+          "Agent Notes": "Agent Notes",
+          "Completion Summary": "Completion Summary"
+        },
+        actions: {
+          edit: "Edit",
+          cancel: "Cancel",
+          save: "Save"
+        },
+        statusMessages: {
+          refreshing: "Refreshing...",
+          refreshed: "Refreshed",
+          refreshFailed: "Refresh failed",
+          saving: "Saving...",
+          saved: "Saved",
+          saveFailed: "Save failed"
+        },
+        contentAria: "{section} content"
+      },
+      zh: {
+        appTitle: "Taskr 看板",
+        eyebrow: "仓库本地任务记忆",
+        statsAria: "任务统计",
+        stats: {
+          total: "全部",
+          active: "进行中",
+          done: "已完成"
+        },
+        search: {
+          aria: "筛选任务",
+          placeholder: "按标题、ID、需求或文件筛选..."
+        },
+        refresh: {
+          label: "刷新",
+          aria: "刷新任务"
+        },
+        view: {
+          aria: "看板视图",
+          table: "表格",
+          board: "看板"
+        },
+        languageToggle: {
+          label: "EN",
+          aria: "切换到英文"
+        },
+        hint: "点击任意任务查看详情。",
+        tableAria: "Taskr 任务表格",
+        boardAria: "Taskr 看板",
+        closeDetail: "关闭任务详情",
+        detailKicker: "任务详情",
+        selectTask: "选择一个任务",
+        deletedTask: "这个任务已不存在。",
+        noTasks: "暂无任务",
+        noCards: "暂无卡片",
+        noRequest: "没有记录需求。",
+        unknown: "未知",
+        none: "无",
+        empty: "空。",
+        commitUnknown: "commit 未知",
+        originalStatus: "原为",
+        files: {
+          one: "1 个文件",
+          many: "{count} 个文件"
+        },
+        tableHeaders: ["任务", "状态", "验收项", "更新于", "文件", "提交"],
+        statuses: {
+          planned: "已计划",
+          in_progress: "进行中",
+          implemented: "已实现",
+          blocked: "受阻"
+        },
+        meta: {
+          status: "状态",
+          updated: "更新于",
+          commitStatus: "提交状态",
+          path: "路径",
+          branch: "分支",
+          criteria: "验收项",
+          relatedFiles: "相关文件",
+          commits: "提交"
+        },
+        sections: {
+          "Request": "需求",
+          "Acceptance Criteria": "验收标准",
+          "Implementation Plan": "实现计划",
+          "Progress Log": "进度日志",
+          "Agent Notes": "代理备注",
+          "Completion Summary": "完成总结"
+        },
+        actions: {
+          edit: "编辑",
+          cancel: "取消",
+          save: "保存"
+        },
+        statusMessages: {
+          refreshing: "正在刷新...",
+          refreshed: "已刷新",
+          refreshFailed: "刷新失败",
+          saving: "正在保存...",
+          saved: "已保存",
+          saveFailed: "保存失败"
+        },
+        contentAria: "{section}内容"
+      }
     };
+
+    function preferredLanguage() {
+      try {
+        const saved = localStorage.getItem(languageStorageKey);
+        if (saved === "en" || saved === "zh") return saved;
+      } catch {
+        // Ignore storage failures; browser language is still a sensible default.
+      }
+      return navigator.language && navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
+    }
+
+    function currentCopy() {
+      return copy[language] || copy.en;
+    }
+
+    function t(path) {
+      const parts = path.split(".");
+      let value = currentCopy();
+      let fallback = copy.en;
+      for (const part of parts) {
+        value = value && value[part];
+        fallback = fallback && fallback[part];
+      }
+      return typeof value === "string" ? value : typeof fallback === "string" ? fallback : path;
+    }
+
+    function translateRecord(path, key, fallback = key) {
+      const localized = currentCopy()[path] || {};
+      const english = copy.en[path] || {};
+      return localized[key] || english[key] || fallback;
+    }
+
+    function statusLabel(status) {
+      return translateRecord("statuses", status, status);
+    }
+
+    function sectionLabel(sectionName) {
+      return translateRecord("sections", sectionName, sectionName);
+    }
+
+    function formatFileCount(count) {
+      if (count === 1) return t("files.one");
+      return t("files.many").replace("{count}", String(count));
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+      document.title = t("appTitle");
+      document.querySelector("#eyebrow").textContent = t("eyebrow");
+      document.querySelector("#title").textContent = t("appTitle");
+      document.querySelector(".stats").setAttribute("aria-label", t("statsAria"));
+      document.querySelector("#totalTasksLabel").textContent = t("stats.total");
+      document.querySelector("#activeTasksLabel").textContent = t("stats.active");
+      document.querySelector("#implementedTasksLabel").textContent = t("stats.done");
+      search.setAttribute("aria-label", t("search.aria"));
+      search.placeholder = t("search.placeholder");
+      refreshButton.textContent = t("refresh.label");
+      refreshButton.setAttribute("aria-label", t("refresh.aria"));
+      refreshButton.title = t("refresh.aria");
+      document.querySelector(".view-toggle").setAttribute("aria-label", t("view.aria"));
+      tableViewButton.textContent = t("view.table");
+      boardViewButton.textContent = t("view.board");
+      languageToggle.textContent = t("languageToggle.label");
+      languageToggle.setAttribute("aria-label", t("languageToggle.aria"));
+      languageToggle.title = t("languageToggle.aria");
+      document.querySelector("#hint").textContent = t("hint");
+      tableView.setAttribute("aria-label", t("tableAria"));
+      board.setAttribute("aria-label", t("boardAria"));
+      closeButton.setAttribute("aria-label", t("closeDetail"));
+      if (!activeId) {
+        document.querySelector("#detailKicker").textContent = t("detailKicker");
+        document.querySelector("#detailTitle").textContent = t("selectTask");
+      }
+    }
+
+    function setLanguage(nextLanguage) {
+      language = nextLanguage;
+      try {
+        localStorage.setItem(languageStorageKey, language);
+      } catch {
+        // The board still works without persistent storage.
+      }
+      applyLanguage();
+      render();
+      syncDetail();
+    }
 
     function updateStats() {
       document.querySelector("#repo").textContent = model.repoRoot;
@@ -1107,7 +1370,7 @@ export function renderBoardHtml(model: BoardModel): string {
       if (tasks.length === 0) {
         const empty = document.createElement("div");
         empty.className = "empty table-empty";
-        empty.textContent = "No tasks";
+        empty.textContent = t("noTasks");
         tableView.replaceChildren(empty);
         return;
       }
@@ -1119,7 +1382,7 @@ export function renderBoardHtml(model: BoardModel): string {
 
       const head = document.createElement("thead");
       const headRow = document.createElement("tr");
-      for (const label of ["Task", "Status", "Criteria", "Updated", "Files", "Commit"]) {
+      for (const label of currentCopy().tableHeaders) {
         const cell = document.createElement("th");
         cell.scope = "col";
         cell.textContent = label;
@@ -1169,7 +1432,7 @@ export function renderBoardHtml(model: BoardModel): string {
       files.textContent = String(task.relatedFiles.length);
 
       const commit = document.createElement("td");
-      commit.textContent = task.commitStatus || "Unknown";
+      commit.textContent = task.commitStatus || t("unknown");
 
       row.append(title, status, criteria, updated, files, commit);
       return row;
@@ -1182,7 +1445,7 @@ export function renderBoardHtml(model: BoardModel): string {
       dot.className = "dot";
       dot.setAttribute("aria-hidden", "true");
       element.dataset.status = status;
-      element.append(dot, document.createTextNode(labels[status] || status));
+      element.append(dot, document.createTextNode(statusLabel(status)));
       return element;
     }
 
@@ -1213,7 +1476,7 @@ export function renderBoardHtml(model: BoardModel): string {
       dot.className = "dot";
       dot.setAttribute("aria-hidden", "true");
       const label = document.createElement("span");
-      label.textContent = labels[status] || status;
+      label.textContent = statusLabel(status);
       title.append(dot, label);
 
       const count = document.createElement("span");
@@ -1226,7 +1489,7 @@ export function renderBoardHtml(model: BoardModel): string {
       if (tasks.length === 0) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = "No cards";
+        empty.textContent = t("noCards");
         cards.append(empty);
       } else {
         cards.append(...tasks.map(card));
@@ -1254,7 +1517,7 @@ export function renderBoardHtml(model: BoardModel): string {
       title.textContent = task.title;
 
       if (task.status === "implemented") {
-        button.setAttribute("aria-label", task.title + " · " + (labels[task.status] || task.status));
+        button.setAttribute("aria-label", task.title + " · " + statusLabel(task.status));
         const meta = document.createElement("div");
         meta.className = "compact-meta";
         const compactId = document.createElement("span");
@@ -1267,14 +1530,14 @@ export function renderBoardHtml(model: BoardModel): string {
 
       const request = document.createElement("div");
       request.className = "card-request";
-      request.textContent = task.sections.Request || "No request recorded.";
+      request.textContent = task.sections.Request || t("noRequest");
 
       const footer = document.createElement("div");
       footer.className = "card-footer";
       footer.append(
         criteriaPill(task),
-        pill(task.commitStatus || "commit unknown"),
-        pill(task.relatedFiles.length + " files")
+        pill(task.commitStatus || t("commitUnknown")),
+        pill(formatFileCount(task.relatedFiles.length))
       );
 
       button.append(id, title, request, footer);
@@ -1295,8 +1558,8 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     function updateDetail(task) {
-      const status = labels[task.status] || task.status;
-      const original = task.originalStatus && task.originalStatus !== task.status ? " · was " + task.originalStatus : "";
+      const status = statusLabel(task.status);
+      const original = task.originalStatus && task.originalStatus !== task.status ? " · " + t("originalStatus") + " " + task.originalStatus : "";
       document.querySelector("#detailKicker").textContent = task.id + " · " + status + original;
       document.querySelector("#detailTitle").textContent = task.title;
       document.querySelector("#detailBody").replaceChildren(detailContent(task));
@@ -1316,19 +1579,19 @@ export function renderBoardHtml(model: BoardModel): string {
       const meta = document.createElement("div");
       meta.className = "meta-grid";
       meta.append(
-        metaItem("Status", labels[task.status] || task.status),
-        metaItem("Updated", formatTimestamp(task.updatedAt)),
-        metaItem("Commit status", task.commitStatus || "Unknown"),
-        metaItem("Path", task.path),
-        metaItem("Branch", task.branch || "None"),
+        metaItem(t("meta.status"), statusLabel(task.status)),
+        metaItem(t("meta.updated"), formatTimestamp(task.updatedAt)),
+        metaItem(t("meta.commitStatus"), task.commitStatus || t("unknown")),
+        metaItem(t("meta.path"), task.path),
+        metaItem(t("meta.branch"), task.branch || t("none")),
         progressMeta(task),
-        metaItem("Related files", task.relatedFiles.length ? task.relatedFiles.join("\\n") : "None"),
-        metaItem("Commits", task.commits.length ? task.commits.join("\\n") : "None")
+        metaItem(t("meta.relatedFiles"), task.relatedFiles.length ? task.relatedFiles.join("\\n") : t("none")),
+        metaItem(t("meta.commits"), task.commits.length ? task.commits.join("\\n") : t("none"))
       );
       fragment.append(meta);
 
       for (const name of ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"]) {
-        fragment.append(section(name, task.sections[name] || "Empty."));
+        fragment.append(section(name, task.sections[name] || t("empty")));
       }
       return fragment;
     }
@@ -1341,7 +1604,7 @@ export function renderBoardHtml(model: BoardModel): string {
       const head = document.createElement("div");
       head.className = "section-head";
       const heading = document.createElement("h3");
-      heading.textContent = title;
+      heading.textContent = sectionLabel(title);
       const tools = document.createElement("div");
       tools.className = "section-tools";
       const status = document.createElement("span");
@@ -1354,7 +1617,7 @@ export function renderBoardHtml(model: BoardModel): string {
         const edit = document.createElement("button");
         edit.type = "button";
         edit.className = "section-action";
-        edit.textContent = "Edit";
+        edit.textContent = t("actions.edit");
         edit.addEventListener("click", () => editMode(value));
         tools.replaceChildren(status, edit);
 
@@ -1367,18 +1630,18 @@ export function renderBoardHtml(model: BoardModel): string {
         status.textContent = "";
         const textarea = document.createElement("textarea");
         textarea.value = value;
-        textarea.setAttribute("aria-label", title + " content");
+        textarea.setAttribute("aria-label", t("contentAria").replace("{section}", sectionLabel(title)));
 
         const cancel = document.createElement("button");
         cancel.type = "button";
         cancel.className = "section-action";
-        cancel.textContent = "Cancel";
+        cancel.textContent = t("actions.cancel");
         cancel.addEventListener("click", () => readMode(value));
 
         const save = document.createElement("button");
         save.type = "button";
         save.className = "section-action";
-        save.textContent = "Save";
+        save.textContent = t("actions.save");
         save.addEventListener("click", () => saveSection(title, textarea.value, status, save));
 
         tools.replaceChildren(status, cancel, save);
@@ -1407,7 +1670,7 @@ export function renderBoardHtml(model: BoardModel): string {
       const item = document.createElement("div");
       item.className = "meta";
       const key = document.createElement("span");
-      key.textContent = "Criteria";
+      key.textContent = t("meta.criteria");
       const total = task.criteria.total;
       const checked = task.criteria.checked;
       const percent = total > 0 ? Math.round((checked / total) * 100) : 0;
@@ -1460,11 +1723,11 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     function formatTimestamp(value) {
-      if (!value) return "Unknown";
+      if (!value) return t("unknown");
       const normalized = String(value).replace(/([+-]\\d{2})(\\d{2})$/, "$1:$2");
       const date = new Date(normalized);
       if (Number.isNaN(date.getTime())) return String(value);
-      const parts = new Intl.DateTimeFormat(undefined, {
+      const parts = new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -1496,20 +1759,20 @@ export function renderBoardHtml(model: BoardModel): string {
 
     async function loadTasks() {
       refreshButton.disabled = true;
-      setToolbarStatus("Refreshing...");
+      setToolbarStatus(t("statusMessages.refreshing"));
       try {
         const response = await fetch("/api/tasks", { headers: { accept: "application/json" } });
         const data = await parseJson(response);
         if (!response.ok) {
-          throw new Error(data && data.error ? data.error : "Refresh failed");
+          throw new Error(data && data.error ? data.error : t("statusMessages.refreshFailed"));
         }
         model = data;
         updateStats();
         render();
         syncDetail();
-        setToolbarStatus("Refreshed");
+        setToolbarStatus(t("statusMessages.refreshed"));
       } catch (error) {
-        setToolbarStatus("Refresh failed: " + errorMessage(error), true);
+        setToolbarStatus(t("statusMessages.refreshFailed") + ": " + errorMessage(error), true);
       } finally {
         refreshButton.disabled = false;
       }
@@ -1518,7 +1781,7 @@ export function renderBoardHtml(model: BoardModel): string {
     async function saveSection(sectionTitle, content, statusNode, saveButton) {
       if (!activeId) return;
       saveButton.disabled = true;
-      statusNode.textContent = "Saving...";
+      statusNode.textContent = t("statusMessages.saving");
       try {
         const response = await fetch("/api/tasks/" + encodeURIComponent(activeId) + "/sections/" + encodeURIComponent(sectionTitle), {
           method: "PUT",
@@ -1530,16 +1793,16 @@ export function renderBoardHtml(model: BoardModel): string {
         });
         const data = await parseJson(response);
         if (!response.ok) {
-          throw new Error(data && data.error ? data.error : "Save failed");
+          throw new Error(data && data.error ? data.error : t("statusMessages.saveFailed"));
         }
         model = data;
         updateStats();
         render();
         syncDetail();
-        setToolbarStatus("Saved");
+        setToolbarStatus(t("statusMessages.saved"));
       } catch (error) {
-        statusNode.textContent = "Save failed";
-        setToolbarStatus("Save failed: " + errorMessage(error), true);
+        statusNode.textContent = t("statusMessages.saveFailed");
+        setToolbarStatus(t("statusMessages.saveFailed") + ": " + errorMessage(error), true);
       } finally {
         saveButton.disabled = false;
       }
@@ -1560,11 +1823,11 @@ export function renderBoardHtml(model: BoardModel): string {
         updateDetail(task);
         return;
       }
-      document.querySelector("#detailKicker").textContent = "Task detail";
-      document.querySelector("#detailTitle").textContent = "Select a task";
+      document.querySelector("#detailKicker").textContent = t("detailKicker");
+      document.querySelector("#detailTitle").textContent = t("selectTask");
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = "This task no longer exists.";
+      empty.textContent = t("deletedTask");
       document.querySelector("#detailBody").replaceChildren(empty);
       activeId = null;
       render();
@@ -1599,11 +1862,13 @@ export function renderBoardHtml(model: BoardModel): string {
     refreshButton.addEventListener("click", loadTasks);
     tableViewButton.addEventListener("click", () => setView("table"));
     boardViewButton.addEventListener("click", () => setView("board"));
+    languageToggle.addEventListener("click", () => setLanguage(language === "en" ? "zh" : "en"));
     window.addEventListener("scroll", syncHeader, { passive: true });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && detail.classList.contains("is-open")) closeDetail();
     });
 
+    applyLanguage();
     updateStats();
     syncHeader();
     render();

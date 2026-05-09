@@ -47,12 +47,8 @@ describe("Taskr protocol", () => {
     const path = createTask(repo, "Implement user invitation flow", { status: "in_progress" });
     const document = loadTask(path);
 
-    expect(path).toMatch(
-      /\/\.taskr\/tasks\/\d{4}-\d{2}-\d{2}-implement-user-invitation-flow\.md$/,
-    );
-    expect(document.metadata.id).toMatch(
-      /^\d{4}-\d{2}-\d{2}-implement-user-invitation-flow$/,
-    );
+    expect(path).toMatch(/\/\.taskr\/tasks\/\d{4}-\d{2}-\d{2}-implement-user-invitation-flow\.md$/);
+    expect(document.metadata.id).toMatch(/^\d{4}-\d{2}-\d{2}-implement-user-invitation-flow$/);
     expect(document.metadata.schema_version).toBe(1);
     expect(document.metadata.status).toBe("in_progress");
     expect(document.body).toContain("## Acceptance Criteria");
@@ -133,6 +129,10 @@ describe("Taskr protocol", () => {
     expect(html).toContain("Click any task to open its detail.");
     expect(html).toContain("Refresh");
     expect(html).toContain("Taskr task table");
+    expect(html).toContain("languageStorageKey");
+    expect(html).toContain("Switch language to Chinese");
+    expect(html).toContain("Taskr 看板");
+    expect(html).toContain("点击任意任务查看详情。");
     expect(html).toContain('let currentView = "table"');
     expect(html).toContain("window.scrollY > 88");
     expect(html).toContain("window.scrollY > 16");
