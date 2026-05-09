@@ -130,8 +130,10 @@ describe("Taskr protocol", () => {
     expect(model.tasks[0].sections.Request).toContain("Implement board visualization");
     expect(html).toContain("Taskr Board");
     expect(html).toContain("Taskr Kanban board");
-    expect(html).toContain("Click any card to open its task detail.");
+    expect(html).toContain("Click any task to open its detail.");
     expect(html).toContain("Refresh");
+    expect(html).toContain("Taskr task table");
+    expect(html).toContain('let currentView = "table"');
     expect(html).toContain("progressbar");
     expect(html).toContain("formatTimestamp");
     expect(html).toContain('task.relatedFiles.join("\\n")');

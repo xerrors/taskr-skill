@@ -91,13 +91,17 @@ use lower-kebab-case.
 
 ## Board
 
-Use `taskr board` to serve a repo-local Kanban view of `.taskr/tasks/*.md`.
+Use `taskr board` to serve a repo-local task board for `.taskr/tasks/*.md`.
 
 ```bash
 node dist/cli.js board --open
 ```
 
-The board groups tasks by Taskr status, expands a task detail drawer when you click a card, supports manual refresh, and can edit task sections back into the original Markdown files. It intentionally does not include drag-and-drop or full Markdown rendering.
+The board opens in table view by default for quick scanning, can switch back to
+the status-oriented Kanban view, expands a task detail drawer when you click a
+task, supports manual refresh, and can edit task sections back into the original
+Markdown files. It intentionally does not include drag-and-drop or full Markdown
+rendering.
 
 ## Task States
 

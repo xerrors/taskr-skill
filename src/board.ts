@@ -270,6 +270,15 @@ export function renderBoardHtml(model: BoardModel): string {
       width: min(620px, 100%);
     }
 
+    .view-toggle {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(9, 13, 18, 0.58);
+    }
+
     .search {
       width: 100%;
       color: var(--ink);
@@ -308,6 +317,36 @@ export function renderBoardHtml(model: BoardModel): string {
       padding: 0 16px;
       white-space: nowrap;
       font-weight: 700;
+    }
+
+    .view-tab {
+      min-height: 36px;
+      min-width: 72px;
+      padding: 0 12px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .view-tab:hover {
+      color: var(--ink);
+      background: rgba(148, 163, 184, 0.08);
+    }
+
+    .view-tab:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .view-tab[aria-pressed="true"] {
+      color: var(--ink-strong);
+      border-color: var(--line-strong);
+      background: rgba(20, 28, 37, 0.92);
     }
 
     .icon-button:hover, .section-action:hover {
@@ -354,6 +393,112 @@ export function renderBoardHtml(model: BoardModel): string {
     .hint {
       color: var(--muted);
       font-size: 0.84rem;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    .table-view {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(15, 21, 28, 0.78);
+      overflow: hidden;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .task-table {
+      width: 100%;
+      min-width: 860px;
+      border-collapse: collapse;
+    }
+
+    .task-table th {
+      padding: 11px 14px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      background: rgba(9, 13, 18, 0.46);
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      font-size: 0.68rem;
+      font-weight: 750;
+    }
+
+    .task-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      color: var(--ink);
+      vertical-align: middle;
+      font-size: 0.86rem;
+    }
+
+    .task-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .task-row {
+      cursor: pointer;
+      transition: background 140ms ease, box-shadow 140ms ease;
+    }
+
+    .task-row:hover,
+    .task-row:focus-visible {
+      background: rgba(24, 35, 49, 0.78);
+      outline: none;
+    }
+
+    .task-row.is-active {
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    .task-title-cell {
+      min-width: 280px;
+    }
+
+    .task-title-main {
+      display: block;
+      color: var(--ink-strong);
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .task-title-sub {
+      display: block;
+      max-width: 520px;
+      margin-top: 4px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.78rem;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 112px;
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    .status-chip .dot {
+      flex: 0 0 auto;
+    }
+
+    .status-chip[data-status="blocked"] .dot { background: var(--blocked); box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.12); }
+    .status-chip[data-status="implemented"] .dot { background: var(--implemented); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12); }
+    .status-chip[data-status="in_progress"] .dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12); }
+
+    .table-empty {
+      margin: 10px;
     }
 
     .board {
@@ -793,10 +938,15 @@ export function renderBoardHtml(model: BoardModel): string {
       .stat strong { font-size: 1.35rem; }
       .toolbar { display: grid; }
       .search-wrap { width: 100%; }
+      .view-toggle { width: 100%; }
+      .view-tab { flex: 1; }
       .hint { margin-top: 10px; }
       .board {
         grid-template-columns: 1fr;
         overflow: visible;
+      }
+      .table-view {
+        overflow: hidden;
       }
       .column { min-height: 0; }
       .meta-grid { grid-template-columns: 1fr; }
@@ -838,11 +988,16 @@ export function renderBoardHtml(model: BoardModel): string {
         <input class="search" id="search" type="search" aria-label="Filter tasks" placeholder="Filter by title, id, request, or file..." autocomplete="off">
         <button class="icon-button refresh-button" id="refresh" type="button" aria-label="Refresh tasks" title="Refresh tasks">Refresh</button>
       </div>
-      <div class="hint">Click any card to open its task detail.</div>
+      <div class="view-toggle" role="group" aria-label="Board view">
+        <button class="view-tab" id="tableViewButton" type="button" aria-pressed="true">Table</button>
+        <button class="view-tab" id="boardViewButton" type="button" aria-pressed="false">Board</button>
+      </div>
+      <div class="hint">Click any task to open its detail.</div>
       <div class="toolbar-status" id="toolbarStatus" role="status" aria-live="polite"></div>
     </div>
 
-    <section class="board" id="board" aria-label="Taskr Kanban board"></section>
+    <section class="table-view" id="tableView" aria-label="Taskr task table"></section>
+    <section class="board is-hidden" id="board" aria-label="Taskr Kanban board"></section>
   </main>
 
   <div class="backdrop" id="backdrop" hidden></div>
@@ -861,14 +1016,18 @@ export function renderBoardHtml(model: BoardModel): string {
   <script>
     let model = window.__TASKR_BOARD__;
     const board = document.querySelector("#board");
+    const tableView = document.querySelector("#tableView");
     const detail = document.querySelector("#detail");
     const backdrop = document.querySelector("#backdrop");
     const closeButton = document.querySelector("#close");
     const search = document.querySelector("#search");
     const refreshButton = document.querySelector("#refresh");
+    const tableViewButton = document.querySelector("#tableViewButton");
+    const boardViewButton = document.querySelector("#boardViewButton");
     const toolbarStatus = document.querySelector("#toolbarStatus");
     const masthead = document.querySelector(".masthead");
     let activeId = null;
+    let currentView = "table";
     let statusTimer = null;
 
     const labels = {
@@ -888,7 +1047,109 @@ export function renderBoardHtml(model: BoardModel): string {
     function render() {
       const query = search.value.trim().toLowerCase();
       const tasks = model.tasks.filter((task) => matches(task, query));
+      renderBoard(tasks);
+      renderTable(tasks);
+      syncView();
+    }
+
+    function renderBoard(tasks) {
       board.replaceChildren(...model.statuses.map((status) => column(status, tasks.filter((task) => task.status === status))));
+    }
+
+    function renderTable(tasks) {
+      if (tasks.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty table-empty";
+        empty.textContent = "No tasks";
+        tableView.replaceChildren(empty);
+        return;
+      }
+
+      const scroll = document.createElement("div");
+      scroll.className = "table-scroll";
+      const table = document.createElement("table");
+      table.className = "task-table";
+
+      const head = document.createElement("thead");
+      const headRow = document.createElement("tr");
+      for (const label of ["Task", "Status", "Criteria", "Updated", "Files", "Commit"]) {
+        const cell = document.createElement("th");
+        cell.scope = "col";
+        cell.textContent = label;
+        headRow.append(cell);
+      }
+      head.append(headRow);
+
+      const body = document.createElement("tbody");
+      body.append(...tasks.map(tableRow));
+      table.append(head, body);
+      scroll.append(table);
+      tableView.replaceChildren(scroll);
+    }
+
+    function tableRow(task) {
+      const row = document.createElement("tr");
+      row.className = "task-row" + (task.id === activeId ? " is-active" : "");
+      row.tabIndex = 0;
+      row.addEventListener("click", () => openDetail(task));
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetail(task);
+        }
+      });
+
+      const title = document.createElement("td");
+      title.className = "task-title-cell";
+      const titleMain = document.createElement("span");
+      titleMain.className = "task-title-main";
+      titleMain.textContent = task.title;
+      const titleSub = document.createElement("span");
+      titleSub.className = "task-title-sub";
+      titleSub.textContent = task.id;
+      title.append(titleMain, titleSub);
+
+      const status = document.createElement("td");
+      status.append(statusChip(task.status));
+
+      const criteria = document.createElement("td");
+      criteria.append(criteriaPill(task));
+
+      const updated = document.createElement("td");
+      updated.textContent = formatTimestamp(task.updatedAt);
+
+      const files = document.createElement("td");
+      files.textContent = String(task.relatedFiles.length);
+
+      const commit = document.createElement("td");
+      commit.textContent = task.commitStatus || "Unknown";
+
+      row.append(title, status, criteria, updated, files, commit);
+      return row;
+    }
+
+    function statusChip(status) {
+      const element = document.createElement("span");
+      element.className = "status-chip";
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      dot.setAttribute("aria-hidden", "true");
+      element.dataset.status = status;
+      element.append(dot, document.createTextNode(labels[status] || status));
+      return element;
+    }
+
+    function syncView() {
+      const showingTable = currentView === "table";
+      tableView.classList.toggle("is-hidden", !showingTable);
+      board.classList.toggle("is-hidden", showingTable);
+      tableViewButton.setAttribute("aria-pressed", String(showingTable));
+      boardViewButton.setAttribute("aria-pressed", String(!showingTable));
+    }
+
+    function setView(view) {
+      currentView = view;
+      syncView();
     }
 
     function column(status, tasks) {
@@ -1276,6 +1537,8 @@ export function renderBoardHtml(model: BoardModel): string {
     backdrop.addEventListener("click", closeDetail);
     search.addEventListener("input", render);
     refreshButton.addEventListener("click", loadTasks);
+    tableViewButton.addEventListener("click", () => setView("table"));
+    boardViewButton.addEventListener("click", () => setView("board"));
     window.addEventListener("scroll", syncHeader, { passive: true });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && detail.classList.contains("is-open")) closeDetail();
