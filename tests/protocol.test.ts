@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createBoardModel, renderBoardHtml } from "../src/board.js";
+import { createBoardModel, renderBoardHtml, startBoardServer } from "../src/board.js";
 import {
   completeTask,
   createTask,
@@ -96,27 +96,76 @@ describe("Taskr protocol", () => {
     const html = renderBoardHtml(model);
 
     expect(model.statuses).toContain("in_progress");
+    expect(model.statuses).not.toContain("closed");
     expect(model.tasks).toHaveLength(1);
     expect(model.tasks[0].id).toBe("implement-board-visualization");
     expect(model.tasks[0].sections.Request).toContain("Implement board visualization");
     expect(html).toContain("Taskr Board");
     expect(html).toContain("Taskr Kanban board");
     expect(html).toContain("Click any card to open its task detail.");
+    expect(html).toContain("Refresh");
+    expect(html).toContain("progressbar");
+    expect(html).toContain("formatTimestamp");
     expect(html).toContain('task.relatedFiles.join("\\n")');
   });
 
-  it("keeps tasks with unknown statuses visible on the board", () => {
+  it("maps legacy and unknown statuses into the four board columns", () => {
     const repo = tempRepo();
     initProtocol(repo);
+    createTask(repo, "Inspect closed task");
     createTask(repo, "Inspect odd task state");
-    const path = taskPath(repo, "inspect-odd-task-state");
-    const content = readFileSync(path, "utf8").replace("status: planned", "status: reviewing");
-    writeFileSync(path, content, "utf8");
+    const closedPath = taskPath(repo, "inspect-closed-task");
+    const oddPath = taskPath(repo, "inspect-odd-task-state");
+    writeFileSync(
+      closedPath,
+      readFileSync(closedPath, "utf8").replace("status: planned", "status: closed"),
+      "utf8",
+    );
+    writeFileSync(
+      oddPath,
+      readFileSync(oddPath, "utf8").replace("status: planned", "status: reviewing"),
+      "utf8",
+    );
 
     const model = createBoardModel(repo);
+    const closedTask = model.tasks.find((task) => task.id === "inspect-closed-task");
+    const oddTask = model.tasks.find((task) => task.id === "inspect-odd-task-state");
 
-    expect(model.statuses).toContain("reviewing");
-    expect(model.tasks[0].status).toBe("reviewing");
+    expect(model.statuses).toEqual(["planned", "in_progress", "implemented", "blocked"]);
+    expect(closedTask?.status).toBe("implemented");
+    expect(closedTask?.originalStatus).toBe("closed");
+    expect(oddTask?.status).toBe("blocked");
+    expect(oddTask?.originalStatus).toBe("reviewing");
+  });
+
+  it("saves task sections through the board API", async () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Edit task sections");
+
+    const { server, url } = await startBoardServer(repo, {
+      host: "127.0.0.1",
+      port: 0,
+    });
+
+    try {
+      const response = await fetch(new URL("api/tasks/edit-task-sections/sections/Request", url), {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content: "Updated from the board." }),
+      });
+      const model = await response.json();
+      const content = readFileSync(taskPath(repo, "edit-task-sections"), "utf8");
+
+      expect(response.status).toBe(200);
+      expect(model.tasks[0].sections.Request).toBe("Updated from the board.");
+      expect(content).toContain("## Request\n\nUpdated from the board.");
+      expect(content).toContain("## Acceptance Criteria");
+    } finally {
+      await new Promise<void>((resolveClose, rejectClose) => {
+        server.close((error) => (error ? rejectClose(error) : resolveClose()));
+      });
+    }
   });
 });
 

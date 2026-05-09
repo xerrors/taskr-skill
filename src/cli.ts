@@ -342,7 +342,7 @@ Commands:
   new <title>                  Create a task file.
   list                         List tasks.
   show <task_id>               Print a task file.
-  board                        Serve a read-only Kanban board.
+  board                        Serve a Kanban board.
   validate [task_id]           Validate Taskr task files.
   status <task_id> <status>    Update a task status.
   note <task_id> <note>        Append an agent note to a task.

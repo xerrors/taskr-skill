@@ -1,13 +1,17 @@
-import { createServer, type Server } from "node:http";
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { spawn } from "node:child_process";
 import {
   extractSections,
   listTasks,
+  loadTaskById,
   relative,
+  replaceSection,
+  TaskrError,
   taskId,
   taskStatus,
   taskTitle,
   VALID_STATUSES,
+  writeTask,
   type TaskDocument,
 } from "./protocol.js";
 
@@ -15,6 +19,7 @@ export interface BoardTask {
   id: string;
   title: string;
   status: string;
+  originalStatus: string;
   path: string;
   updatedAt: string;
   branch: string | null;
@@ -49,13 +54,10 @@ export interface BoardServer {
 
 export function createBoardModel(repoRoot: string): BoardModel {
   const tasks = listTasks(repoRoot).map((task) => boardTask(task, repoRoot));
-  const unknownStatuses = tasks
-    .map((task) => task.status)
-    .filter((status) => !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number]));
   return {
     generatedAt: new Date().toISOString(),
     repoRoot,
-    statuses: [...VALID_STATUSES, ...new Set(unknownStatuses)],
+    statuses: [...VALID_STATUSES],
     tasks,
   };
 }
@@ -71,26 +73,27 @@ export function renderBoardHtml(model: BoardModel): string {
   <style>
     :root {
       color-scheme: dark;
-      --ink: #e7e2d8;
-      --ink-strong: #f7f2e8;
-      --muted: #a39c91;
-      --faint: #6c665d;
-      --background: #101316;
-      --panel: #171b20;
-      --panel-raised: #1c2228;
-      --card: #20262d;
-      --card-hover: #242b33;
-      --line: rgba(231, 226, 216, 0.12);
-      --line-strong: rgba(231, 226, 216, 0.22);
-      --accent: #d37b45;
-      --accent-soft: rgba(211, 123, 69, 0.14);
-      --accent-2: #76b6a8;
-      --focus: 0 0 0 3px rgba(118, 182, 168, 0.24);
-      --blocked: #d66b68;
-      --implemented: #88bd63;
-      --closed: #8f99e8;
-      --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.18);
-      --shadow-md: 0 16px 42px rgba(0, 0, 0, 0.28);
+      --ink: #dbe7f3;
+      --ink-strong: #f7fbff;
+      --muted: #93a4b7;
+      --faint: #617083;
+      --background: #090d12;
+      --surface: #0f151c;
+      --panel: #121922;
+      --panel-raised: #17202b;
+      --card: #141c25;
+      --card-hover: #182331;
+      --line: rgba(148, 163, 184, 0.16);
+      --line-strong: rgba(148, 163, 184, 0.28);
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-2: #22c55e;
+      --focus: 0 0 0 3px rgba(56, 189, 248, 0.26);
+      --planned: #f59e0b;
+      --blocked: #fb7185;
+      --implemented: #22c55e;
+      --shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.24);
+      --shadow-md: 0 18px 56px rgba(0, 0, 0, 0.34);
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
@@ -102,7 +105,8 @@ export function renderBoardHtml(model: BoardModel): string {
       color: var(--ink);
       line-height: 1.5;
       background:
-        linear-gradient(180deg, rgba(118, 182, 168, 0.045), transparent 360px),
+        linear-gradient(180deg, rgba(56, 189, 248, 0.065), transparent 320px),
+        linear-gradient(90deg, rgba(34, 197, 94, 0.035), transparent 42%),
         var(--background);
       overflow-x: hidden;
     }
@@ -112,12 +116,12 @@ export function renderBoardHtml(model: BoardModel): string {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.08;
+      opacity: 0.035;
       background-image:
-        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: linear-gradient(to bottom, black, transparent 70%);
+        linear-gradient(rgba(226, 232, 240, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(226, 232, 240, 0.14) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: linear-gradient(to bottom, black, transparent 58%);
     }
 
     button, input { font: inherit; }
@@ -125,67 +129,117 @@ export function renderBoardHtml(model: BoardModel): string {
     .shell {
       width: min(1560px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 20px 0 28px;
+      padding: 16px 0 28px;
     }
 
     .masthead {
+      position: sticky;
+      top: 12px;
+      z-index: 20;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 20px;
       align-items: center;
-      padding: 22px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: rgba(23, 27, 32, 0.94);
-      box-shadow: var(--shadow-md);
+      padding: 22px 0 18px;
+      border-bottom: 1px solid transparent;
+      background: transparent;
+      isolation: isolate;
+      transition: padding 180ms ease, border-color 180ms ease;
+    }
+
+    .masthead::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 100vw;
+      transform: translateX(-50%);
+      z-index: -1;
+      opacity: 0;
+      background: rgba(9, 13, 18, 0.9);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(16px);
+      transition: opacity 180ms ease;
+    }
+
+    .masthead.is-compact {
+      padding: 10px 0 10px;
+    }
+
+    .masthead.is-compact::before {
+      opacity: 1;
     }
 
     .eyebrow {
       margin: 0 0 6px;
-      color: var(--accent-2);
+      color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-weight: 700;
     }
 
     h1 {
       margin: 0;
       color: var(--ink-strong);
-      font-size: 3.15rem;
+      font-size: 2.65rem;
       line-height: 1.05;
       letter-spacing: 0;
       font-weight: 720;
+      transition: font-size 180ms ease;
+    }
+
+    .masthead.is-compact h1 {
+      font-size: 1.55rem;
     }
 
     .repo {
       max-width: 62rem;
-      margin: 10px 0 0;
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.86rem;
       word-break: break-all;
+      transition: margin 180ms ease, font-size 180ms ease;
+    }
+
+    .masthead.is-compact .repo {
+      margin-top: 4px;
+      font-size: 0.78rem;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(92px, 1fr));
       gap: 8px;
-      min-width: 320px;
+      min-width: 300px;
     }
 
     .stat {
-      padding: 12px;
-      border-radius: 10px;
-      background: var(--panel-raised);
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(18, 25, 34, 0.74);
       border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      transition: padding 180ms ease;
+    }
+
+    .masthead.is-compact .stat {
+      padding: 8px 10px;
     }
 
     .stat strong {
       display: block;
-      font-size: 1.75rem;
+      font-size: 1.35rem;
       line-height: 1;
-      color: var(--accent);
+      color: var(--ink-strong);
       font-weight: 720;
+      transition: font-size 180ms ease;
+    }
+
+    .masthead.is-compact .stat strong {
+      font-size: 1.2rem;
     }
 
     .stat span {
@@ -194,7 +248,7 @@ export function renderBoardHtml(model: BoardModel): string {
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.7rem;
+      font-size: 0.66rem;
       font-weight: 600;
     }
 
@@ -202,18 +256,29 @@ export function renderBoardHtml(model: BoardModel): string {
       display: flex;
       gap: 12px;
       align-items: center;
-      margin: 14px 0;
+      margin: 14px 0 12px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(15, 21, 28, 0.66);
+    }
+
+    .search-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      width: min(620px, 100%);
     }
 
     .search {
-      width: min(520px, 100%);
+      width: 100%;
       color: var(--ink);
       border: 1px solid var(--line);
       outline: none;
-      border-radius: 10px;
-      background: rgba(28, 34, 40, 0.9);
+      border-radius: 8px;
+      background: rgba(9, 13, 18, 0.78);
       min-height: 44px;
-      padding: 10px 12px;
+      padding: 10px 13px;
       transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
     }
 
@@ -225,15 +290,76 @@ export function renderBoardHtml(model: BoardModel): string {
       background: var(--panel-raised);
     }
 
+    .icon-button, .section-action {
+      display: inline-grid;
+      place-items: center;
+      min-width: 44px;
+      min-height: 44px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(20, 28, 37, 0.88);
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+    }
+
+    .icon-button {
+      width: auto;
+      padding: 0 16px;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .icon-button:hover, .section-action:hover {
+      border-color: var(--line-strong);
+      background: var(--panel-raised);
+    }
+
+    .section-action:hover {
+      transform: translateY(-1px);
+    }
+
+    .refresh-button {
+      min-width: 96px;
+      color: var(--ink-strong);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.08));
+      border-color: rgba(56, 189, 248, 0.28);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .refresh-button:hover {
+      color: var(--ink-strong);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.24), rgba(56, 189, 248, 0.12));
+      border-color: rgba(56, 189, 248, 0.44);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .icon-button:focus-visible, .section-action:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .icon-button[disabled], .section-action[disabled] {
+      cursor: wait;
+      color: var(--faint);
+      transform: none;
+    }
+
+    .toolbar-status {
+      min-width: 128px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
     .hint {
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.84rem;
     }
 
     .board {
       display: grid;
-      grid-template-columns: repeat(5, minmax(260px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(4, minmax(250px, 1fr));
+      gap: 10px;
       align-items: start;
       overflow-x: auto;
       padding-bottom: 16px;
@@ -241,12 +367,12 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     .column {
-      min-height: 540px;
+      min-height: 560px;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      background: rgba(23, 27, 32, 0.96);
+      border-radius: 10px;
+      background: rgba(15, 21, 28, 0.78);
       box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
-      padding: 12px;
+      padding: 10px;
     }
 
     .column-header {
@@ -255,7 +381,7 @@ export function renderBoardHtml(model: BoardModel): string {
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 10px;
-      padding: 6px 4px 12px;
+      padding: 5px 3px 10px;
       border-bottom: 1px solid var(--line);
     }
 
@@ -266,35 +392,37 @@ export function renderBoardHtml(model: BoardModel): string {
       margin: 0;
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.78rem;
+      color: var(--ink);
+      font-size: 0.74rem;
       font-weight: 700;
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--planned);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
     }
 
-    .column[data-status="blocked"] .dot { background: var(--blocked); }
-    .column[data-status="implemented"] .dot { background: var(--implemented); }
-    .column[data-status="closed"] .dot { background: var(--closed); }
-    .column[data-status="in_progress"] .dot { background: var(--accent-2); }
+    .column[data-status="blocked"] .dot { background: var(--blocked); box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.12); }
+    .column[data-status="implemented"] .dot { background: var(--implemented); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12); }
+    .column[data-status="in_progress"] .dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12); }
 
     .count {
       color: var(--muted);
       border: 1px solid var(--line);
-      border-radius: 999px;
-      min-width: 28px;
-      padding: 2px 8px;
+      border-radius: 7px;
+      min-width: 26px;
+      padding: 2px 7px;
       text-align: center;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
+      font-variant-numeric: tabular-nums;
     }
 
     .cards {
       display: grid;
-      gap: 9px;
+      gap: 8px;
     }
 
     .card {
@@ -303,16 +431,15 @@ export function renderBoardHtml(model: BoardModel): string {
       text-align: left;
       color: var(--ink);
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 13px;
+      border-radius: 8px;
+      padding: 12px;
       background: var(--card);
       box-shadow: none;
       cursor: pointer;
-      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
     }
 
     .card:hover, .card:focus-visible {
-      transform: translateY(-1px);
       border-color: var(--line-strong);
       background: var(--card-hover);
       box-shadow: var(--shadow-sm);
@@ -322,21 +449,35 @@ export function renderBoardHtml(model: BoardModel): string {
     .card:focus-visible { box-shadow: var(--focus), var(--shadow-sm); }
 
     .card.is-active {
-      border-color: var(--accent);
-      box-shadow: inset 3px 0 0 var(--accent);
+      border-color: rgba(56, 189, 248, 0.72);
+      box-shadow: inset 3px 0 0 var(--accent), var(--shadow-sm);
+    }
+
+    .card.card-compact {
+      min-height: 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(20, 28, 37, 0.72);
+    }
+
+    .card.card-compact .card-title {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.3;
+      font-weight: 650;
     }
 
     .card-id {
       color: var(--muted);
       letter-spacing: 0;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 600;
     }
 
     .card-title {
-      margin: 7px 0 9px;
+      margin: 6px 0 8px;
       color: var(--ink-strong);
-      font-size: 1rem;
+      font-size: 0.96rem;
       line-height: 1.35;
       letter-spacing: 0;
       font-weight: 680;
@@ -345,7 +486,7 @@ export function renderBoardHtml(model: BoardModel): string {
     .card-request {
       color: var(--muted);
       line-height: 1.45;
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -355,18 +496,40 @@ export function renderBoardHtml(model: BoardModel): string {
     .card-footer {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 12px;
+      gap: 5px;
+      margin-top: 11px;
     }
 
     .pill {
-      border-radius: 999px;
+      border-radius: 7px;
       padding: 3px 7px;
-      background: rgba(231, 226, 216, 0.06);
+      background: rgba(148, 163, 184, 0.08);
       color: var(--muted);
-      border: 1px solid rgba(231, 226, 216, 0.07);
+      border: 1px solid rgba(148, 163, 184, 0.1);
       font-size: 0.72rem;
       letter-spacing: 0;
+    }
+
+    .mini-progress {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 68px;
+    }
+
+    .mini-progress-bar {
+      width: 34px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.14);
+      overflow: hidden;
+    }
+
+    .mini-progress-bar span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--implemented);
     }
 
     .empty {
@@ -375,22 +538,22 @@ export function renderBoardHtml(model: BoardModel): string {
       place-items: center;
       color: var(--faint);
       border: 1px dashed var(--line);
-      border-radius: 10px;
-      font-size: 0.9rem;
+      border-radius: 8px;
+      font-size: 0.84rem;
     }
 
     .detail {
       position: fixed;
-      top: 18px;
-      right: 18px;
-      bottom: 18px;
-      width: min(620px, calc(100vw - 36px));
+      top: 14px;
+      right: 14px;
+      bottom: 14px;
+      width: min(660px, calc(100vw - 28px));
       display: grid;
       grid-template-rows: auto 1fr;
       border: 1px solid var(--line-strong);
-      border-radius: 14px;
-      background: rgba(17, 21, 25, 0.98);
-      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.52);
+      border-radius: 12px;
+      background: rgba(12, 17, 24, 0.98);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.58);
       transform: translateX(calc(100% + 28px));
       transition: transform 220ms ease;
       z-index: 40;
@@ -400,23 +563,23 @@ export function renderBoardHtml(model: BoardModel): string {
     .detail.is-open { transform: translateX(0); }
 
     .detail-header {
-      padding: 22px;
+      padding: 20px 22px 18px;
       border-bottom: 1px solid var(--line);
       background: var(--panel);
     }
 
     .detail-kicker {
-      color: var(--accent-2);
+      color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 700;
     }
 
     .detail-title {
       margin: 8px 56px 0 0;
       color: var(--ink-strong);
-      font-size: 1.55rem;
+      font-size: 1.35rem;
       line-height: 1.25;
       letter-spacing: 0;
       font-weight: 720;
@@ -429,16 +592,17 @@ export function renderBoardHtml(model: BoardModel): string {
       width: 44px;
       height: 44px;
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 8px;
       color: var(--ink);
-      background: rgba(231, 226, 216, 0.06);
+      background: rgba(148, 163, 184, 0.08);
       cursor: pointer;
-      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
     }
 
     .close:hover {
       border-color: var(--line-strong);
-      background: rgba(231, 226, 216, 0.1);
+      background: rgba(148, 163, 184, 0.13);
+      transform: translateY(-1px);
     }
 
     .close:focus-visible {
@@ -448,21 +612,21 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .detail-body {
       overflow: auto;
-      padding: 18px 22px 24px;
+      padding: 16px 22px 24px;
     }
 
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 9px;
-      margin-bottom: 18px;
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
     .meta {
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 11px;
-      background: rgba(231, 226, 216, 0.035);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(20, 28, 37, 0.66);
       color: var(--ink);
       word-break: break-word;
     }
@@ -472,39 +636,126 @@ export function renderBoardHtml(model: BoardModel): string {
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.7rem;
+      font-size: 0.66rem;
       font-weight: 700;
       margin-bottom: 4px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-label {
+      min-width: 44px;
+      color: var(--ink);
+      font-weight: 650;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-percent {
+      min-width: 36px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-track {
+      flex: 1;
+      min-width: 72px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.12);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--implemented));
+      transition: width 180ms ease;
     }
 
     .section {
       margin-top: 12px;
       border: 1px solid var(--line);
-      border-radius: 10px;
-      background: rgba(231, 226, 216, 0.03);
+      border-radius: 8px;
+      background: rgba(20, 28, 37, 0.54);
       overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
     }
 
     .section h3 {
       margin: 0;
-      padding: 11px 13px;
-      color: var(--accent);
-      border-bottom: 1px solid var(--line);
+      color: #7dd3fc;
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-weight: 750;
+    }
+
+    .section-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .section-status {
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .section-action {
+      min-width: 34px;
+      min-height: 30px;
+      padding: 4px 9px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      font-weight: 700;
     }
 
     .section pre {
       margin: 0;
       padding: 13px;
-      color: #d8d1c5;
+      color: #dbe7f3;
       white-space: pre-wrap;
       word-break: break-word;
       font-family: "SFMono-Regular", Consolas, monospace;
       font-size: 0.86rem;
       line-height: 1.52;
+    }
+
+    .section textarea {
+      width: 100%;
+      min-height: 180px;
+      margin: 0;
+      display: block;
+      resize: vertical;
+      color: #dbe7f3;
+      background: rgba(9, 13, 18, 0.78);
+      border: 0;
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
+      outline: none;
+      padding: 13px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.52;
+    }
+
+    .section textarea:focus {
+      box-shadow: inset 0 0 0 2px rgba(56, 189, 248, 0.32);
     }
 
     .backdrop {
@@ -525,18 +776,29 @@ export function renderBoardHtml(model: BoardModel): string {
     @media (max-width: 980px) {
       .masthead { grid-template-columns: 1fr; }
       .stats { min-width: 0; }
-      .board { grid-template-columns: repeat(5, 280px); }
+      .board { grid-template-columns: repeat(4, 280px); }
     }
 
     @media (max-width: 640px) {
       .shell { width: min(100vw - 16px, 1560px); padding-top: 8px; }
-      .masthead { padding: 16px; border-radius: 12px; }
-      h1 { font-size: 2.25rem; }
+      .masthead {
+        padding: 16px 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+      h1 { font-size: 2rem; }
       .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .stat { padding: 10px; }
       .stat strong { font-size: 1.35rem; }
-      .toolbar { display: block; }
+      .toolbar { display: grid; }
+      .search-wrap { width: 100%; }
       .hint { margin-top: 10px; }
+      .board {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+      .column { min-height: 0; }
       .meta-grid { grid-template-columns: 1fr; }
       .detail {
         top: 8px;
@@ -553,7 +815,6 @@ export function renderBoardHtml(model: BoardModel): string {
         transition-duration: 1ms !important;
       }
 
-      .card:hover, .card:focus-visible { transform: none; }
     }
   </style>
 </head>
@@ -566,15 +827,19 @@ export function renderBoardHtml(model: BoardModel): string {
         <p class="repo" id="repo"></p>
       </div>
       <div class="stats" aria-label="Task statistics">
-        <div class="stat"><strong id="totalTasks">0</strong><span>Total tasks</span></div>
+        <div class="stat"><strong id="totalTasks">0</strong><span>Total</span></div>
         <div class="stat"><strong id="activeTasks">0</strong><span>Active</span></div>
-        <div class="stat"><strong id="implementedTasks">0</strong><span>Implemented</span></div>
+        <div class="stat"><strong id="implementedTasks">0</strong><span>Done</span></div>
       </div>
     </section>
 
     <div class="toolbar">
-      <input class="search" id="search" type="search" aria-label="Filter tasks" placeholder="Filter by title, id, request, or file..." autocomplete="off">
+      <div class="search-wrap">
+        <input class="search" id="search" type="search" aria-label="Filter tasks" placeholder="Filter by title, id, request, or file..." autocomplete="off">
+        <button class="icon-button refresh-button" id="refresh" type="button" aria-label="Refresh tasks" title="Refresh tasks">Refresh</button>
+      </div>
       <div class="hint">Click any card to open its task detail.</div>
+      <div class="toolbar-status" id="toolbarStatus" role="status" aria-live="polite"></div>
     </div>
 
     <section class="board" id="board" aria-label="Taskr Kanban board"></section>
@@ -594,26 +859,31 @@ export function renderBoardHtml(model: BoardModel): string {
     window.__TASKR_BOARD__ = ${data};
   </script>
   <script>
-    const model = window.__TASKR_BOARD__;
+    let model = window.__TASKR_BOARD__;
     const board = document.querySelector("#board");
     const detail = document.querySelector("#detail");
     const backdrop = document.querySelector("#backdrop");
     const closeButton = document.querySelector("#close");
     const search = document.querySelector("#search");
+    const refreshButton = document.querySelector("#refresh");
+    const toolbarStatus = document.querySelector("#toolbarStatus");
+    const masthead = document.querySelector(".masthead");
     let activeId = null;
+    let statusTimer = null;
 
     const labels = {
       planned: "Planned",
-      in_progress: "In progress",
-      blocked: "Blocked",
+      in_progress: "In Progress",
       implemented: "Implemented",
-      closed: "Closed"
+      blocked: "Blocked"
     };
 
-    document.querySelector("#repo").textContent = model.repoRoot;
-    document.querySelector("#totalTasks").textContent = model.tasks.length;
-    document.querySelector("#activeTasks").textContent = model.tasks.filter((task) => ["planned", "in_progress", "blocked"].includes(task.status)).length;
-    document.querySelector("#implementedTasks").textContent = model.tasks.filter((task) => task.status === "implemented").length;
+    function updateStats() {
+      document.querySelector("#repo").textContent = model.repoRoot;
+      document.querySelector("#totalTasks").textContent = model.tasks.length;
+      document.querySelector("#activeTasks").textContent = model.tasks.filter((task) => ["planned", "in_progress", "blocked"].includes(task.status)).length;
+      document.querySelector("#implementedTasks").textContent = model.tasks.filter((task) => task.status === "implemented").length;
+    }
 
     function render() {
       const query = search.value.trim().toLowerCase();
@@ -662,6 +932,9 @@ export function renderBoardHtml(model: BoardModel): string {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "card" + (task.id === activeId ? " is-active" : "");
+      if (task.status === "implemented") {
+        button.className += " card-compact";
+      }
       button.addEventListener("click", () => openDetail(task));
 
       const id = document.createElement("div");
@@ -672,6 +945,12 @@ export function renderBoardHtml(model: BoardModel): string {
       title.className = "card-title";
       title.textContent = task.title;
 
+      if (task.status === "implemented") {
+        button.setAttribute("aria-label", task.title + " · " + (labels[task.status] || task.status));
+        button.append(title);
+        return button;
+      }
+
       const request = document.createElement("div");
       request.className = "card-request";
       request.textContent = task.sections.Request || "No request recorded.";
@@ -679,7 +958,7 @@ export function renderBoardHtml(model: BoardModel): string {
       const footer = document.createElement("div");
       footer.className = "card-footer";
       footer.append(
-        pill(criteriaLabel(task)),
+        criteriaPill(task),
         pill(task.commitStatus || "commit unknown"),
         pill(task.relatedFiles.length + " files")
       );
@@ -688,17 +967,25 @@ export function renderBoardHtml(model: BoardModel): string {
       return button;
     }
 
-    function openDetail(task) {
+    function openDetail(task, options = {}) {
       activeId = task.id;
       render();
-      document.querySelector("#detailKicker").textContent = task.id + " · " + (labels[task.status] || task.status);
-      document.querySelector("#detailTitle").textContent = task.title;
-      document.querySelector("#detailBody").replaceChildren(detailContent(task));
+      updateDetail(task);
       detail.classList.add("is-open");
       detail.setAttribute("aria-hidden", "false");
       backdrop.hidden = false;
       requestAnimationFrame(() => backdrop.classList.add("is-open"));
-      closeButton.focus({ preventScroll: true });
+      if (options.focusClose !== false) {
+        closeButton.focus({ preventScroll: true });
+      }
+    }
+
+    function updateDetail(task) {
+      const status = labels[task.status] || task.status;
+      const original = task.originalStatus && task.originalStatus !== task.status ? " · was " + task.originalStatus : "";
+      document.querySelector("#detailKicker").textContent = task.id + " · " + status + original;
+      document.querySelector("#detailTitle").textContent = task.title;
+      document.querySelector("#detailBody").replaceChildren(detailContent(task));
     }
 
     function closeDetail() {
@@ -716,11 +1003,11 @@ export function renderBoardHtml(model: BoardModel): string {
       meta.className = "meta-grid";
       meta.append(
         metaItem("Status", labels[task.status] || task.status),
-        metaItem("Updated", task.updatedAt || "Unknown"),
+        metaItem("Updated", formatTimestamp(task.updatedAt)),
         metaItem("Commit status", task.commitStatus || "Unknown"),
         metaItem("Path", task.path),
         metaItem("Branch", task.branch || "None"),
-        metaItem("Criteria", criteriaLabel(task)),
+        progressMeta(task),
         metaItem("Related files", task.relatedFiles.length ? task.relatedFiles.join("\\n") : "None"),
         metaItem("Commits", task.commits.length ? task.commits.join("\\n") : "None")
       );
@@ -735,11 +1022,59 @@ export function renderBoardHtml(model: BoardModel): string {
     function section(title, content) {
       const wrapper = document.createElement("section");
       wrapper.className = "section";
+      wrapper.dataset.section = title;
+
+      const head = document.createElement("div");
+      head.className = "section-head";
       const heading = document.createElement("h3");
       heading.textContent = title;
-      const pre = document.createElement("pre");
-      pre.textContent = content;
-      wrapper.append(heading, pre);
+      const tools = document.createElement("div");
+      tools.className = "section-tools";
+      const status = document.createElement("span");
+      status.className = "section-status";
+      const body = document.createElement("div");
+      body.className = "section-body";
+
+      function readMode(value) {
+        status.textContent = "";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "section-action";
+        edit.textContent = "Edit";
+        edit.addEventListener("click", () => editMode(value));
+        tools.replaceChildren(status, edit);
+
+        const pre = document.createElement("pre");
+        pre.textContent = value;
+        body.replaceChildren(pre);
+      }
+
+      function editMode(value) {
+        status.textContent = "";
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.setAttribute("aria-label", title + " content");
+
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.className = "section-action";
+        cancel.textContent = "Cancel";
+        cancel.addEventListener("click", () => readMode(value));
+
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "section-action";
+        save.textContent = "Save";
+        save.addEventListener("click", () => saveSection(title, textarea.value, status, save));
+
+        tools.replaceChildren(status, cancel, save);
+        body.replaceChildren(textarea);
+        textarea.focus({ preventScroll: true });
+      }
+
+      head.append(heading, tools);
+      wrapper.append(head, body);
+      readMode(content);
       return wrapper;
     }
 
@@ -754,6 +1089,40 @@ export function renderBoardHtml(model: BoardModel): string {
       return item;
     }
 
+    function progressMeta(task) {
+      const item = document.createElement("div");
+      item.className = "meta";
+      const key = document.createElement("span");
+      key.textContent = "Criteria";
+      const total = task.criteria.total;
+      const checked = task.criteria.checked;
+      const percent = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+      const row = document.createElement("div");
+      row.className = "progress-row";
+      const label = document.createElement("div");
+      label.className = "progress-label";
+      label.textContent = total > 0 ? checked + "/" + total : "0/0";
+
+      const track = document.createElement("div");
+      track.className = "progress-track";
+      track.setAttribute("role", "progressbar");
+      track.setAttribute("aria-valuemin", "0");
+      track.setAttribute("aria-valuemax", String(total));
+      track.setAttribute("aria-valuenow", String(checked));
+      const fill = document.createElement("span");
+      fill.className = "progress-fill";
+      fill.style.width = percent + "%";
+      track.append(fill);
+
+      const value = document.createElement("div");
+      value.className = "progress-percent";
+      value.textContent = total > 0 ? percent + "%" : "0%";
+      row.append(label, track, value);
+      item.append(key, row);
+      return item;
+    }
+
     function pill(value) {
       const element = document.createElement("span");
       element.className = "pill";
@@ -761,8 +1130,39 @@ export function renderBoardHtml(model: BoardModel): string {
       return element;
     }
 
-    function criteriaLabel(task) {
-      return task.criteria.checked + "/" + task.criteria.total + " criteria";
+    function criteriaPill(task) {
+      const element = document.createElement("span");
+      element.className = "pill mini-progress";
+      const text = document.createElement("span");
+      text.textContent = task.criteria.checked + "/" + task.criteria.total;
+      const bar = document.createElement("span");
+      bar.className = "mini-progress-bar";
+      const fill = document.createElement("span");
+      const percent = task.criteria.total > 0 ? Math.round((task.criteria.checked / task.criteria.total) * 100) : 0;
+      fill.style.width = percent + "%";
+      bar.append(fill);
+      element.append(text, bar);
+      return element;
+    }
+
+    function formatTimestamp(value) {
+      if (!value) return "Unknown";
+      const normalized = String(value).replace(/([+-]\\d{2})(\\d{2})$/, "$1:$2");
+      const date = new Date(normalized);
+      if (Number.isNaN(date.getTime())) return String(value);
+      const parts = new Intl.DateTimeFormat(undefined, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+        timeZoneName: "short"
+      }).formatToParts(date).reduce((result, part) => {
+        result[part.type] = part.value;
+        return result;
+      }, {});
+      return parts.year + "-" + parts.month + "-" + parts.day + " " + parts.hour + ":" + parts.minute + " " + parts.timeZoneName;
     }
 
     function matches(task, query) {
@@ -776,13 +1176,113 @@ export function renderBoardHtml(model: BoardModel): string {
       ].join(" ").toLowerCase().includes(query);
     }
 
+    function findTask(id) {
+      return model.tasks.find((task) => task.id === id) || null;
+    }
+
+    async function loadTasks() {
+      refreshButton.disabled = true;
+      setToolbarStatus("Refreshing...");
+      try {
+        const response = await fetch("/api/tasks", { headers: { accept: "application/json" } });
+        const data = await parseJson(response);
+        if (!response.ok) {
+          throw new Error(data && data.error ? data.error : "Refresh failed");
+        }
+        model = data;
+        updateStats();
+        render();
+        syncDetail();
+        setToolbarStatus("Refreshed");
+      } catch (error) {
+        setToolbarStatus("Refresh failed: " + errorMessage(error), true);
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
+
+    async function saveSection(sectionTitle, content, statusNode, saveButton) {
+      if (!activeId) return;
+      saveButton.disabled = true;
+      statusNode.textContent = "Saving...";
+      try {
+        const response = await fetch("/api/tasks/" + encodeURIComponent(activeId) + "/sections/" + encodeURIComponent(sectionTitle), {
+          method: "PUT",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({ content })
+        });
+        const data = await parseJson(response);
+        if (!response.ok) {
+          throw new Error(data && data.error ? data.error : "Save failed");
+        }
+        model = data;
+        updateStats();
+        render();
+        syncDetail();
+        setToolbarStatus("Saved");
+      } catch (error) {
+        statusNode.textContent = "Save failed";
+        setToolbarStatus("Save failed: " + errorMessage(error), true);
+      } finally {
+        saveButton.disabled = false;
+      }
+    }
+
+    async function parseJson(response) {
+      try {
+        return await response.json();
+      } catch {
+        return null;
+      }
+    }
+
+    function syncDetail() {
+      if (!activeId || !detail.classList.contains("is-open")) return;
+      const task = findTask(activeId);
+      if (task) {
+        updateDetail(task);
+        return;
+      }
+      document.querySelector("#detailKicker").textContent = "Task detail";
+      document.querySelector("#detailTitle").textContent = "Select a task";
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "This task no longer exists.";
+      document.querySelector("#detailBody").replaceChildren(empty);
+      activeId = null;
+      render();
+    }
+
+    function setToolbarStatus(message, sticky = false) {
+      toolbarStatus.textContent = message;
+      if (statusTimer) clearTimeout(statusTimer);
+      if (!sticky && message) {
+        statusTimer = setTimeout(() => { toolbarStatus.textContent = ""; }, 1800);
+      }
+    }
+
+    function errorMessage(error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+
+    function syncHeader() {
+      masthead.classList.toggle("is-compact", window.scrollY > 44);
+    }
+
     closeButton.addEventListener("click", closeDetail);
     backdrop.addEventListener("click", closeDetail);
     search.addEventListener("input", render);
+    refreshButton.addEventListener("click", loadTasks);
+    window.addEventListener("scroll", syncHeader, { passive: true });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && detail.classList.contains("is-open")) closeDetail();
     });
 
+    updateStats();
+    syncHeader();
     render();
   </script>
 </body>
@@ -794,21 +1294,10 @@ export function startBoardServer(
   options: BoardServerOptions,
 ): Promise<BoardServer> {
   const server = createServer((request, response) => {
-    if (request.url === "/api/tasks") {
-      const body = JSON.stringify(createBoardModel(repoRoot), null, 2);
-      response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-      response.end(body);
-      return;
-    }
-
-    if (request.url === "/" || request.url === undefined) {
-      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-      response.end(renderBoardHtml(createBoardModel(repoRoot)));
-      return;
-    }
-
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-    response.end("Not found");
+    void handleBoardRequest(repoRoot, request, response).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      sendJson(response, 500, { error: message });
+    });
   });
 
   return new Promise((resolve, reject) => {
@@ -826,12 +1315,94 @@ export function startBoardServer(
   });
 }
 
+async function handleBoardRequest(
+  repoRoot: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  const url = new URL(request.url ?? "/", "http://taskr.local");
+
+  if (request.method === "GET" && url.pathname === "/api/tasks") {
+    sendJson(response, 200, createBoardModel(repoRoot));
+    return;
+  }
+
+  const sectionMatch = /^\/api\/tasks\/([^/]+)\/sections\/([^/]+)$/.exec(url.pathname);
+  if (request.method === "PUT" && sectionMatch) {
+    const id = decodeURIComponent(sectionMatch[1]);
+    const section = decodeURIComponent(sectionMatch[2]);
+    const payload = await readJsonBody(request);
+    if (!isRecord(payload) || typeof payload.content !== "string") {
+      sendJson(response, 400, { error: "Request body must include string field `content`." });
+      return;
+    }
+
+    try {
+      const document = loadTaskById(repoRoot, id);
+      document.body = replaceSection(document.body, section, payload.content);
+      writeTask(document);
+      sendJson(response, 200, createBoardModel(repoRoot));
+    } catch (error) {
+      if (error instanceof TaskrError) {
+        const status = error.message.startsWith("Task not found") ? 404 : 400;
+        sendJson(response, status, { error: error.message });
+        return;
+      }
+      throw error;
+    }
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/") {
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    response.end(renderBoardHtml(createBoardModel(repoRoot)));
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/favicon.ico") {
+    response.writeHead(204);
+    response.end();
+    return;
+  }
+
+  sendJson(response, 404, { error: "Not found" });
+}
+
+async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+  let body = "";
+  for await (const chunk of request) {
+    body += chunk;
+    if (body.length > 1_000_000) {
+      throw new TaskrError("Request body is too large.");
+    }
+  }
+  if (!body.trim()) {
+    return {};
+  }
+  try {
+    return JSON.parse(body) as unknown;
+  } catch {
+    throw new TaskrError("Request body must be valid JSON.");
+  }
+}
+
+function sendJson(response: ServerResponse, status: number, value: unknown): void {
+  if (response.headersSent) {
+    response.end();
+    return;
+  }
+  response.writeHead(status, { "content-type": "application/json; charset=utf-8" });
+  response.end(JSON.stringify(value, null, 2));
+}
+
 function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
   const sections = extractSections(document.body);
+  const originalStatus = taskStatus(document) || "planned";
   return {
     id: taskId(document),
     title: taskTitle(document),
-    status: taskStatus(document) || "planned",
+    status: boardStatus(originalStatus),
+    originalStatus,
     path: relative(document.path, repoRoot),
     updatedAt: String(document.metadata.updated_at ?? ""),
     branch: document.metadata.branch === null ? null : String(document.metadata.branch ?? ""),
@@ -844,6 +1415,16 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
   };
 }
 
+function boardStatus(status: string): string {
+  if (VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+    return status;
+  }
+  if (status === "closed") {
+    return "implemented";
+  }
+  return "blocked";
+}
+
 function countCriteria(value: string): { checked: number; total: number } {
   const matches = [...value.matchAll(/- \[([ xX])\]/g)];
   return {
@@ -854,6 +1435,10 @@ function countCriteria(value: string): { checked: number; total: number } {
 
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String) : [];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function escapeScriptJson(value: unknown): string {

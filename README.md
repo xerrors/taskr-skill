@@ -86,13 +86,13 @@ The npm package is scoped to the `xerrors` npm account and exposes a `taskr` bin
 
 ## Board
 
-Use `taskr board` to serve a read-only repo-local Kanban view of `.taskr/tasks/*.md`.
+Use `taskr board` to serve a repo-local Kanban view of `.taskr/tasks/*.md`.
 
 ```bash
 node dist/cli.js board --open
 ```
 
-The board groups tasks by Taskr status and expands a task detail drawer when you click a card. The MVP intentionally does not include drag-and-drop, editing, or full Markdown rendering.
+The board groups tasks by Taskr status, expands a task detail drawer when you click a card, supports manual refresh, and can edit task sections back into the original Markdown files. It intentionally does not include drag-and-drop or full Markdown rendering.
 
 ## Task States
 
