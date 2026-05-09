@@ -1,6 +1,6 @@
 # Taskr
 
-Taskr is a Claude Code Skill and repo-local task protocol for AI-assisted software development.
+Taskr is a repo-local task protocol for AI-assisted software development.
 
 It lets coding agents create, track, update, and summarize implementation tasks inside your existing Git repository.
 
@@ -10,49 +10,59 @@ No SaaS. No database. No project management ceremony. Just `.taskr/`.
 
 ### While Developing Taskr
 
-Inside this repository, run the CLI through `uv`:
+Inside this repository, install dependencies and run the TypeScript CLI:
 
 ```bash
-uv run taskr init
-uv run taskr install-skill claude
-uv run taskr new "implement user invitation flow" --status in_progress
-uv run taskr list
-uv run taskr validate
+npm install
+npm run build
+node dist/cli.js init
+node dist/cli.js install-skill claude
+node dist/cli.js new "implement user invitation flow" --status in_progress
+node dist/cli.js list
+node dist/cli.js validate
 ```
 
-### Try Taskr in Another Project with a Local Wheel
+Run checks with:
 
-Build a wheel from this repository:
+```bash
+npm run check
+```
+
+### Try Taskr in Another Project Locally
+
+Build a local npm package tarball from this repository:
 
 ```bash
 cd /path/to/taskr
-uv build
+npm pack
 ```
 
-Then use that wheel from any other Git repository:
+Then use that package from any other Git repository:
 
 ```bash
 cd /path/to/your-project
-uvx --from /path/to/taskr/dist/taskr-0.1.0-py3-none-any.whl taskr init
-uvx --from /path/to/taskr/dist/taskr-0.1.0-py3-none-any.whl taskr install-skill claude
-uvx --from /path/to/taskr/dist/taskr-0.1.0-py3-none-any.whl taskr new "implement user invitation flow" --status in_progress
-uvx --from /path/to/taskr/dist/taskr-0.1.0-py3-none-any.whl taskr list
-uvx --from /path/to/taskr/dist/taskr-0.1.0-py3-none-any.whl taskr validate
+npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr init
+npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr install-skill claude
+npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr new "implement user invitation flow" --status in_progress
+npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr list
+npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr validate
 ```
 
-This is the recommended way to test Taskr in a real project before publishing it. The target project does not need to add Taskr as a dependency; `uvx` creates an isolated temporary tool environment from the wheel.
+This is the recommended way to test Taskr in a real project before publishing it. The target project does not need to add Taskr as a dependency; `npx` executes the package in a temporary npm environment.
 
 ### After Publishing
 
-Once Taskr is published as a package, the same workflow becomes:
+Once Taskr is published as `@xerrors/taskr`, the same workflow becomes:
 
 ```bash
-uvx taskr init
-uvx taskr install-skill claude
-uvx taskr new "implement user invitation flow" --status in_progress
-uvx taskr list
-uvx taskr validate
+npx @xerrors/taskr init
+npx @xerrors/taskr install-skill claude
+npx @xerrors/taskr new "implement user invitation flow" --status in_progress
+npx @xerrors/taskr list
+npx @xerrors/taskr validate
 ```
+
+The npm package is scoped to the `xerrors` npm account and exposes a `taskr` binary.
 
 ## What Gets Created
 

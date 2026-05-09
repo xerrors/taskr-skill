@@ -1,27 +1,18 @@
-# Byte-compiled / optimized files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# Python packaging / build output
-build/
+# Build output
 dist/
-*.egg-info/
+
+# Node dependencies / package output
+node_modules/
+
+# Local agent state
+.claude/
+.taskr/
 
 # Test, coverage, and tool caches
-.pytest_cache/
 .coverage
 .coverage.*
-htmlcov/
-.mypy_cache/
-.ruff_cache/
-.pyre/
-.tox/
+coverage/
+.vitest/
 
 # Local editor and OS files
 .vscode/
