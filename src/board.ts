@@ -607,16 +607,54 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .card.card-compact {
       min-height: 0;
-      padding: 8px 10px;
+      display: grid;
+      gap: 7px;
+      padding: 10px 11px;
       border-radius: 8px;
-      background: rgba(20, 28, 37, 0.72);
+      background:
+        linear-gradient(180deg, rgba(20, 28, 37, 0.86), rgba(15, 21, 28, 0.72));
+      border-color: rgba(148, 163, 184, 0.13);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    }
+
+    .card.card-compact:hover,
+    .card.card-compact:focus-visible {
+      background:
+        linear-gradient(180deg, rgba(24, 35, 49, 0.92), rgba(18, 25, 34, 0.82));
+      border-color: rgba(148, 163, 184, 0.26);
     }
 
     .card.card-compact .card-title {
       margin: 0;
-      font-size: 0.9rem;
-      line-height: 1.3;
-      font-weight: 650;
+      font-size: 0.88rem;
+      line-height: 1.34;
+      font-weight: 680;
+    }
+
+    .compact-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+      color: var(--muted);
+    }
+
+    .compact-id {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.7rem;
+      font-weight: 620;
+    }
+
+    .card.card-compact .mini-progress {
+      flex: 0 0 auto;
+      min-width: 62px;
+      padding: 2px 0;
+      border: 0;
+      background: transparent;
     }
 
     .card-id {
@@ -1217,7 +1255,13 @@ export function renderBoardHtml(model: BoardModel): string {
 
       if (task.status === "implemented") {
         button.setAttribute("aria-label", task.title + " · " + (labels[task.status] || task.status));
-        button.append(title);
+        const meta = document.createElement("div");
+        meta.className = "compact-meta";
+        const compactId = document.createElement("span");
+        compactId.className = "compact-id";
+        compactId.textContent = task.id;
+        meta.append(compactId, criteriaPill(task));
+        button.append(title, meta);
         return button;
       }
 

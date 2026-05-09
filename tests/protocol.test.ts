@@ -136,6 +136,7 @@ describe("Taskr protocol", () => {
     expect(html).toContain('let currentView = "table"');
     expect(html).toContain("window.scrollY > 88");
     expect(html).toContain("window.scrollY > 16");
+    expect(html).toContain("compact-meta");
     expect(html).toContain("progressbar");
     expect(html).toContain("formatTimestamp");
     expect(html).toContain('task.relatedFiles.join("\\n")');
