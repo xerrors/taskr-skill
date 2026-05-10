@@ -12,7 +12,7 @@ Taskr 是一个面向 AI 辅助开发的仓库本地任务协议。
 
 - 把智能体工作绑定到明确的任务文件，而不是只依赖聊天上下文。
 - Claude 和 Codex 使用同一份共享 Skill。
-- 保持很小的四状态模型：`planned`、`in_progress`、`implemented`、`blocked`。
+- 保持很小的五状态模型：`planned`、`in_progress`、`pending_confirmation`、`implemented`、`blocked`。
 - 提供本地看板，用于浏览任务、查看提交、编辑任务小节。
 - 通过 npm CLI 分发，一条 `npx` 命令即可使用。
 
@@ -128,13 +128,14 @@ npx @xerrors/taskr board --open
 ```text
 planned
 in_progress
+pending_confirmation
 implemented
 blocked
 ```
 
-`implemented` 表示智能体完成了一轮实现。它不等于变更已经经过评审、合并、发布或完整测试。
+`pending_confirmation` 表示智能体已经完成实现和验证，正在等待用户确认提交或完成。`implemented` 表示用户已经确认该任务可以视为完成。
 
-看板会展示这四种状态。旧的 `closed` 任务文件会在看板中视为已完成，但 `closed` 不再是有效协议状态。
+看板会把 `in_progress` 和 `pending_confirmation` 放在同一个可视化列中，但保留它们各自的任务状态。旧的 `closed` 任务文件会在看板中视为已完成，但 `closed` 不再是有效协议状态。
 
 ## 本地开发
 

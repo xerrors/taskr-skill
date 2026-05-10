@@ -18,7 +18,8 @@ describe("Taskr skill guidance", () => {
     expect(SKILL).toContain("TDD is recommended");
     expect(SKILL).toContain("TDD is optional");
     expect(SKILL).toContain("Review against `## Request`");
-    expect(SKILL).toContain("Keep the task `in_progress`");
+    expect(SKILL).toContain("Set the task to `pending_confirmation`");
+    expect(SKILL).toContain("Use `implemented` only after the user confirms");
     expect(SKILL).toContain("failure or unable-to-run reason");
   });
 });

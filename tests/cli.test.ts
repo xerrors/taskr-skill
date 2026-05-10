@@ -93,6 +93,12 @@ describe("Taskr CLI", () => {
       ]),
     ).toBe(0);
     expect(run(["validate", "2026-05-10-implement-user-invitation-flow"])).toBe(0);
+    expect(
+      readFileSync(
+        resolve(repo, ".taskr/tasks/2026-05-10-implement-user-invitation-flow.md"),
+        "utf8",
+      ),
+    ).toContain("status: pending_confirmation");
     expect(existsSync(resolve(repo, ".claude/skills/taskr/SKILL.md"))).toBe(true);
     expect(existsSync(resolve(repo, ".codex/skills/taskr/SKILL.md"))).toBe(true);
   });

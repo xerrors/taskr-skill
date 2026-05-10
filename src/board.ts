@@ -115,6 +115,7 @@ export function renderBoardHtml(model: BoardModel): string {
       --focus: 0 0 0 3px rgba(56, 189, 248, 0.26);
       --planned: #f59e0b;
       --blocked: #fb7185;
+      --pending: #a78bfa;
       --implemented: #22c55e;
       --shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.24);
       --shadow-md: 0 18px 56px rgba(0, 0, 0, 0.34);
@@ -153,7 +154,10 @@ export function renderBoardHtml(model: BoardModel): string {
       mask-image: linear-gradient(to bottom, black, transparent 58%);
     }
 
-    button, input { font: inherit; }
+    button, input {
+      font: inherit;
+      touch-action: manipulation;
+    }
 
     .shell {
       width: min(1560px, calc(100vw - 32px));
@@ -202,12 +206,19 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     .eyebrow {
-      margin: 0 0 6px;
+      margin: 0;
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0;
       font-size: 0.72rem;
       font-weight: 700;
+    }
+
+    .masthead-topline {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin: 0 0 6px;
     }
 
     h1 {
@@ -283,22 +294,46 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(320px, 1fr) auto auto minmax(180px, auto) minmax(128px, auto);
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-4);
+      align-items: start;
+      margin: var(--space-5) 0 var(--space-4);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .toolbar-primary {
+      display: grid;
       gap: var(--space-2);
-      align-items: center;
-      margin: var(--space-4) 0 var(--space-3);
-      padding: var(--space-2);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: linear-gradient(180deg, rgba(18, 25, 34, 0.78), rgba(15, 21, 28, 0.68));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      min-width: 0;
+    }
+
+    .toolbar-secondary {
+      display: grid;
+      justify-items: end;
+      gap: var(--space-2);
+      min-width: 0;
+      align-self: start;
     }
 
     .search-wrap {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: var(--space-2);
       align-items: center;
       min-width: 0;
+    }
+
+    .toolbar-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      min-height: 22px;
+      padding: 0 2px;
     }
 
     .view-toggle {
@@ -310,19 +345,31 @@ export function renderBoardHtml(model: BoardModel): string {
       background: rgba(9, 13, 18, 0.58);
     }
 
-    .language-button {
-      min-width: 58px;
-      padding: 0 var(--space-3);
+    .icon-button.language-button {
+      min-width: 50px;
+      min-height: 30px;
+      padding: 0 9px;
       color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.22);
+      background: rgba(9, 13, 18, 0.28);
+      font-size: 0.76rem;
+      line-height: 1;
+    }
+
+    .masthead.is-compact .icon-button.language-button {
+      min-height: 26px;
+      padding: 0 7px;
+      font-size: 0.72rem;
     }
 
     .search {
       width: 100%;
       color: var(--ink);
-      border: 1px solid var(--line);
+      border: 1px solid rgba(148, 163, 184, 0.2);
       outline: none;
       border-radius: 8px;
-      background: rgba(9, 13, 18, 0.78);
+      background:
+        linear-gradient(180deg, rgba(18, 25, 34, 0.92), rgba(9, 13, 18, 0.78));
       min-height: 48px;
       padding: var(--space-3) var(--space-4);
       transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
@@ -429,7 +476,7 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     .toolbar-status {
-      min-width: 128px;
+      min-width: 0;
       color: var(--muted);
       font-size: 0.82rem;
       text-align: right;
@@ -438,7 +485,7 @@ export function renderBoardHtml(model: BoardModel): string {
     .hint {
       color: var(--muted);
       font-size: 0.84rem;
-      text-align: right;
+      text-align: left;
     }
 
     .is-hidden {
@@ -541,6 +588,7 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .status-chip[data-status="blocked"] .dot { background: var(--blocked); box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.12); }
     .status-chip[data-status="implemented"] .dot { background: var(--implemented); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12); }
+    .status-chip[data-status="pending_confirmation"] .dot { background: var(--pending); box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.12); }
     .status-chip[data-status="in_progress"] .dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12); }
 
     .table-empty {
@@ -752,6 +800,20 @@ export function renderBoardHtml(model: BoardModel): string {
       border: 1px solid rgba(148, 163, 184, 0.1);
       font-size: 0.72rem;
       letter-spacing: 0;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    .status-pill[data-status="pending_confirmation"] {
+      color: #ddd6fe;
+      background: rgba(167, 139, 250, 0.1);
+      border-color: rgba(167, 139, 250, 0.18);
     }
 
     .mini-progress {
@@ -1223,14 +1285,7 @@ export function renderBoardHtml(model: BoardModel): string {
       .masthead { grid-template-columns: 1fr; }
       .stats { min-width: 0; }
       .toolbar {
-        grid-template-columns: minmax(0, 1fr) auto auto;
-      }
-      .hint {
-        grid-column: 1 / 3;
-        text-align: left;
-      }
-      .toolbar-status {
-        text-align: right;
+        grid-template-columns: minmax(0, 1fr) auto;
       }
       .board { grid-template-columns: repeat(4, 280px); }
     }
@@ -1249,9 +1304,16 @@ export function renderBoardHtml(model: BoardModel): string {
       .stat strong { font-size: 1.35rem; }
       .toolbar { grid-template-columns: 1fr; }
       .search-wrap { width: 100%; }
+      .toolbar-secondary {
+        justify-items: stretch;
+        order: -1;
+      }
       .view-toggle { width: 100%; }
       .view-tab { flex: 1; }
-      .language-button { width: 100%; }
+      .toolbar-meta {
+        display: grid;
+        gap: 4px;
+      }
       .hint, .toolbar-status {
         grid-column: auto;
         text-align: left;
@@ -1303,7 +1365,10 @@ export function renderBoardHtml(model: BoardModel): string {
   <main class="shell">
     <section class="masthead" aria-labelledby="title">
       <div>
-        <p class="eyebrow" id="eyebrow">Repo-local task memory</p>
+        <div class="masthead-topline">
+          <p class="eyebrow" id="eyebrow">Repo-local task memory</p>
+          <button class="icon-button language-button" id="languageToggle" type="button">🌐 ZH</button>
+        </div>
         <h1 id="title">Taskr Board</h1>
         <p class="repo" id="repo"></p>
       </div>
@@ -1315,17 +1380,22 @@ export function renderBoardHtml(model: BoardModel): string {
     </section>
 
     <div class="toolbar">
-      <div class="search-wrap">
-        <input class="search" id="search" type="search" aria-label="Filter tasks" placeholder="Filter by title, id, request, or file..." autocomplete="off">
-        <button class="icon-button refresh-button" id="refresh" type="button" aria-label="Refresh tasks" title="Refresh tasks">Refresh</button>
+      <div class="toolbar-primary">
+        <div class="search-wrap">
+          <input class="search" id="search" type="search" aria-label="Filter tasks" placeholder="Filter by title, id, request, or file..." autocomplete="off">
+          <button class="icon-button refresh-button" id="refresh" type="button" aria-label="Refresh tasks" title="Refresh tasks">Refresh</button>
+        </div>
+        <div class="toolbar-meta">
+          <div class="hint" id="hint">Click any task to open its detail.</div>
+          <div class="toolbar-status" id="toolbarStatus" role="status" aria-live="polite"></div>
+        </div>
       </div>
-      <div class="view-toggle" role="group" aria-label="Board view">
-        <button class="view-tab" id="tableViewButton" type="button" aria-pressed="true">Table</button>
-        <button class="view-tab" id="boardViewButton" type="button" aria-pressed="false">Board</button>
+      <div class="toolbar-secondary">
+        <div class="view-toggle" role="group" aria-label="Board view">
+          <button class="view-tab" id="tableViewButton" type="button" aria-pressed="true">Table</button>
+          <button class="view-tab" id="boardViewButton" type="button" aria-pressed="false">Board</button>
+        </div>
       </div>
-      <button class="icon-button language-button" id="languageToggle" type="button">中文</button>
-      <div class="hint" id="hint">Click any task to open its detail.</div>
-      <div class="toolbar-status" id="toolbarStatus" role="status" aria-live="polite"></div>
     </div>
 
     <section class="table-view" id="tableView" aria-label="Taskr task table"></section>
@@ -1392,7 +1462,7 @@ export function renderBoardHtml(model: BoardModel): string {
           board: "Board"
         },
         languageToggle: {
-          label: "中文",
+          label: "🌐 ZH",
           aria: "Switch language to Chinese"
         },
         hint: "Click any task to open its detail.",
@@ -1429,6 +1499,7 @@ export function renderBoardHtml(model: BoardModel): string {
         statuses: {
           planned: "Planned",
           in_progress: "In Progress",
+          pending_confirmation: "Pending Confirmation",
           implemented: "Implemented",
           blocked: "Blocked"
         },
@@ -1491,7 +1562,7 @@ export function renderBoardHtml(model: BoardModel): string {
           board: "看板"
         },
         languageToggle: {
-          label: "EN",
+          label: "🌐 EN",
           aria: "切换到英文"
         },
         hint: "点击任意任务查看详情。",
@@ -1526,8 +1597,9 @@ export function renderBoardHtml(model: BoardModel): string {
         },
         tableHeaders: ["任务", "状态", "验收项", "更新于", "文件", "提交"],
         statuses: {
-          planned: "已计划",
+          planned: "已规划",
           in_progress: "进行中",
+          pending_confirmation: "待确认",
           implemented: "已实现",
           blocked: "受阻"
         },
@@ -1667,7 +1739,7 @@ export function renderBoardHtml(model: BoardModel): string {
     function updateStats() {
       document.querySelector("#repo").textContent = model.repoRoot;
       document.querySelector("#totalTasks").textContent = model.tasks.length;
-      document.querySelector("#activeTasks").textContent = model.tasks.filter((task) => ["planned", "in_progress", "blocked"].includes(task.status)).length;
+      document.querySelector("#activeTasks").textContent = model.tasks.filter((task) => ["planned", "in_progress", "pending_confirmation", "blocked"].includes(task.status)).length;
       document.querySelector("#implementedTasks").textContent = model.tasks.filter((task) => task.status === "implemented").length;
     }
 
@@ -1680,7 +1752,11 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     function renderBoard(tasks) {
-      board.replaceChildren(...model.statuses.map((status) => column(status, tasks.filter((task) => task.status === status))));
+      board.replaceChildren(
+        ...boardColumns().map((group) =>
+          column(group, tasks.filter((task) => group.statuses.includes(task.status)))
+        )
+      );
     }
 
     function renderTable(tasks) {
@@ -1779,10 +1855,19 @@ export function renderBoardHtml(model: BoardModel): string {
       syncView();
     }
 
-    function column(status, tasks) {
+    function boardColumns() {
+      return [
+        { id: "planned", statuses: ["planned"] },
+        { id: "in_progress", statuses: ["in_progress", "pending_confirmation"] },
+        { id: "implemented", statuses: ["implemented"] },
+        { id: "blocked", statuses: ["blocked"] }
+      ];
+    }
+
+    function column(group, tasks) {
       const element = document.createElement("article");
       element.className = "column";
-      element.dataset.status = status;
+      element.dataset.status = group.id;
 
       const header = document.createElement("div");
       header.className = "column-header";
@@ -1793,7 +1878,7 @@ export function renderBoardHtml(model: BoardModel): string {
       dot.className = "dot";
       dot.setAttribute("aria-hidden", "true");
       const label = document.createElement("span");
-      label.textContent = statusLabel(status);
+      label.textContent = group.statuses.map((status) => statusLabel(status)).join(" / ");
       title.append(dot, label);
 
       const count = document.createElement("span");
@@ -1851,6 +1936,9 @@ export function renderBoardHtml(model: BoardModel): string {
 
       const footer = document.createElement("div");
       footer.className = "card-footer";
+      if (task.status === "pending_confirmation") {
+        footer.append(statusPill(task.status));
+      }
       footer.append(
         criteriaPill(task),
         pill(commitSummary(task)),
@@ -2137,6 +2225,13 @@ export function renderBoardHtml(model: BoardModel): string {
       const element = document.createElement("span");
       element.className = "pill";
       element.textContent = value;
+      return element;
+    }
+
+    function statusPill(status) {
+      const element = pill(statusLabel(status));
+      element.className += " status-pill";
+      element.dataset.status = status;
       return element;
     }
 

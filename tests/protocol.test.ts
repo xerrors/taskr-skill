@@ -25,8 +25,14 @@ describe("Taskr protocol", () => {
     expect(slugify("实现用户邀请功能")).toMatch(/^task-/);
   });
 
-  it("defines the four canonical task statuses", () => {
-    expect([...VALID_STATUSES]).toEqual(["planned", "in_progress", "implemented", "blocked"]);
+  it("defines the five canonical task statuses", () => {
+    expect([...VALID_STATUSES]).toEqual([
+      "planned",
+      "in_progress",
+      "pending_confirmation",
+      "implemented",
+      "blocked",
+    ]);
   });
 
   it("initializes the protocol without an index cache", () => {
@@ -76,24 +82,29 @@ describe("Taskr protocol", () => {
     expect(validate(repo)).toEqual([]);
   });
 
-  it("requires summary and files for implemented tasks", () => {
+  it("requires summary and files for tasks awaiting confirmation", () => {
     const repo = tempRepo();
     initProtocol(repo);
     createTask(repo, "Implement billing webhook", { taskId: "implement-billing-webhook" });
 
     const path = taskPath(repo, "implement-billing-webhook");
-    const content = readFileSync(path, "utf8").replace("status: planned", "status: implemented");
+    const content = readFileSync(path, "utf8").replace(
+      "status: planned",
+      "status: pending_confirmation",
+    );
     writeFileSync(path, content, "utf8");
 
     const messages = validate(repo, "implement-billing-webhook").map((issue) => issue.message);
 
-    expect(messages).toContain("`implemented` tasks need a Completion Summary.");
     expect(messages).toContain(
-      "`implemented` tasks need `related_files` or `no_related_files_reason`.",
+      "`pending_confirmation` and `implemented` tasks need a Completion Summary.",
+    );
+    expect(messages).toContain(
+      "`pending_confirmation` and `implemented` tasks need `related_files` or `no_related_files_reason`.",
     );
   });
 
-  it("can produce a valid implemented task", () => {
+  it("can produce a valid task awaiting confirmation", () => {
     const repo = tempRepo();
     initProtocol(repo);
     createTask(repo, "Implement billing webhook", { taskId: "implement-billing-webhook" });
@@ -106,6 +117,8 @@ describe("Taskr protocol", () => {
       checkCriteria: true,
     });
 
+    const document = loadTask(taskPath(repo, "implement-billing-webhook"));
+    expect(document.metadata.status).toBe("pending_confirmation");
     expect(validate(repo, "implement-billing-webhook")).toEqual([]);
   });
 
@@ -116,15 +129,21 @@ describe("Taskr protocol", () => {
       taskId: "implement-board-visualization",
       status: "in_progress",
     });
+    createTask(repo, "Confirm board visualization", {
+      taskId: "confirm-board-visualization",
+      status: "pending_confirmation",
+    });
 
     const model = createBoardModel(repo);
     const html = renderBoardHtml(model);
 
     expect(model.statuses).toContain("in_progress");
+    expect(model.statuses).toContain("pending_confirmation");
     expect(model.statuses).not.toContain("closed");
-    expect(model.tasks).toHaveLength(1);
-    expect(model.tasks[0].id).toBe("implement-board-visualization");
-    expect(model.tasks[0].sections.Request).toContain("Implement board visualization");
+    expect(model.tasks).toHaveLength(2);
+    expect(
+      model.tasks.find((task) => task.id === "implement-board-visualization")?.sections.Request,
+    ).toContain("Implement board visualization");
     expect(html).toContain("Taskr Board");
     expect(html).toContain("Taskr Kanban board");
     expect(html).toContain("Click any task to open its detail.");
@@ -132,6 +151,15 @@ describe("Taskr protocol", () => {
     expect(html).toContain("Taskr task table");
     expect(html).toContain("languageStorageKey");
     expect(html).toContain("Switch language to Chinese");
+    expect(html).toContain("masthead-topline");
+    expect(html).toContain("🌐 ZH");
+    expect(html).toContain("🌐 EN");
+    expect(html).toContain("toolbar-primary");
+    expect(html).toContain("toolbar-secondary");
+    expect(html).toContain("border: 0;");
+    expect(html).toContain('statuses: ["in_progress", "pending_confirmation"]');
+    expect(html).toContain("Pending Confirmation");
+    expect(html).toContain("待确认");
     expect(html).toContain("Taskr 看板");
     expect(html).toContain("点击任意任务查看详情。");
     expect(html).toContain('let currentView = "table"');
@@ -266,7 +294,7 @@ describe("Taskr protocol", () => {
     expect(model.tasks[0].commits).toEqual([commit.slice(0, 7)]);
   });
 
-  it("maps legacy and unknown statuses into the four board columns", () => {
+  it("maps legacy and unknown statuses into board statuses", () => {
     const repo = tempRepo();
     initProtocol(repo);
     createTask(repo, "Inspect closed task", { taskId: "inspect-closed-task" });
@@ -288,7 +316,13 @@ describe("Taskr protocol", () => {
     const closedTask = model.tasks.find((task) => task.id === "inspect-closed-task");
     const oddTask = model.tasks.find((task) => task.id === "inspect-odd-task-state");
 
-    expect(model.statuses).toEqual(["planned", "in_progress", "implemented", "blocked"]);
+    expect(model.statuses).toEqual([
+      "planned",
+      "in_progress",
+      "pending_confirmation",
+      "implemented",
+      "blocked",
+    ]);
     expect(closedTask?.status).toBe("implemented");
     expect(closedTask?.originalStatus).toBe("closed");
     expect(oddTask?.status).toBe("blocked");

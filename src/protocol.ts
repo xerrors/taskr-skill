@@ -19,7 +19,13 @@ export const TEMPLATES_DIR = "templates";
 export const TASK_TEMPLATE = "task.md";
 
 export const SCHEMA_VERSION = 1;
-export const VALID_STATUSES = ["planned", "in_progress", "implemented", "blocked"] as const;
+export const VALID_STATUSES = [
+  "planned",
+  "in_progress",
+  "pending_confirmation",
+  "implemented",
+  "blocked",
+] as const;
 export const VALID_COMMIT_STATUSES = ["created", "not_created", "not_applicable"] as const;
 export const SKILL_TARGETS = ["claude", "codex"] as const;
 export const REQUIRED_SECTIONS = [
@@ -149,7 +155,7 @@ export function defaultConfig(): TaskMetadata {
     },
     agent: {
       preferred_update_method: "cli_or_direct_file",
-      default_status_after_code_change: "implemented",
+      default_status_after_code_change: "pending_confirmation",
       require_completion_summary: true,
       require_related_files: true,
     },
@@ -532,7 +538,7 @@ export function completeTask(
   document.metadata.commit_status =
     commitStatus ?? (mergedCommits.length > 0 ? "created" : "not_created");
   document.metadata.related_files = unique([...existingFiles, ...fileList]);
-  document.metadata.status = "implemented";
+  document.metadata.status = "pending_confirmation";
   if (testsRun !== undefined || verificationResult !== undefined) {
     document.metadata.verification = {
       tests_run: testsRun ?? [],
@@ -554,7 +560,7 @@ export function completeTask(
   document.body = appendToSection(
     document.body,
     "Progress Log",
-    `- ${logTimestamp()} - Marked implemented.`,
+    `- ${logTimestamp()} - Marked pending confirmation.`,
   );
   writeTask(document);
   return document;
@@ -615,10 +621,13 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     }
   }
 
-  if (status === "implemented") {
+  if (status === "pending_confirmation" || status === "implemented") {
     const summary = (sections["Completion Summary"] ?? "").trim();
     if (summary === "" || summary === "Empty.") {
-      issues.push({ path, message: "`implemented` tasks need a Completion Summary." });
+      issues.push({
+        path,
+        message: "`pending_confirmation` and `implemented` tasks need a Completion Summary.",
+      });
     }
 
     const commits = asStringArray(metadata.commits);
@@ -631,7 +640,8 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     if (relatedFiles.length === 0 && !noFilesReason) {
       issues.push({
         path,
-        message: "`implemented` tasks need `related_files` or `no_related_files_reason`.",
+        message:
+          "`pending_confirmation` and `implemented` tasks need `related_files` or `no_related_files_reason`.",
       });
     }
 
@@ -642,7 +652,8 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     } else if (!checkboxMatches.some((match) => match[1].toLowerCase() === "x")) {
       issues.push({
         path,
-        message: "`implemented` tasks should mark checked Acceptance Criteria.",
+        message:
+          "`pending_confirmation` and `implemented` tasks should mark checked Acceptance Criteria.",
       });
     }
   }

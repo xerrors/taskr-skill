@@ -382,7 +382,7 @@ Commands:
   doctor                          Check protocol, task, skill, and environment status.
   status <task_id> <status>       Update a task status.
   note <task_id> <note>           Append an agent note to a task.
-  complete <task_id>              Mark a task implemented.
+  complete <task_id>              Mark a task pending confirmation.
 
 Run "taskr <command> --help" for command-specific options.
 `);
@@ -419,7 +419,7 @@ Create a Markdown task file under .taskr/tasks/.
 
 Options:
   --id        Explicit lower-kebab-case task id.
-  --status    Initial status: planned, in_progress, implemented, or blocked.
+  --status    Initial status: planned, in_progress, pending_confirmation, implemented, or blocked.
   --request   Original request text to place in the task body.
 `,
     list: `Usage: taskr list [--status status]
@@ -427,7 +427,7 @@ Options:
 List Taskr tasks.
 
 Options:
-  --status    Filter by status: planned, in_progress, implemented, or blocked.
+  --status    Filter by status: planned, in_progress, pending_confirmation, implemented, or blocked.
 `,
     show: `Usage: taskr show <task_id>
 
@@ -456,7 +456,7 @@ status, project skill installation clues, and the local Node runtime.
 
 Update a task status.
 
-Statuses: planned, in_progress, implemented, blocked.
+Statuses: planned, in_progress, pending_confirmation, implemented, blocked.
 `,
     note: `Usage: taskr note <task_id> <note>
 
@@ -464,7 +464,7 @@ Append a note to ## Agent Notes and record the update in ## Progress Log.
 `,
     complete: `Usage: taskr complete <task_id> --summary text [options]
 
-Mark a task implemented and update its completion metadata.
+Mark a task pending confirmation and update its completion metadata.
 
 Options:
   --summary text           Required completion summary.

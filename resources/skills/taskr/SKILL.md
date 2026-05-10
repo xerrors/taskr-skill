@@ -31,8 +31,8 @@ If the CLI is unavailable, copy this shared skill file to the platform-specific 
 - If `.taskr/` exists, use Taskr for substantial implementation, fix, refactor, investigation, and planning work in the repo.
 - If `.taskr/` does not exist, initialize it only when the user explicitly mentions Taskr or invokes `/taskr`.
 - Do not create a task for trivial edits unless the user asks to track them.
-- Prefer reusing a matching `planned` or `in_progress` task over creating a duplicate.
-- Do not use `closed`; Taskr tracks only planned, in-progress, implemented, and blocked work.
+- Prefer reusing a matching `planned`, `in_progress`, or `pending_confirmation` task over creating a duplicate.
+- Do not use `closed`; Taskr tracks only planned, in-progress, pending-confirmation, implemented, and blocked work.
 
 ## Intent And Confirmation Policy
 
@@ -54,7 +54,7 @@ taskr init
 taskr new "implement user invitation flow" --status in_progress
 taskr status 2026-05-10-user-invitation in_progress
 taskr note 2026-05-10-user-invitation "Found existing workspace role model."
-taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow." --file path/to/file.py --check-criteria
+taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow; waiting for user confirmation." --file path/to/file.py --check-criteria
 taskr validate 2026-05-10-user-invitation
 ```
 
@@ -70,13 +70,14 @@ For multi-task requests:
 2. Work one task at a time unless the user explicitly asks to batch tasks together.
 3. Confirm the user has explicitly approved implementation for the current task before editing source files.
 4. Move the current task to `in_progress`, implement it, verify it, and report the result before starting the next task.
-5. Commit and mark the task `implemented` only when the user has explicitly approved that step, or when the current request already asked you to implement, verify, and submit completed tasks.
-6. Keep a short running plan outside Taskr if it helps the user follow long work, but keep durable task state in `.taskr/`.
+5. After implementation and verification, mark the task `pending_confirmation`, not `implemented`.
+6. Commit and mark the task `implemented` only when the user has explicitly approved submission/completion, or when the current request already asked you to implement, verify, and submit completed tasks.
+7. Keep a short running plan outside Taskr if it helps the user follow long work, but keep durable task state in `.taskr/`.
 
 Before starting substantial work:
 
 1. Check whether `.taskr/` exists.
-2. List or inspect existing `planned` and `in_progress` tasks, then reuse a matching task when one exists.
+2. List or inspect existing `planned`, `in_progress`, and `pending_confirmation` tasks, then reuse a matching task when one exists.
 3. If Taskr is active and no matching task exists, create one task under `.taskr/tasks/`.
 4. Use a lower-kebab-case task id.
 5. Prefix new task file ids with the local date, at least `YYYY-MM-DD`, for example `2026-05-10-implement-user-invitation-flow.md`. Keep the date prefix lower-kebab-case compatible and human-readable. Existing task files without a date prefix may remain unchanged.
@@ -125,18 +126,18 @@ During work:
 - Commit after each completed task when the user requests task-by-task commits.
 - Use a normal first-line summary. Put the Taskr reference in the commit message footer, for example `Taskr: 2026-05-10-user-invitation`.
 - Legacy `[taskr:<task-id>]` messages may still be read by older tooling, but new commits should prefer the footer.
-- After the commit succeeds, record the commit hash in the task using `taskr complete --commit <hash>` or by editing the task file.
+- After the commit succeeds, record the commit hash in the task metadata and set status to `implemented`; if using the CLI, run `taskr complete --commit <hash> ...` to record metadata, then `taskr status <task-id> implemented` after user confirmation.
 - If `.taskr/` is ignored by Git, still update it locally; the Markdown task files remain the working record even when they are not committed.
 
 After implementation and verification:
 
-1. Keep the task `in_progress` while waiting for user confirmation to commit or mark complete.
-2. Update `## Completion Summary` when completion is confirmed.
+1. Set the task to `pending_confirmation` after implementation and verification are done but before user confirmation.
+2. Update `## Completion Summary` before or when moving into `pending_confirmation`.
 3. Record changed files in `related_files`, or add `no_related_files_reason`.
 4. Record commits when created and set `commit_status` to `created`, `not_created`, or `not_applicable`.
 5. Check acceptance criteria that are satisfied.
 6. Record verification commands or checks and result in `verification`.
-7. Set status to `implemented` only after completion is confirmed unless the work is blocked.
+7. Set status to `implemented` only after the user confirms submission/completion unless the work is blocked.
 8. Run `taskr validate <task-id>` when possible.
 
 ## Task File Contract
@@ -164,11 +165,12 @@ Required statuses:
 ```text
 planned
 in_progress
+pending_confirmation
 implemented
 blocked
 ```
 
-Use `implemented` for completed agent work. Use `blocked` when missing context, dependencies, or errors prevent progress.
+Use `pending_confirmation` for completed agent work that is waiting for user confirmation. Use `implemented` only after the user confirms the work can be submitted or treated as done. Use `blocked` when missing context, dependencies, or errors prevent progress.
 
 Required commit statuses:
 
@@ -178,4 +180,4 @@ not_created
 not_applicable
 ```
 
-Implemented tasks must have a completion summary, checked acceptance criteria, an explicit commit status, and either `related_files` or `no_related_files_reason`.
+`pending_confirmation` and `implemented` tasks must have a completion summary, checked acceptance criteria, an explicit commit status, and either `related_files` or `no_related_files_reason`.
