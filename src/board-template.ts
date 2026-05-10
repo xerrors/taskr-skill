@@ -45,6 +45,13 @@ ${boardStyles}
         </div>
       </div>
       <div class="toolbar-secondary">
+        <label class="sort-control">
+          <span id="sortLabel">Sort</span>
+          <select id="sortSelect" aria-label="Sort tasks">
+            <option value="updatedAt">Updated</option>
+            <option value="createdAt">Created</option>
+          </select>
+        </label>
         <div class="view-toggle" role="group" aria-label="Board view">
           <button class="view-tab" id="tableViewButton" type="button" aria-pressed="true">Table</button>
           <button class="view-tab" id="boardViewButton" type="button" aria-pressed="false">Board</button>

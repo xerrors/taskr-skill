@@ -6,6 +6,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -413,6 +414,15 @@ export function loadTaskById(repoRoot: string, id: string): TaskDocument {
     throw new TaskrError(`Task not found: ${id}`);
   }
   return loadTask(path);
+}
+
+export function deleteTask(repoRoot: string, id: string): TaskDocument {
+  if (!SLUG_RE.test(id)) {
+    throw new TaskrError(`Invalid task id: ${id}`);
+  }
+  const document = loadTaskById(repoRoot, id);
+  unlinkSync(document.path);
+  return document;
 }
 
 export function writeTask(document: TaskDocument): void {

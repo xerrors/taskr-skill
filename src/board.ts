@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { execFileSync, spawn } from "node:child_process";
 import { renderBoardHtml } from "./board-template.js";
 import {
+  deleteTask,
   extractSections,
   listTasks,
   loadTaskById,
@@ -109,6 +110,27 @@ async function handleBoardRequest(
     return;
   }
 
+  const taskMatch = /^\/api\/tasks\/([^/]+)$/.exec(url.pathname);
+  if (request.method === "DELETE" && taskMatch) {
+    const id = decodeURIComponent(taskMatch[1]);
+    try {
+      deleteTask(repoRoot, id);
+      sendJson(response, 200, createBoardModel(repoRoot));
+    } catch (error) {
+      if (error instanceof TaskrError) {
+        const status = error.message.startsWith("Task not found")
+          ? 404
+          : error.message.startsWith("Invalid task id")
+            ? 400
+            : 500;
+        sendJson(response, status, { error: error.message });
+        return;
+      }
+      throw error;
+    }
+    return;
+  }
+
   if (request.method === "GET" && url.pathname === "/") {
     response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
     response.end(renderBoardHtml(createBoardModel(repoRoot)));
@@ -161,6 +183,7 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
     status: boardStatus(originalStatus),
     originalStatus,
     path: relative(document.path, repoRoot),
+    createdAt: String(document.metadata.created_at ?? ""),
     updatedAt: String(document.metadata.updated_at ?? ""),
     branch: document.metadata.branch === null ? null : String(document.metadata.branch ?? ""),
     commitStatus: String(document.metadata.commit_status ?? "not_created"),

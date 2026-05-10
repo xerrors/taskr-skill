@@ -9,11 +9,13 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     const tableViewButton = document.querySelector("#tableViewButton");
     const boardViewButton = document.querySelector("#boardViewButton");
     const languageToggle = document.querySelector("#languageToggle");
+    const sortSelect = document.querySelector("#sortSelect");
     const toolbarStatus = document.querySelector("#toolbarStatus");
     const masthead = document.querySelector(".masthead");
     const languageStorageKey = "taskr-board-language";
     let activeId = null;
     let currentView = "table";
+    let sortBy = "updatedAt";
     let language = preferredLanguage();
     let statusTimer = null;
     let headerCompact = false;
@@ -36,6 +38,12 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         refresh: {
           label: "Refresh",
           aria: "Refresh tasks"
+        },
+        sort: {
+          label: "Sort",
+          aria: "Sort tasks",
+          created: "Created",
+          updated: "Updated"
         },
         view: {
           aria: "Board view",
@@ -108,7 +116,19 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         actions: {
           edit: "Edit",
           cancel: "Cancel",
-          save: "Save"
+          save: "Save",
+          delete: "Delete",
+          confirmDelete: "Delete task",
+          keepTask: "Keep task"
+        },
+        danger: {
+          title: "Danger zone",
+          copy: "Deleting this task removes the local Markdown file.",
+          confirmTitle: "Delete this task?",
+          warning: "This will permanently delete {path}.",
+          task: "Task",
+          id: "ID",
+          path: "Path"
         },
         statusMessages: {
           refreshing: "Refreshing...",
@@ -116,7 +136,10 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           refreshFailed: "Refresh failed",
           saving: "Saving...",
           saved: "Saved",
-          saveFailed: "Save failed"
+          saveFailed: "Save failed",
+          deleting: "Deleting...",
+          deleted: "Deleted",
+          deleteFailed: "Delete failed"
         },
         contentAria: "{section} content"
       },
@@ -136,6 +159,12 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         refresh: {
           label: "刷新",
           aria: "刷新任务"
+        },
+        sort: {
+          label: "排序",
+          aria: "任务排序",
+          created: "创建时间",
+          updated: "更新时间"
         },
         view: {
           aria: "看板视图",
@@ -208,7 +237,19 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         actions: {
           edit: "编辑",
           cancel: "取消",
-          save: "保存"
+          save: "保存",
+          delete: "删除",
+          confirmDelete: "确认删除",
+          keepTask: "保留任务"
+        },
+        danger: {
+          title: "危险操作",
+          copy: "删除任务会移除本地 Markdown 文件。",
+          confirmTitle: "删除这个任务？",
+          warning: "这会永久删除 {path}。",
+          task: "任务",
+          id: "ID",
+          path: "路径"
         },
         statusMessages: {
           refreshing: "正在刷新...",
@@ -216,7 +257,10 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           refreshFailed: "刷新失败",
           saving: "正在保存...",
           saved: "已保存",
-          saveFailed: "保存失败"
+          saveFailed: "保存失败",
+          deleting: "正在删除...",
+          deleted: "已删除",
+          deleteFailed: "删除失败"
         },
         contentAria: "{section}内容"
       }
@@ -289,6 +333,11 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       refreshButton.textContent = t("refresh.label");
       refreshButton.setAttribute("aria-label", t("refresh.aria"));
       refreshButton.title = t("refresh.aria");
+      document.querySelector("#sortLabel").textContent = t("sort.label");
+      sortSelect.setAttribute("aria-label", t("sort.aria"));
+      sortSelect.title = t("sort.aria");
+      sortSelect.options[0].textContent = t("sort.updated");
+      sortSelect.options[1].textContent = t("sort.created");
       document.querySelector(".view-toggle").setAttribute("aria-label", t("view.aria"));
       tableViewButton.textContent = t("view.table");
       boardViewButton.textContent = t("view.board");
@@ -326,10 +375,32 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
 
     function render() {
       const query = search.value.trim().toLowerCase();
-      const tasks = model.tasks.filter((task) => matches(task, query));
+      const tasks = sortTasks(model.tasks.filter((task) => matches(task, query)));
       renderBoard(tasks);
       renderTable(tasks);
       syncView();
+    }
+
+    function sortTasks(tasks) {
+      return [...tasks].sort((left, right) => {
+        const field = sortBy === "createdAt" ? "createdAt" : "updatedAt";
+        const compared = compareTimestamp(right[field], left[field]);
+        if (compared !== 0) return compared;
+        return left.title.localeCompare(right.title) || left.id.localeCompare(right.id);
+      });
+    }
+
+    function compareTimestamp(left, right) {
+      const leftTime = timestampValue(left);
+      const rightTime = timestampValue(right);
+      if (leftTime !== rightTime) return leftTime - rightTime;
+      return String(left || "").localeCompare(String(right || ""));
+    }
+
+    function timestampValue(value) {
+      const normalized = String(value || "").replace(/([+-]\\d{2})(\\d{2})$/, "$1:$2");
+      const time = Date.parse(normalized);
+      return Number.isNaN(time) ? 0 : time;
     }
 
     function renderBoard(tasks) {
@@ -576,6 +647,81 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       for (const name of ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"]) {
         fragment.append(section(name, task.sections[name] || t("empty")));
       }
+      fragment.append(dangerZone(task));
+      return fragment;
+    }
+
+    function dangerZone(task) {
+      const wrapper = document.createElement("section");
+      wrapper.className = "danger-zone";
+
+      const head = document.createElement("div");
+      head.className = "danger-zone-head";
+      const text = document.createElement("div");
+      const title = document.createElement("h3");
+      title.textContent = t("danger.title");
+      const copy = document.createElement("p");
+      copy.textContent = t("danger.copy");
+      text.append(title, copy);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "danger-button";
+      deleteButton.textContent = t("actions.delete");
+
+      head.append(text, deleteButton);
+
+      const confirm = document.createElement("div");
+      confirm.className = "danger-confirm";
+      confirm.hidden = true;
+      const confirmTitle = document.createElement("h4");
+      confirmTitle.textContent = t("danger.confirmTitle");
+      const warning = document.createElement("p");
+      warning.textContent = t("danger.warning").replace("{path}", task.path);
+      const facts = document.createElement("dl");
+      facts.className = "danger-facts";
+      facts.append(
+        fact(t("danger.task"), task.title),
+        fact(t("danger.id"), task.id),
+        fact(t("danger.path"), task.path)
+      );
+      const status = document.createElement("div");
+      status.className = "danger-status";
+      const actions = document.createElement("div");
+      actions.className = "danger-actions";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "section-action";
+      cancel.textContent = t("actions.keepTask");
+      const confirmDelete = document.createElement("button");
+      confirmDelete.type = "button";
+      confirmDelete.className = "danger-button danger-button-solid";
+      confirmDelete.textContent = t("actions.confirmDelete");
+      actions.append(cancel, confirmDelete);
+      confirm.append(confirmTitle, warning, facts, status, actions);
+
+      deleteButton.addEventListener("click", () => {
+        confirm.hidden = false;
+        confirmDelete.focus({ preventScroll: true });
+      });
+      cancel.addEventListener("click", () => {
+        status.textContent = "";
+        confirm.hidden = true;
+        deleteButton.focus({ preventScroll: true });
+      });
+      confirmDelete.addEventListener("click", () => deleteTaskFromDetail(task, status, confirmDelete, cancel));
+
+      wrapper.append(head, confirm);
+      return wrapper;
+    }
+
+    function fact(label, value) {
+      const fragment = document.createDocumentFragment();
+      const term = document.createElement("dt");
+      term.textContent = label;
+      const description = document.createElement("dd");
+      description.textContent = value;
+      fragment.append(term, description);
       return fragment;
     }
 
@@ -924,6 +1070,32 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       }
     }
 
+    async function deleteTaskFromDetail(task, statusNode, confirmButton, cancelButton) {
+      confirmButton.disabled = true;
+      cancelButton.disabled = true;
+      statusNode.textContent = t("statusMessages.deleting");
+      try {
+        const response = await fetch("/api/tasks/" + encodeURIComponent(task.id), {
+          method: "DELETE",
+          headers: { accept: "application/json" }
+        });
+        const data = await parseJson(response);
+        if (!response.ok) {
+          throw new Error(data && data.error ? data.error : t("statusMessages.deleteFailed"));
+        }
+        model = data;
+        updateStats();
+        setToolbarStatus(t("statusMessages.deleted"));
+        closeDetail();
+      } catch (error) {
+        statusNode.textContent = t("statusMessages.deleteFailed") + ": " + errorMessage(error);
+        setToolbarStatus(t("statusMessages.deleteFailed") + ": " + errorMessage(error), true);
+      } finally {
+        confirmButton.disabled = false;
+        cancelButton.disabled = false;
+      }
+    }
+
     async function parseJson(response) {
       try {
         return await response.json();
@@ -947,6 +1119,13 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       document.querySelector("#detailBody").replaceChildren(empty);
       activeId = null;
       render();
+    }
+
+    function closeDeleteConfirm() {
+      const confirm = detail.querySelector(".danger-confirm:not([hidden])");
+      if (!confirm) return false;
+      confirm.hidden = true;
+      return true;
     }
 
     function setToolbarStatus(message, sticky = false) {
@@ -976,12 +1155,19 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     backdrop.addEventListener("click", closeDetail);
     search.addEventListener("input", render);
     refreshButton.addEventListener("click", loadTasks);
+    sortSelect.addEventListener("change", () => {
+      sortBy = sortSelect.value === "createdAt" ? "createdAt" : "updatedAt";
+      render();
+    });
     tableViewButton.addEventListener("click", () => setView("table"));
     boardViewButton.addEventListener("click", () => setView("board"));
     languageToggle.addEventListener("click", () => setLanguage(language === "en" ? "zh" : "en"));
     window.addEventListener("scroll", syncHeader, { passive: true });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && detail.classList.contains("is-open")) closeDetail();
+      if (event.key === "Escape" && detail.classList.contains("is-open")) {
+        if (closeDeleteConfirm()) return;
+        closeDetail();
+      }
     });
 
     applyLanguage();

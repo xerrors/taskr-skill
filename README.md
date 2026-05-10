@@ -93,7 +93,7 @@ Use `taskr board` to serve a repo-local task board for `.taskr/tasks/*.md`.
 npx @xerrors/taskr board --open
 ```
 
-The board opens in table view by default for quick scanning. It can switch to a status-oriented Kanban view, expands a detail drawer when you click a task, shows commit status and file-level diff stats, supports manual refresh, renders lightweight Markdown in task sections, and can edit sections back into the original task files.
+The board opens in table view by default for quick scanning. It can sort table and Kanban lists by updated time or created time, switch to a status-oriented Kanban view, expand a detail drawer when you click a task, show commit status and file-level diff stats, support manual refresh, render lightweight Markdown in task sections, and edit sections back into the original task files. The detail drawer also includes a confirmed delete action that removes the task's local Markdown file.
 
 ## What Gets Created
 

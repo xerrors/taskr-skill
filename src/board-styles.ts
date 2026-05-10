@@ -248,6 +248,37 @@ export const boardStyles = `    :root {
       background: rgba(9, 13, 18, 0.58);
     }
 
+    .sort-control {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 40px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .sort-control span {
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .sort-control select {
+      min-height: 40px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(9, 13, 18, 0.58);
+      padding: 0 34px 0 11px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .sort-control select:focus-visible {
+      border-color: var(--accent-2);
+      box-shadow: var(--focus);
+    }
+
     .icon-button.language-button {
       min-width: 50px;
       min-height: 30px;
@@ -1156,6 +1187,123 @@ export const boardStyles = `    :root {
       overflow-wrap: anywhere;
     }
 
+    .danger-zone {
+      margin-top: 14px;
+      border: 1px solid rgba(251, 113, 133, 0.28);
+      border-radius: 8px;
+      background: rgba(127, 29, 29, 0.12);
+      overflow: hidden;
+    }
+
+    .danger-zone-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px;
+    }
+
+    .danger-zone h3,
+    .danger-zone h4 {
+      margin: 0;
+      color: #fecdd3;
+      letter-spacing: 0;
+      font-size: 0.84rem;
+      font-weight: 750;
+    }
+
+    .danger-zone p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .danger-button {
+      min-height: 36px;
+      border: 1px solid rgba(251, 113, 133, 0.34);
+      border-radius: 8px;
+      color: #fecdd3;
+      background: rgba(127, 29, 29, 0.22);
+      padding: 0 12px;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    .danger-button:hover,
+    .danger-button:focus-visible {
+      border-color: rgba(251, 113, 133, 0.58);
+      background: rgba(127, 29, 29, 0.34);
+      outline: none;
+    }
+
+    .danger-button:focus-visible {
+      box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.2);
+    }
+
+    .danger-button-solid {
+      color: #fff1f2;
+      background: rgba(225, 29, 72, 0.72);
+      border-color: rgba(251, 113, 133, 0.74);
+    }
+
+    .danger-button[disabled] {
+      cursor: wait;
+      color: var(--faint);
+      background: rgba(127, 29, 29, 0.12);
+    }
+
+    .danger-confirm {
+      display: grid;
+      gap: 10px;
+      padding: 13px;
+      border-top: 1px solid rgba(251, 113, 133, 0.2);
+      background: rgba(9, 13, 18, 0.38);
+    }
+
+    .danger-confirm[hidden] {
+      display: none;
+    }
+
+    .danger-facts {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 6px 10px;
+      margin: 0;
+      padding: 10px;
+      border: 1px solid rgba(251, 113, 133, 0.14);
+      border-radius: 8px;
+      background: rgba(15, 21, 28, 0.64);
+    }
+
+    .danger-facts dt {
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: 0.66rem;
+      font-weight: 750;
+    }
+
+    .danger-facts dd {
+      min-width: 0;
+      margin: 0;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+      font-size: 0.8rem;
+    }
+
+    .danger-status {
+      min-height: 18px;
+      color: #fecdd3;
+      font-size: 0.78rem;
+    }
+
+    .danger-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
     .section textarea {
       width: 100%;
       min-height: 180px;
@@ -1218,6 +1366,13 @@ export const boardStyles = `    :root {
       .toolbar-secondary {
         justify-items: stretch;
         order: -1;
+      }
+      .sort-control {
+        justify-content: space-between;
+        width: 100%;
+      }
+      .sort-control select {
+        min-width: 150px;
       }
       .view-toggle { width: 100%; }
       .view-tab { flex: 1; }

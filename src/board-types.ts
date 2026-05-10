@@ -4,6 +4,7 @@ export interface BoardTask {
   status: string;
   originalStatus: string;
   path: string;
+  createdAt: string;
   updatedAt: string;
   branch: string | null;
   commitStatus: string;

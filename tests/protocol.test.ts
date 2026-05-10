@@ -168,6 +168,7 @@ describe("Taskr protocol", () => {
     expect(
       model.tasks.find((task) => task.id === "implement-board-visualization")?.sections.Request,
     ).toContain("Implement board visualization");
+    expect(model.tasks[0].createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(html).toContain("Taskr Board");
     expect(html).toContain(boardStyles);
     expect(html).toContain(boardClientScript);
@@ -182,6 +183,12 @@ describe("Taskr protocol", () => {
     expect(html).toContain("🌐 EN");
     expect(html).toContain("toolbar-primary");
     expect(html).toContain("toolbar-secondary");
+    expect(html).toContain("sortSelect");
+    expect(html).toContain("Sort tasks");
+    expect(html).toContain("Created");
+    expect(html).toContain("更新时间");
+    expect(html).toContain("sortTasks");
+    expect(html).toContain("createdAt");
     expect(html).toContain("border: 0;");
     expect(html).toContain('statuses: ["in_progress", "pending_confirmation"]');
     expect(html).toContain("Pending Confirmation");
@@ -203,6 +210,9 @@ describe("Taskr protocol", () => {
     expect(html).toContain("grid-template-columns: auto minmax(0, 1fr);");
     expect(html).toContain("task-list-item-content");
     expect(html).toContain("overflow-wrap: anywhere;");
+    expect(html).toContain("danger-zone");
+    expect(html).toContain("Delete task");
+    expect(html).toContain("删除任务会移除本地 Markdown 文件");
   });
 
   it("loads file-level diff details for task commits in the board model", () => {
@@ -381,6 +391,60 @@ describe("Taskr protocol", () => {
       expect(model.tasks[0].sections.Request).toBe("Updated from the board.");
       expect(content).toContain("## Request\n\nUpdated from the board.");
       expect(content).toContain("## Acceptance Criteria");
+    } finally {
+      await new Promise<void>((resolveClose, rejectClose) => {
+        server.close((error) => (error ? rejectClose(error) : resolveClose()));
+      });
+    }
+  });
+
+  it("deletes task files through the board API", async () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Delete task sections", { taskId: "delete-task-sections" });
+    createTask(repo, "Keep another task", { taskId: "keep-another-task" });
+
+    const { server, url } = await startBoardServer(repo, {
+      host: "127.0.0.1",
+      port: 0,
+    });
+
+    try {
+      const response = await fetch(new URL("api/tasks/delete-task-sections", url), {
+        method: "DELETE",
+        headers: { accept: "application/json" },
+      });
+      const model = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(existsSync(taskPath(repo, "delete-task-sections"))).toBe(false);
+      expect(existsSync(taskPath(repo, "keep-another-task"))).toBe(true);
+      expect(model.tasks.map((task: { id: string }) => task.id)).toEqual(["keep-another-task"]);
+    } finally {
+      await new Promise<void>((resolveClose, rejectClose) => {
+        server.close((error) => (error ? rejectClose(error) : resolveClose()));
+      });
+    }
+  });
+
+  it("returns not found when deleting a missing task through the board API", async () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+
+    const { server, url } = await startBoardServer(repo, {
+      host: "127.0.0.1",
+      port: 0,
+    });
+
+    try {
+      const response = await fetch(new URL("api/tasks/missing-task", url), {
+        method: "DELETE",
+        headers: { accept: "application/json" },
+      });
+      const body = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(body.error).toBe("Task not found: missing-task");
     } finally {
       await new Promise<void>((resolveClose, rejectClose) => {
         server.close((error) => (error ? rejectClose(error) : resolveClose()));
