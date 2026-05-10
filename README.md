@@ -114,7 +114,7 @@ The npm package is [`@xerrors/taskr`](https://www.npmjs.com/package/@xerrors/tas
 `taskr doctor` checks whether the current repository is ready for Taskr:
 
 - `.taskr/` initialization.
-- Config, schema, and task directory presence.
+- Task directory presence.
 - Task Markdown validation.
 - Project-level Claude/Codex Skill installation clues.
 - Local Node runtime compatibility.
@@ -129,8 +129,6 @@ npx --yes @xerrors/taskr doctor
 
 ```text
 .taskr/
-├── config.yaml
-├── schema.yaml
 ├── templates/
 │   └── task.md
 └── tasks/

@@ -141,28 +141,6 @@ export function ensureUniqueTaskId(repoRoot: string, desired: string): string {
   return candidate;
 }
 
-export function defaultConfig(): TaskMetadata {
-  return {
-    version: SCHEMA_VERSION,
-    tasks_dir: ".taskr/tasks",
-    id: {
-      style: "kebab-case",
-      generated_by: "agent",
-    },
-    statuses: [...VALID_STATUSES],
-    commit: {
-      required_for_implemented: false,
-      convention: "Taskr: {id}",
-    },
-    agent: {
-      preferred_update_method: "cli_or_direct_file",
-      default_status_after_code_change: "pending_confirmation",
-      require_completion_summary: true,
-      require_related_files: true,
-    },
-  };
-}
-
 export function defaultSchema(): TaskMetadata {
   return {
     schema_version: SCHEMA_VERSION,
@@ -242,8 +220,6 @@ export function initProtocol(repoRoot: string, force = false): string[] {
   mkdirSync(resolve(root, TEMPLATES_DIR), { recursive: true });
 
   const files = new Map<string, string>([
-    [resolve(root, "config.yaml"), dumpYaml(defaultConfig())],
-    [resolve(root, "schema.yaml"), dumpYaml(defaultSchema())],
     [resolve(root, TEMPLATES_DIR, TASK_TEMPLATE), taskTemplatePlaceholder()],
   ]);
 

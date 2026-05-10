@@ -53,6 +53,10 @@ describe("Taskr CLI", () => {
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[ok] Protocol: .taskr/ is initialized."),
     );
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining("[ok] Structure: Task Markdown files are the repo-local source"),
+    );
+    expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining("Config"));
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("[warn] Tasks: 0 Markdown"));
   });
 

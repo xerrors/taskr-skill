@@ -39,15 +39,15 @@ describe("Taskr protocol", () => {
     ]);
   });
 
-  it("initializes the protocol without an index cache", () => {
+  it("initializes the protocol without config, schema, or an index cache", () => {
     const repo = tempRepo();
     const changed = initProtocol(repo);
 
     expect(changed.map((path) => path.slice(repo.length + 1))).toEqual([
-      ".taskr/config.yaml",
-      ".taskr/schema.yaml",
       ".taskr/templates/task.md",
     ]);
+    expect(existsSync(resolve(repo, ".taskr/config.yaml"))).toBe(false);
+    expect(existsSync(resolve(repo, ".taskr/schema.yaml"))).toBe(false);
     expect(existsSync(resolve(repo, ".taskr/index.json"))).toBe(false);
   });
 

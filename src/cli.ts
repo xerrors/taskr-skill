@@ -499,8 +499,6 @@ function doctorChecks(
   const checks: { level: "ok" | "warn" | "error"; label: string; message: string }[] = [];
   const taskrDir = resolve(repoRoot, ".taskr");
   const tasksDir = resolve(taskrDir, "tasks");
-  const schemaPath = resolve(taskrDir, "schema.yaml");
-  const configPath = resolve(taskrDir, "config.yaml");
 
   checks.push({ level: "ok", label: "Repository", message: repoRoot });
   checks.push(nodeCheck());
@@ -515,11 +513,11 @@ function doctorChecks(
   }
 
   checks.push({ level: "ok", label: "Protocol", message: ".taskr/ is initialized." });
-  checks.push(
-    existsSync(configPath) && existsSync(schemaPath)
-      ? { level: "ok", label: "Config", message: "config.yaml and schema.yaml are present." }
-      : { level: "warn", label: "Config", message: "config.yaml or schema.yaml is missing." },
-  );
+  checks.push({
+    level: "ok",
+    label: "Structure",
+    message: "Task Markdown files are the repo-local source of truth.",
+  });
 
   if (!existsSync(tasksDir)) {
     checks.push({ level: "error", label: "Tasks", message: ".taskr/tasks/ is missing." });

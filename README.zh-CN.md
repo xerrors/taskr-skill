@@ -114,7 +114,7 @@ npm 包是 [`@xerrors/taskr`](https://www.npmjs.com/package/@xerrors/taskr)，�
 `taskr doctor` 会检查当前仓库是否已经准备好使用 Taskr：
 
 - `.taskr/` 是否已经初始化。
-- config、schema 和任务目录是否存在。
+- 任务目录是否存在。
 - 任务 Markdown 是否通过协议验证。
 - 是否存在项目级 Claude/Codex Skill 安装线索。
 - 本地 Node 版本是否满足要求。
@@ -129,8 +129,6 @@ npx --yes @xerrors/taskr doctor
 
 ```text
 .taskr/
-├── config.yaml
-├── schema.yaml
 ├── templates/
 │   └── task.md
 └── tasks/
