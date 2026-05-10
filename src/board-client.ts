@@ -642,7 +642,9 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         progressMeta(task)
       );
       fragment.append(meta);
-      fragment.append(commitPanel(task));
+      if (task.commitDetails.length > 0) {
+        fragment.append(commitPanel(task));
+      }
 
       for (const name of ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"]) {
         fragment.append(section(name, task.sections[name] || t("empty")));
@@ -744,14 +746,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
 
       const list = document.createElement("div");
       list.className = "commit-list";
-      if (task.commitDetails.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = t("none");
-        list.append(empty);
-      } else {
-        list.append(...task.commitDetails.map(commitRow));
-      }
+      list.append(...task.commitDetails.map(commitRow));
 
       wrapper.append(head, list);
       return wrapper;
