@@ -1,9 +1,13 @@
 {
   "name": "@xerrors/taskr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Repo-local task protocol for AI-assisted software development.",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xerrors/taskr.git"
+  },
   "main": "./dist/protocol.js",
   "types": "./dist/protocol.d.ts",
   "exports": {
