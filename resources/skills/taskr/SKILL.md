@@ -31,7 +31,19 @@ If the CLI is unavailable, copy this shared skill file to the platform-specific 
 - If `.taskr/` exists, use Taskr for substantial implementation, fix, refactor, investigation, and planning work in the repo.
 - If `.taskr/` does not exist, initialize it only when the user explicitly mentions Taskr or invokes `/taskr`.
 - Do not create a task for trivial edits unless the user asks to track them.
+- Prefer reusing a matching `planned` or `in_progress` task over creating a duplicate.
 - Do not use `closed`; Taskr tracks only planned, in-progress, implemented, and blocked work.
+
+## Intent And Confirmation Policy
+
+Taskr should add useful friction before code changes, not ceremony everywhere.
+
+- For simple, clear requests, write a concise task card and proceed only when the user has already asked you to implement, fix, refactor, or otherwise do the work.
+- For complex, ambiguous, cross-module, product-behavior, release, or visual-design requests, ask at most a few key clarification questions when the answer materially changes the implementation.
+- After creating or updating the task card and lightweight plan, stop and ask whether to start implementation unless the user has already given explicit implementation approval in the current request.
+- If the user has not clearly approved implementation, do not edit source files. Summarize the recorded request, acceptance criteria, and plan, then wait.
+- Keep planning lightweight. A checklist is enough for most tasks; add goals, scope, risks, files, or stop conditions only when they help the user review or edit the plan.
+- Do not force a Superpowers-style heavy flow by default: no mandatory brainstorming, no mandatory design document, no default worktree, no skill splitting, and no expanded state machine.
 
 ## CLI Policy
 
@@ -56,19 +68,22 @@ For multi-task requests:
 
 1. List existing planned tasks before editing.
 2. Work one task at a time unless the user explicitly asks to batch tasks together.
-3. Move the current task to `in_progress`, implement it, verify it, commit it, and complete the task record before starting the next task.
-4. Use a separate commit for each completed task when the user asks for per-task commits.
-5. Keep a short running plan outside Taskr if it helps the user follow long work, but keep durable task state in `.taskr/`.
+3. Confirm the user has explicitly approved implementation for the current task before editing source files.
+4. Move the current task to `in_progress`, implement it, verify it, commit it, and complete the task record before starting the next task.
+5. Use a separate commit for each completed task when the user asks for per-task commits.
+6. Keep a short running plan outside Taskr if it helps the user follow long work, but keep durable task state in `.taskr/`.
 
 Before starting substantial work:
 
 1. Check whether `.taskr/` exists.
-2. If Taskr is active, create or update one task under `.taskr/tasks/`.
-3. Use a lower-kebab-case task id.
-4. Prefix new task file ids with the local date, at least `YYYY-MM-DD`, for example `2026-05-10-implement-user-invitation-flow.md`. Keep the date prefix lower-kebab-case compatible and human-readable. Existing task files without a date prefix may remain unchanged.
-5. Record the user's original request in `## Request`.
-6. Add concrete acceptance criteria and a short implementation plan.
-7. Set status to `in_progress` before making code changes.
+2. List or inspect existing `planned` and `in_progress` tasks, then reuse a matching task when one exists.
+3. If Taskr is active and no matching task exists, create one task under `.taskr/tasks/`.
+4. Use a lower-kebab-case task id.
+5. Prefix new task file ids with the local date, at least `YYYY-MM-DD`, for example `2026-05-10-implement-user-invitation-flow.md`. Keep the date prefix lower-kebab-case compatible and human-readable. Existing task files without a date prefix may remain unchanged.
+6. Record the user's original request in `## Request`.
+7. Add concrete acceptance criteria and a short implementation plan.
+8. If implementation approval is not already explicit, ask whether to start implementation and wait.
+9. Set status to `in_progress` before making code changes.
 
 ### Language Policy
 
