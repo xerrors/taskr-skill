@@ -24,10 +24,10 @@ describe("Taskr Markdown renderer", () => {
 
     expect(html).toContain('<ul class="task-list">');
     expect(html).toContain(
-      '<li class="task-list-item"><input type="checkbox" disabled checked> Finished <code>setup</code></li>',
+      '<li class="task-list-item"><input type="checkbox" disabled checked><span class="task-list-item-content">Finished <code>setup</code></span></li>',
     );
     expect(html).toContain(
-      '<li class="task-list-item"><input type="checkbox" disabled> Verify <strong>output</strong></li>',
+      '<li class="task-list-item"><input type="checkbox" disabled><span class="task-list-item-content">Verify <strong>output</strong></span></li>',
     );
     expect(html).toContain("<ul><li>One</li><li>Two</li></ul>");
     expect(html).toContain("<ol><li>First</li><li>Second</li></ol>");

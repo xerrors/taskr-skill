@@ -8,6 +8,8 @@ import {
   completeTask,
   createTask,
   defaultTaskId,
+  addNote,
+  extractSections,
   initProtocol,
   loadTask,
   slugify,
@@ -80,6 +82,26 @@ describe("Taskr protocol", () => {
     expect(document.body).toContain("- [ ] 检查相关代码和既有模式。");
     expect(document.body).toContain("暂无。");
     expect(validate(repo)).toEqual([]);
+  });
+
+  it("keeps progress log optional for generated tasks and agent notes", () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+
+    createTask(repo, "Investigate optional progress log", {
+      taskId: "investigate-optional-progress-log",
+    });
+    let document = loadTask(taskPath(repo, "investigate-optional-progress-log"));
+    let sections = extractSections(document.body);
+
+    expect(sections["Progress Log"]).toBe("Empty.");
+
+    addNote(repo, "investigate-optional-progress-log", "Found the relevant parser behavior.");
+    document = loadTask(taskPath(repo, "investigate-optional-progress-log"));
+    sections = extractSections(document.body);
+
+    expect(sections["Agent Notes"]).toContain("- Found the relevant parser behavior.");
+    expect(sections["Progress Log"]).toBe("Empty.");
   });
 
   it("requires summary and files for tasks awaiting confirmation", () => {
@@ -174,6 +196,9 @@ describe("Taskr protocol", () => {
     expect(html).toContain("commitStatusLabel");
     expect(html).toContain("renderTaskrMarkdown");
     expect(html).toContain("markdown-content");
+    expect(html).toContain("grid-template-columns: auto minmax(0, 1fr);");
+    expect(html).toContain("task-list-item-content");
+    expect(html).toContain("overflow-wrap: anywhere;");
   });
 
   it("loads file-level diff details for task commits in the board model", () => {

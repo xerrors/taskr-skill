@@ -5,7 +5,7 @@ description: Repo-local task tracking workflow for agent implementation work. Us
 
 # Taskr
 
-Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep implementation intent, progress, related files, verification, and commits in human-readable Markdown.
+Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep implementation intent, checklist progress, optional progress notes, related files, verification, and commits in human-readable Markdown.
 
 ## Installation Policy
 
@@ -96,7 +96,7 @@ During work:
 
 1. Re-read the task before significant edits.
 2. Update checklist items when they become true.
-3. Append dated entries to `## Progress Log` after meaningful progress.
+3. Use `## Progress Log` only for long-running work, handoff context, blockers, repeated failed attempts, or notable state changes that are not already obvious from the checklist/status.
 4. Add discovered files to `related_files`.
 5. Use `blocked` when missing context, dependencies, or errors prevent progress.
 
@@ -159,6 +159,8 @@ Required sections:
 
 ## Completion Summary
 ```
+
+`## Progress Log` remains a required section for parser and board compatibility, but its content is optional. Prefer the acceptance and implementation checklists for routine progress; leave the section empty for short tasks unless there is useful handoff context to preserve.
 
 Required statuses:
 

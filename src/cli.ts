@@ -460,7 +460,7 @@ Statuses: planned, in_progress, pending_confirmation, implemented, blocked.
 `,
     note: `Usage: taskr note <task_id> <note>
 
-Append a note to ## Agent Notes and record the update in ## Progress Log.
+Append a note to ## Agent Notes.
 `,
     complete: `Usage: taskr complete <task_id> --summary text [options]
 

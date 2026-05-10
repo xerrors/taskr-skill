@@ -18,7 +18,7 @@ export function renderMarkdownHtml(markdown: string): string {
         if (!item) break;
         const checked = item.checked ? " checked" : "";
         items.push(
-          `<li class="task-list-item"><input type="checkbox" disabled${checked}> ${renderInline(item.text)}</li>`,
+          `<li class="task-list-item"><input type="checkbox" disabled${checked}><span class="task-list-item-content">${renderInline(item.text)}</span></li>`,
         );
         index += 1;
       }

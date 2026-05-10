@@ -4,7 +4,7 @@
 
 Taskr is a repo-local task protocol for AI-assisted software development.
 
-It gives coding agents a durable place to record the request, acceptance criteria, plan, progress, verification, related files, and completion summary for each task. Everything lives in your Git repository as Markdown.
+It gives coding agents a durable place to record the request, acceptance criteria, plan, checklist progress, optional progress notes, verification, related files, and completion summary for each task. Everything lives in your Git repository as Markdown.
 
 No SaaS. No database. No project-management ceremony. Just `.taskr/`.
 

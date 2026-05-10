@@ -222,7 +222,7 @@ Describe the original user request.
 
 ## Progress Log
 
-- 2026-05-09 14:30 +08:00 - Task created.
+Empty.
 
 ## Agent Notes
 
@@ -301,7 +301,6 @@ export function renderTask({
       reason: "Not run yet.",
     },
   };
-  const createdLine = `- ${logTimestamp()} - Task created.`;
   return `---
 ${dumpYaml(metadata)}---
 
@@ -321,7 +320,7 @@ ${copy.implementationPlan.map((item) => `- [ ] ${item}`).join("\n")}
 
 ## Progress Log
 
-${createdLine}
+${copy.empty}
 
 ## Agent Notes
 
@@ -468,7 +467,7 @@ export function replaceSection(body: string, section: string, content: string): 
 export function appendToSection(body: string, section: string, line: string): string {
   const sections = extractSections(body);
   let current = (sections[section] ?? "").trim();
-  if (current === "Empty.") {
+  if (current === "Empty." || current === "暂无。") {
     current = "";
   }
   const content = `${current}\n${line}`.trim();
@@ -493,11 +492,6 @@ export function setStatus(repoRoot: string, id: string, status: TaskStatus): Tas
 export function addNote(repoRoot: string, id: string, note: string): TaskDocument {
   const document = loadTaskById(repoRoot, id);
   document.body = appendToSection(document.body, "Agent Notes", `- ${note.trim()}`);
-  document.body = appendToSection(
-    document.body,
-    "Progress Log",
-    `- ${logTimestamp()} - Added agent note.`,
-  );
   writeTask(document);
   return document;
 }

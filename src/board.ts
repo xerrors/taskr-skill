@@ -1221,6 +1221,8 @@ export function renderBoardHtml(model: BoardModel): string {
       color: #e0f2fe;
       font-family: "SFMono-Regular", Consolas, monospace;
       font-size: 0.86em;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .markdown-content strong {
@@ -1234,7 +1236,8 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     .markdown-content .task-list-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 8px;
       align-items: flex-start;
     }
@@ -1243,6 +1246,11 @@ export function renderBoardHtml(model: BoardModel): string {
       flex: 0 0 auto;
       margin-top: 0.3em;
       accent-color: var(--implemented);
+    }
+
+    .markdown-content .task-list-item-content {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
 
     .section textarea {
