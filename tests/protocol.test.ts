@@ -144,6 +144,8 @@ describe("Taskr protocol", () => {
     expect(html).toContain("commit-files");
     expect(html).toContain("commitDetails");
     expect(html).toContain("commitStatusLabel");
+    expect(html).toContain("renderTaskrMarkdown");
+    expect(html).toContain("markdown-content");
   });
 
   it("loads file-level diff details for task commits in the board model", () => {

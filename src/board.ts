@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { execFileSync, spawn } from "node:child_process";
+import { markdownBrowserScript } from "./markdown.js";
 import {
   extractSections,
   listTasks,
@@ -1125,6 +1126,63 @@ export function renderBoardHtml(model: BoardModel): string {
       line-height: 1.52;
     }
 
+    .markdown-content {
+      padding: 13px;
+      color: #dbe7f3;
+      word-break: break-word;
+      font-size: 0.9rem;
+      line-height: 1.56;
+    }
+
+    .markdown-content > :first-child { margin-top: 0; }
+    .markdown-content > :last-child { margin-bottom: 0; }
+
+    .markdown-content p {
+      margin: 0 0 10px;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+      margin: 0 0 10px;
+      padding-left: 1.35rem;
+    }
+
+    .markdown-content li + li {
+      margin-top: 4px;
+    }
+
+    .markdown-content code {
+      padding: 1px 5px;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 5px;
+      background: rgba(9, 13, 18, 0.66);
+      color: #e0f2fe;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.86em;
+    }
+
+    .markdown-content strong {
+      color: var(--ink-strong);
+      font-weight: 750;
+    }
+
+    .markdown-content .task-list {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .markdown-content .task-list-item {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .markdown-content .task-list-item input {
+      flex: 0 0 auto;
+      margin-top: 0.3em;
+      accent-color: var(--implemented);
+    }
+
     .section textarea {
       width: 100%;
       min-height: 180px;
@@ -1287,6 +1345,7 @@ export function renderBoardHtml(model: BoardModel): string {
   <script>
     window.__TASKR_BOARD__ = ${data};
   </script>
+  ${markdownBrowserScript()}
   <script>
     let model = window.__TASKR_BOARD__;
     const board = document.querySelector("#board");
@@ -1994,9 +2053,10 @@ export function renderBoardHtml(model: BoardModel): string {
         edit.addEventListener("click", () => editMode(value));
         tools.replaceChildren(status, edit);
 
-        const pre = document.createElement("pre");
-        pre.textContent = value;
-        body.replaceChildren(pre);
+        const content = document.createElement("div");
+        content.className = "markdown-content";
+        content.innerHTML = window.renderTaskrMarkdown(value);
+        body.replaceChildren(content);
       }
 
       function editMode(value) {
