@@ -365,6 +365,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       if (!activeId) {
         document.querySelector("#detailKicker").textContent = t("detailKicker");
         document.querySelector("#detailTitle").textContent = t("selectTask");
+        document.querySelector("#detailBasics").replaceChildren();
       }
     }
 
@@ -633,6 +634,10 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       const original = task.originalStatus && task.originalStatus !== task.status ? " · " + t("originalStatus") + " " + task.originalStatus : "";
       document.querySelector("#detailKicker").textContent = task.id + " · " + status + original;
       document.querySelector("#detailTitle").textContent = task.title;
+      document.querySelector("#detailBasics").replaceChildren(
+        detailBasic(t("meta.path"), task.path),
+        detailBasic(t("meta.updated"), formatTimestamp(task.updatedAt))
+      );
       document.querySelector("#detailBody").replaceChildren(detailContent(task));
     }
 
@@ -651,8 +656,6 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       meta.className = "meta-grid";
       meta.append(
         statusMeta(task),
-        metaItem(t("meta.path"), task.path),
-        metaItem(t("meta.updated"), formatTimestamp(task.updatedAt)),
         progressMeta(task)
       );
       fragment.append(meta);
@@ -960,6 +963,17 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       return item;
     }
 
+    function detailBasic(label, value) {
+      const item = document.createElement("div");
+      item.className = "detail-basic";
+      const key = document.createElement("span");
+      key.textContent = label;
+      const body = document.createElement("code");
+      body.textContent = String(value);
+      item.append(key, body);
+      return item;
+    }
+
     function progressMeta(task) {
       const item = document.createElement("div");
       item.className = "meta";
@@ -1252,6 +1266,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       }
       document.querySelector("#detailKicker").textContent = t("detailKicker");
       document.querySelector("#detailTitle").textContent = t("selectTask");
+      document.querySelector("#detailBasics").replaceChildren();
       const empty = document.createElement("div");
       empty.className = "empty";
       empty.textContent = t("deletedTask");

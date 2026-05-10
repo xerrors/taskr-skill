@@ -209,6 +209,11 @@ describe("Taskr protocol", () => {
     expect(html).toContain("compact-meta");
     expect(html).toContain("progressbar");
     expect(html).toContain("formatTimestamp");
+    expect(html).toContain("detail-basics");
+    expect(html).toContain('detailBasic(t("meta.path"), task.path)');
+    expect(html).toContain('detailBasic(t("meta.updated"), formatTimestamp(task.updatedAt))');
+    expect(html).not.toContain('metaItem(t("meta.path"), task.path)');
+    expect(html).toContain("grid-template-columns: minmax(64px, max-content) minmax(0, 1fr);");
     expect(html).toContain("commit-panel");
     expect(html).toContain("commit-files");
     expect(html).toContain("commitDetails");
@@ -216,6 +221,8 @@ describe("Taskr protocol", () => {
     expect(html).toContain("renderTaskrMarkdown");
     expect(html).toContain("markdown-content");
     expect(html).toContain("grid-template-columns: auto minmax(0, 1fr);");
+    expect(html).toContain("appearance: none;");
+    expect(html).toContain("border-color: rgba(34, 197, 94, 0.72);");
     expect(html).toContain("task-list-item-content");
     expect(html).toContain("overflow-wrap: anywhere;");
     expect(html).toContain("danger-zone");
@@ -295,7 +302,7 @@ describe("Taskr protocol", () => {
     expect(task.commits).toEqual([commit.slice(0, 7)]);
     expect(task.commitStatus).toBe("created");
     expect(task.commitDetails[0].subject).toBe("implement feature");
-    expect(taskContent).toContain(`  - ${commit.slice(0, 7)}`);
+    expect(taskContent).toMatch(new RegExp(`  - '?${commit.slice(0, 7)}'?`));
     expect(taskContent).not.toContain(commit);
     expect(taskContent).toContain("commit_status: created");
   });

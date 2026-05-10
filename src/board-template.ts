@@ -69,6 +69,7 @@ ${boardStyles}
     <div class="detail-header">
       <div class="detail-kicker" id="detailKicker">Task detail</div>
       <h2 class="detail-title" id="detailTitle">Select a task</h2>
+      <div class="detail-basics" id="detailBasics"></div>
     </div>
     <div class="detail-body" id="detailBody"></div>
   </aside>

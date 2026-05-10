@@ -804,7 +804,7 @@ export const boardStyles = `    :root {
     .detail.is-open { transform: translateX(0); }
 
     .detail-header {
-      padding: 20px 22px 18px;
+      padding: 20px 22px 16px;
       border-bottom: 1px solid var(--line);
       background: var(--panel);
     }
@@ -824,6 +824,42 @@ export const boardStyles = `    :root {
       line-height: 1.25;
       letter-spacing: 0;
       font-weight: 720;
+    }
+
+    .detail-basics {
+      display: grid;
+      gap: 6px;
+      margin: 12px 56px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .detail-basic {
+      display: grid;
+      grid-template-columns: minmax(64px, max-content) minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+      min-width: 0;
+    }
+
+    .detail-basic > span {
+      color: var(--faint);
+      text-transform: uppercase;
+      font-size: 0.66rem;
+      font-weight: 750;
+    }
+
+    .detail-basic > code {
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.78rem;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .close {
@@ -858,7 +894,7 @@ export const boardStyles = `    :root {
 
     .meta-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
       gap: 12px 16px;
       margin-bottom: 16px;
       padding: 12px;
@@ -1124,7 +1160,8 @@ export const boardStyles = `    :root {
       color: #7dd3fc;
       text-transform: uppercase;
       letter-spacing: 0;
-      font-size: 0.72rem;
+      font-size: 0.82rem;
+      line-height: 1.28;
       font-weight: 750;
     }
 
@@ -1204,23 +1241,65 @@ export const boardStyles = `    :root {
     .markdown-content .task-list {
       padding-left: 0;
       list-style: none;
+      display: grid;
+      gap: 7px;
     }
 
     .markdown-content .task-list-item {
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
-      gap: 8px;
-      align-items: flex-start;
+      gap: 10px;
+      align-items: start;
+      padding: 8px 10px;
+      border: 1px solid rgba(56, 189, 248, 0.12);
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.045);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .markdown-content .task-list-item:hover {
+      border-color: rgba(56, 189, 248, 0.22);
+      background: rgba(56, 189, 248, 0.07);
     }
 
     .markdown-content .task-list-item input {
+      appearance: none;
+      display: grid;
+      place-items: center;
       flex: 0 0 auto;
-      margin-top: 0.3em;
-      accent-color: var(--implemented);
+      width: 18px;
+      height: 18px;
+      margin: 0.18em 0 0;
+      border: 1px solid rgba(56, 189, 248, 0.48);
+      border-radius: 5px;
+      background: rgba(9, 13, 18, 0.72);
+      box-shadow: inset 0 0 0 2px rgba(9, 13, 18, 0.86);
+      cursor: default;
+    }
+
+    .markdown-content .task-list-item input::before {
+      content: "";
+      width: 8px;
+      height: 5px;
+      border-left: 2px solid #061018;
+      border-bottom: 2px solid #061018;
+      opacity: 0;
+      transform: rotate(-45deg) translate(1px, -1px);
+    }
+
+    .markdown-content .task-list-item input:checked {
+      border-color: rgba(34, 197, 94, 0.72);
+      background: var(--implemented);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+    }
+
+    .markdown-content .task-list-item input:checked::before {
+      opacity: 1;
     }
 
     .markdown-content .task-list-item-content {
       min-width: 0;
+      color: var(--ink);
       overflow-wrap: anywhere;
     }
 
