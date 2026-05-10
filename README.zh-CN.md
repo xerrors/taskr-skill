@@ -1,99 +1,129 @@
 # Taskr
 
+[![npm package](https://img.shields.io/npm/v/%40xerrors%2Ftaskr?label=npm)](https://www.npmjs.com/package/@xerrors/taskr)
+[![Node.js >=20](https://img.shields.io/badge/node-%3E%3D20-339933)](https://nodejs.org/)
+
 [English README](README.md)
 
-Taskr 是一个面向 AI 辅助开发的仓库本地任务协议。
+Taskr 是一个面向 AI 辅助开发的仓库本地任务协议、Skill 和本地看板。
 
-它让编码智能体把每个任务的需求、验收标准、计划、清单进度、可选进度备注、验证、相关文件和完成总结记录到持久的 Markdown 文件里。所有内容都留在你的 Git 仓库中。
+它让编码智能体把聊天里的需求转成仓库里的持久 Markdown 任务文件：需求、验收标准、实现计划、清单进度、可选备注、验证记录、相关文件、提交和完成总结都留在同一个地方。
 
 没有 SaaS。没有数据库。没有项目管理仪式。只有 `.taskr/`。
 
-## 为什么使用 Taskr
+## Taskr 提供什么
 
-- 把智能体工作绑定到明确的任务文件，而不是只依赖聊天上下文。
-- Claude 和 Codex 使用同一份共享 Skill。
-- 保持很小的五状态模型：`planned`、`in_progress`、`pending_confirmation`、`implemented`、`blocked`。
-- 提供本地看板，用于浏览任务、查看提交、编辑任务小节。
-- 通过 npm CLI 分发，一条 `npx` 命令即可使用。
+- 一份 Claude 或 Codex Skill，让智能体知道什么时候、用什么方式跟踪工作。
+- 存放在 `.taskr/tasks/*.md` 下的人类可读任务文件。
+- 一套适合智能体协作的小工作流：`planned`、`in_progress`、`pending_confirmation`、`implemented`、`blocked`。
+- 一个本地看板，用来浏览任务、切换表格和 Kanban、查看提交上下文、编辑任务小节。
+- 通过 npm 分发的 CLI，可直接用 `npx` 运行，目标仓库不需要把 Taskr 加为依赖。
 
-## 安装 Skill
+## 快速开始
 
-日常使用时，先安装一次 Taskr Skill，然后让你的智能体使用 Taskr。安装器会创建对应的 skill 目录。
+先安装一次 Skill，然后在需要跟踪实现工作时让智能体使用 Taskr。
 
 安装到 Claude Code 的用户级目录：
 
 ```bash
-npx @xerrors/taskr install-skill claude --scope user
+npx --yes @xerrors/taskr install-skill claude --scope user
 ```
 
-也可以只安装到当前仓库：
+安装到 Codex 的用户级目录：
 
 ```bash
-npx @xerrors/taskr install-skill claude
+npx --yes @xerrors/taskr install-skill codex --scope user
 ```
 
-Codex 使用同样的方式：
+如果只想安装到当前仓库，在仓库目录中运行不带 `--scope user` 的命令：
 
 ```bash
-npx @xerrors/taskr install-skill codex --scope user
+npx --yes @xerrors/taskr install-skill claude
+npx --yes @xerrors/taskr install-skill codex
 ```
 
-安装后，可以在智能体中这样触发：
+之后可以这样让智能体开始跟踪任务：
 
 ```text
 /taskr implement user invitation flow
 ```
 
-当第一次在仓库中使用 Taskr 跟踪工作时，Skill 会引导智能体初始化 `.taskr/`。
+第一次在仓库中使用 Taskr 时，Skill 会引导智能体初始化 `.taskr/`。
 
-## CLI 快速开始
+## 智能体工作流
 
-当你需要脚本化、排查安装问题或手动管理任务文件时，可以直接使用 CLI：
+Taskr 适合在聊天需求变成真实仓库工作时使用。
+
+1. 你让智能体用 Taskr 实现、修复、重构、调研或规划某件事。
+2. 智能体在 `.taskr/tasks/` 中记录需求、验收标准和简短计划。
+3. 智能体在工作过程中持续更新任务文件。
+4. 实现和验证完成后，任务进入 `pending_confirmation`。
+5. 你确认结果后，任务可以标记为 `implemented`，并关联到对应提交。
+
+因为任务就是普通 Markdown，它会在 Git 历史、代码评审、交接和之后的智能体会话中继续有用。
+
+## 看板
+
+为当前仓库打开本地看板：
 
 ```bash
-npx @xerrors/taskr init
-npx @xerrors/taskr new "implement user invitation flow" --status in_progress
-npx @xerrors/taskr list
-npx @xerrors/taskr doctor
-npx @xerrors/taskr board
-npx @xerrors/taskr validate
+npx --yes @xerrors/taskr board --open
 ```
 
-查看帮助：
+看板直接读取 `.taskr/tasks/*.md`。它支持搜索、表格和 Kanban 视图、按创建或更新时间排序、状态统计、提交和文件 diff 上下文、手动刷新、任务小节编辑、轻量 Markdown 渲染，以及需要确认的任务删除。
+
+### 表格视图
+
+![Taskr 表格视图](docs/assets/taskr-table-view.png)
+
+### Kanban 视图
+
+![Taskr Kanban 视图](docs/assets/taskr-kanban-view.png)
+
+### 任务详情抽屉
+
+<p>
+  <img src="docs/assets/taskr-detail-overview.png" alt="Taskr 详情抽屉，展示状态、提交和需求上下文" width="49%">
+  <img src="docs/assets/taskr-detail-request-plan.png" alt="Taskr 详情抽屉，展示需求、验收标准和实现计划" width="49%">
+</p>
+
+## CLI
+
+当你想手动初始化 Taskr、创建任务、检查本地状态或写脚本时，可以直接使用 CLI：
 
 ```bash
-npx @xerrors/taskr --help
-npx @xerrors/taskr new --help
-npx @xerrors/taskr complete --help
+npx --yes @xerrors/taskr init
+npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
+npx --yes @xerrors/taskr list
+npx --yes @xerrors/taskr doctor
+npx --yes @xerrors/taskr validate
 ```
 
-npm 包位于 `xerrors` 作用域，并提供 `taskr` 可执行命令。
+查看任意命令的帮助：
+
+```bash
+npx --yes @xerrors/taskr --help
+npx --yes @xerrors/taskr new --help
+npx --yes @xerrors/taskr complete --help
+```
+
+npm 包是 [`@xerrors/taskr`](https://www.npmjs.com/package/@xerrors/taskr)，并提供 `taskr` 可执行命令。
 
 ## Doctor 检查
 
-`taskr doctor` 会检查当前仓库：
+`taskr doctor` 会检查当前仓库是否已经准备好使用 Taskr：
 
 - `.taskr/` 是否已经初始化。
 - config、schema 和任务目录是否存在。
 - 任务 Markdown 是否通过协议验证。
-- 是否存在项目级 Claude/Codex skill 安装线索。
+- 是否存在项目级 Claude/Codex Skill 安装线索。
 - 本地 Node 版本是否满足要求。
 
 当设置看起来不对时，先运行它：
 
 ```bash
-npx @xerrors/taskr doctor
+npx --yes @xerrors/taskr doctor
 ```
-
-## Board 看板
-
-使用 `taskr board` 为 `.taskr/tasks/*.md` 启动本地任务看板：
-
-```bash
-npx @xerrors/taskr board --open
-```
-
-看板默认以表格视图打开，便于快速扫描；表格和 Kanban 列表都支持按更新时间或创建时间排序，也可以切换到按状态分组的 Kanban 视图。点击任务后会展开详情抽屉，展示提交状态、文件级 diff 统计，支持手动刷新，能在任务小节中渲染轻量 Markdown，并可以把编辑内容写回原始任务文件。详情抽屉也提供需要确认的删除操作，会删除该任务的本地 Markdown 文件。
 
 ## 会创建哪些文件
 
@@ -139,7 +169,7 @@ blocked
 
 ## 本地开发
 
-在本仓库中安装依赖并运行 TypeScript CLI：
+在本仓库中：
 
 ```bash
 npm install
@@ -147,65 +177,15 @@ npm run build
 node dist/cli.js install-skill claude
 node dist/cli.js install-skill codex
 node dist/cli.js init
-node dist/cli.js new "implement user invitation flow" --status in_progress
-node dist/cli.js list
-node dist/cli.js doctor
 node dist/cli.js board
 node dist/cli.js validate
 ```
 
-运行检查：
+运行完整检查：
 
 ```bash
 npm run check
 ```
-
-构建本地 npm tarball：
-
-```bash
-npm pack
-```
-
-然后在另一个 Git 仓库中使用：
-
-```bash
-cd /path/to/your-project
-npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr install-skill claude
-npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr init
-npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr new "implement user invitation flow" --status in_progress
-npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr doctor
-```
-
-目标项目不需要把 Taskr 加为依赖；`npx` 会在临时 npm 环境中运行这个包。
-
-## 发布到 npm
-
-当 GitHub Release 发布时，`.github/workflows/publish.yml` 会自动发布 npm 包。
-
-第一次自动发布前，需要为 `@xerrors/taskr` 配置 npm Trusted Publishing：
-
-- Publisher: GitHub Actions
-- Owner: `xerrors`
-- Repository: `taskr`
-- Workflow filename: `publish.yml`
-- Environment name: 如果 workflow 之后没有改为使用 environment，则留空
-
-workflow 使用 npm 基于 OIDC 的 Trusted Publishing，不需要 `NPM_TOKEN` secret。配置完成后，只要有权限向 GitHub 仓库推送，就可以通过推送匹配版本的 tag 并发布 GitHub Release 来触发 npm 发布。
-
-发布新版本：
-
-```bash
-npm version <version> --no-git-tag-version
-npm run check
-git add package.json package-lock.json README.md README.zh-CN.md .github/workflows/publish.yml
-git commit -m "chore(release): prepare v<version>"
-git tag v<version>
-git push origin main
-git push origin v<version>
-gh release create v<version> --verify-tag --title "v<version>" --notes ""
-```
-
-Release tag 必须匹配 `package.json`，例如 `v0.1.2` 发布 `0.1.2`。如果发布失败且 npm 尚未接受该版本，修复问题后可以用同一个 tag 重新发布 GitHub Release；如果 npm 已经接受版本，则需要准备并发布新的 patch 版本，因为 npm 包版本不可变。
 
 ## 提交约定
 
@@ -220,5 +200,5 @@ Taskr: <task-id>
 ```text
 feat(invitation): add invitation creation flow
 
-Taskr: user-invitation
+Taskr: 2026-05-10-user-invitation
 ```
