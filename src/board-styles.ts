@@ -57,7 +57,7 @@ export const boardStyles = `    :root {
       mask-image: linear-gradient(to bottom, black, transparent 58%);
     }
 
-    button, input {
+    button, input, select {
       font: inherit;
       touch-action: manipulation;
     }
@@ -872,7 +872,7 @@ export const boardStyles = `    :root {
       word-break: break-word;
     }
 
-    .meta span {
+    .meta > span {
       display: block;
       color: var(--muted);
       text-transform: uppercase;
@@ -880,6 +880,42 @@ export const boardStyles = `    :root {
       font-size: 0.66rem;
       font-weight: 700;
       margin-bottom: 4px;
+    }
+
+    .status-editor-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-editor {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status-editor select {
+      min-height: 34px;
+      min-width: 190px;
+      flex: 1;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(9, 13, 18, 0.58);
+      padding: 0 30px 0 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .status-editor select:focus-visible {
+      border-color: var(--accent-2);
+      box-shadow: var(--focus);
+    }
+
+    .status-editor-message {
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.4;
     }
 
     .commit-panel {

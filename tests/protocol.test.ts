@@ -179,7 +179,7 @@ describe("Taskr protocol", () => {
     expect(html).toContain("languageStorageKey");
     expect(html).toContain("Switch language to Chinese");
     expect(html).toContain("masthead-topline");
-    expect(html).toContain("🌐 ZH");
+    expect(html).toContain("🇨🇳 ZH");
     expect(html).toContain("🌐 EN");
     expect(html).toContain("toolbar-primary");
     expect(html).toContain("toolbar-secondary");
@@ -215,6 +215,11 @@ describe("Taskr protocol", () => {
     expect(html).toContain("danger-zone");
     expect(html).toContain("Delete task");
     expect(html).toContain("删除任务会移除本地 Markdown 文件");
+    expect(html).toContain("statusEditor");
+    expect(html).toContain("Change status");
+    expect(html).toContain("手动修改状态");
+    expect(html).toContain("status-editor");
+    expect(html).toContain("/status");
   });
 
   it("loads file-level diff details for task commits in the board model", () => {
@@ -393,6 +398,39 @@ describe("Taskr protocol", () => {
       expect(model.tasks[0].sections.Request).toBe("Updated from the board.");
       expect(content).toContain("## Request\n\nUpdated from the board.");
       expect(content).toContain("## Acceptance Criteria");
+    } finally {
+      await new Promise<void>((resolveClose, rejectClose) => {
+        server.close((error) => (error ? rejectClose(error) : resolveClose()));
+      });
+    }
+  });
+
+  it("saves task status through the board API", async () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Confirm task status", {
+      taskId: "confirm-task-status",
+      status: "pending_confirmation",
+    });
+
+    const { server, url } = await startBoardServer(repo, {
+      host: "127.0.0.1",
+      port: 0,
+    });
+
+    try {
+      const response = await fetch(new URL("api/tasks/confirm-task-status/status", url), {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "implemented" }),
+      });
+      const model = await response.json();
+      const content = readFileSync(taskPath(repo, "confirm-task-status"), "utf8");
+
+      expect(response.status).toBe(200);
+      expect(model.tasks[0].status).toBe("implemented");
+      expect(content).toContain("status: implemented");
+      expect(content).toContain("Status changed to `implemented`.");
     } finally {
       await new Promise<void>((resolveClose, rejectClose) => {
         server.close((error) => (error ? rejectClose(error) : resolveClose()));

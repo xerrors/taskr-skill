@@ -121,6 +121,10 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           confirmDelete: "Delete task",
           keepTask: "Keep task"
         },
+        statusEditor: {
+          label: "Change status",
+          help: "Manual status changes are available while this task is pending confirmation."
+        },
         danger: {
           title: "Danger zone",
           copy: "Deleting this task removes the local Markdown file.",
@@ -241,6 +245,10 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           delete: "删除",
           confirmDelete: "确认删除",
           keepTask: "保留任务"
+        },
+        statusEditor: {
+          label: "手动修改状态",
+          help: "待确认任务可以由人工修改为任意状态。"
         },
         danger: {
           title: "危险操作",
@@ -636,7 +644,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       const meta = document.createElement("div");
       meta.className = "meta-grid";
       meta.append(
-        metaItem(t("meta.status"), statusLabel(task.status)),
+        statusMeta(task),
         metaItem(t("meta.path"), task.path),
         metaItem(t("meta.updated"), formatTimestamp(task.updatedAt)),
         progressMeta(task)
@@ -898,6 +906,43 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       return wrapper;
     }
 
+    function statusMeta(task) {
+      const item = document.createElement("div");
+      item.className = "meta status-meta";
+      const key = document.createElement("span");
+      key.textContent = t("meta.status");
+      const body = document.createElement("div");
+      body.className = "status-editor-wrap";
+      body.append(statusChip(task.status));
+
+      if (task.status === "pending_confirmation") {
+        const controls = document.createElement("div");
+        controls.className = "status-editor";
+        const select = document.createElement("select");
+        select.setAttribute("aria-label", t("statusEditor.label"));
+        for (const status of model.statuses) {
+          const option = document.createElement("option");
+          option.value = status;
+          option.textContent = statusLabel(status);
+          option.selected = status === task.status;
+          select.append(option);
+        }
+        const save = document.createElement("button");
+        save.type = "button";
+        save.className = "section-action";
+        save.textContent = t("actions.save");
+        const message = document.createElement("div");
+        message.className = "status-editor-message";
+        message.textContent = t("statusEditor.help");
+        save.addEventListener("click", () => saveStatus(task.id, select.value, message, save));
+        controls.append(select, save);
+        body.append(controls, message);
+      }
+
+      item.append(key, body);
+      return item;
+    }
+
     function metaItem(label, value) {
       const item = document.createElement("div");
       item.className = "meta";
@@ -1032,6 +1077,35 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         setToolbarStatus(t("statusMessages.refreshFailed") + ": " + errorMessage(error), true);
       } finally {
         refreshButton.disabled = false;
+      }
+    }
+
+    async function saveStatus(id, status, statusNode, saveButton) {
+      saveButton.disabled = true;
+      statusNode.textContent = t("statusMessages.saving");
+      try {
+        const response = await fetch("/api/tasks/" + encodeURIComponent(id) + "/status", {
+          method: "PUT",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({ status })
+        });
+        const data = await parseJson(response);
+        if (!response.ok) {
+          throw new Error(data && data.error ? data.error : t("statusMessages.saveFailed"));
+        }
+        model = data;
+        updateStats();
+        render();
+        syncDetail();
+        setToolbarStatus(t("statusMessages.saved"));
+      } catch (error) {
+        statusNode.textContent = t("statusMessages.saveFailed") + ": " + errorMessage(error);
+        setToolbarStatus(t("statusMessages.saveFailed") + ": " + errorMessage(error), true);
+      } finally {
+        saveButton.disabled = false;
       }
     }
 

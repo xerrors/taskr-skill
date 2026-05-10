@@ -9,6 +9,7 @@ import {
   normalizeCommitIds,
   relative,
   replaceSection,
+  setStatus,
   shortCommitId,
   TaskrError,
   taskId,
@@ -81,6 +82,33 @@ async function handleBoardRequest(
 
   if (request.method === "GET" && url.pathname === "/api/tasks") {
     sendJson(response, 200, createBoardModel(repoRoot));
+    return;
+  }
+
+  const statusMatch = /^\/api\/tasks\/([^/]+)\/status$/.exec(url.pathname);
+  if (request.method === "PUT" && statusMatch) {
+    const id = decodeURIComponent(statusMatch[1]);
+    const payload = await readJsonBody(request);
+    if (!isRecord(payload) || typeof payload.status !== "string") {
+      sendJson(response, 400, { error: "Request body must include string field `status`." });
+      return;
+    }
+    if (!VALID_STATUSES.includes(payload.status as (typeof VALID_STATUSES)[number])) {
+      sendJson(response, 400, { error: `Status must be one of ${VALID_STATUSES.join(", ")}.` });
+      return;
+    }
+
+    try {
+      setStatus(repoRoot, id, payload.status as (typeof VALID_STATUSES)[number]);
+      sendJson(response, 200, createBoardModel(repoRoot));
+    } catch (error) {
+      if (error instanceof TaskrError) {
+        const status = error.message.startsWith("Task not found") ? 404 : 400;
+        sendJson(response, status, { error: error.message });
+        return;
+      }
+      throw error;
+    }
     return;
   }
 
