@@ -208,14 +208,16 @@ Release tag 必须匹配 `package.json`，例如 `v0.1.2` 发布 `0.1.2`。如�
 
 ## 提交约定
 
-为任务创建提交时，包含：
+为任务创建提交时，第一行保持正常摘要，把 Taskr 引用放在提交信息底部：
 
 ```text
-[taskr:<task-id>]
+Taskr: <task-id>
 ```
 
 示例：
 
 ```text
-feat(invitation): add invitation creation flow [taskr:user-invitation]
+feat(invitation): add invitation creation flow
+
+Taskr: user-invitation
 ```

@@ -69,8 +69,8 @@ For multi-task requests:
 1. List existing planned tasks before editing.
 2. Work one task at a time unless the user explicitly asks to batch tasks together.
 3. Confirm the user has explicitly approved implementation for the current task before editing source files.
-4. Move the current task to `in_progress`, implement it, verify it, commit it, and complete the task record before starting the next task.
-5. Use a separate commit for each completed task when the user asks for per-task commits.
+4. Move the current task to `in_progress`, implement it, verify it, and report the result before starting the next task.
+5. Commit and mark the task `implemented` only when the user has explicitly approved that step, or when the current request already asked you to implement, verify, and submit completed tasks.
 6. Keep a short running plan outside Taskr if it helps the user follow long work, but keep durable task state in `.taskr/`.
 
 Before starting substantial work:
@@ -102,26 +102,41 @@ During work:
 ### Verification Policy
 
 - Match verification to the change. Run unit/build checks for code changes, and add browser or preview validation for visible UI, styling, layout, or interaction changes.
-- Record the exact commands or manual/browser checks in `verification.tests_run`.
+- Record verification with at least the command or check name, the result, and any failure or unable-to-run reason.
+- Record the exact commands or manual/browser checks in `verification.tests_run` when possible.
 - If a requested style or interaction change is visual, verify at least the default state and the changed interaction state. For responsive UI, also check a narrow viewport when practical.
 - If verification cannot be run, record the reason instead of leaving it implicit.
 
+### TDD Policy
+
+- TDD is recommended for bug fixes, behavior changes, parser/protocol logic, and risky shared code.
+- TDD is optional for documentation, configuration, research, generated assets, tiny copy changes, and low-risk style polish.
+- When strict TDD is impractical, still prefer a focused regression test or a clear verification command before declaring the work complete.
+
+### Review Policy
+
+- For complex, cross-module, public API, release, or user-facing workflow changes, add a light review gate before completion.
+- Prefer a reviewer agent when the platform supports one and the user has allowed delegation. Otherwise self-review or ask the user for manual review.
+- Review against `## Request`, `## Acceptance Criteria`, `## Implementation Plan`, and recorded verification. Note any gaps in `## Agent Notes` or the final response.
+
 ### Commit Policy
 
+- Do not create a git commit without explicit user confirmation. A current user request to implement, verify, and submit completed tasks counts as confirmation.
 - Commit after each completed task when the user requests task-by-task commits.
-- Include `[taskr:<task-id>]` in the commit message.
+- Use a normal first-line summary. Put the Taskr reference in the commit message footer, for example `Taskr: 2026-05-10-user-invitation`.
+- Legacy `[taskr:<task-id>]` messages may still be read by older tooling, but new commits should prefer the footer.
 - After the commit succeeds, record the commit hash in the task using `taskr complete --commit <hash>` or by editing the task file.
 - If `.taskr/` is ignored by Git, still update it locally; the Markdown task files remain the working record even when they are not committed.
 
-After implementation:
+After implementation and verification:
 
-1. Update `## Completion Summary`.
-2. Record changed files in `related_files`, or add `no_related_files_reason`.
-3. Record commits when created and include `[taskr:<task-id>]` in commit messages.
-4. Set `commit_status` to `created`, `not_created`, or `not_applicable`.
+1. Keep the task `in_progress` while waiting for user confirmation to commit or mark complete.
+2. Update `## Completion Summary` when completion is confirmed.
+3. Record changed files in `related_files`, or add `no_related_files_reason`.
+4. Record commits when created and set `commit_status` to `created`, `not_created`, or `not_applicable`.
 5. Check acceptance criteria that are satisfied.
-6. Record verification commands and result in `verification`.
-7. Set status to `implemented` unless the work is blocked.
+6. Record verification commands or checks and result in `verification`.
+7. Set status to `implemented` only after completion is confirmed unless the work is blocked.
 8. Run `taskr validate <task-id>` when possible.
 
 ## Task File Contract

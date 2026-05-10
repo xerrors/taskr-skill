@@ -205,7 +205,7 @@ describe("Taskr protocol", () => {
 
     writeFileSync(resolve(repo, "feature.txt"), "implemented\n", "utf8");
     git(repo, "add", "feature.txt");
-    git(repo, "commit", "-m", "implement feature [taskr:recover-commit-from-log]");
+    git(repo, "commit", "-m", "implement feature", "-m", "Taskr: recover-commit-from-log");
     const commit = git(repo, "rev-parse", "HEAD");
 
     const model = createBoardModel(repo);
@@ -214,9 +214,7 @@ describe("Taskr protocol", () => {
 
     expect(task.commits).toEqual([commit.slice(0, 7)]);
     expect(task.commitStatus).toBe("created");
-    expect(task.commitDetails[0].subject).toBe(
-      "implement feature [taskr:recover-commit-from-log]",
-    );
+    expect(task.commitDetails[0].subject).toBe("implement feature");
     expect(taskContent).toContain(`  - ${commit.slice(0, 7)}`);
     expect(taskContent).not.toContain(commit);
     expect(taskContent).toContain("commit_status: created");
@@ -248,6 +246,24 @@ describe("Taskr protocol", () => {
     expect(model.tasks[0].commitDetails[0].shortHash).toBe(shortCommit);
     expect(taskContent).toContain(`  - ${shortCommit}`);
     expect(taskContent).not.toContain(commit);
+  });
+
+  it("still discovers legacy bracketed task commit references", () => {
+    const repo = tempRepo();
+    initGitRepo(repo);
+    initProtocol(repo);
+    createTask(repo, "Recover legacy commit from log", {
+      taskId: "recover-legacy-commit-from-log",
+    });
+
+    writeFileSync(resolve(repo, "legacy.txt"), "implemented\n", "utf8");
+    git(repo, "add", "legacy.txt");
+    git(repo, "commit", "-m", "implement legacy [taskr:recover-legacy-commit-from-log]");
+    const commit = git(repo, "rev-parse", "HEAD");
+
+    const model = createBoardModel(repo);
+
+    expect(model.tasks[0].commits).toEqual([commit.slice(0, 7)]);
   });
 
   it("maps legacy and unknown statuses into the four board columns", () => {

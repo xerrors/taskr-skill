@@ -145,7 +145,7 @@ export function defaultConfig(): TaskMetadata {
     statuses: [...VALID_STATUSES],
     commit: {
       required_for_implemented: false,
-      convention: "[taskr:{id}]",
+      convention: "Taskr: {id}",
     },
     agent: {
       preferred_update_method: "cli_or_direct_file",

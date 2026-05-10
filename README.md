@@ -208,14 +208,16 @@ The release tag must match `package.json`, so `v0.1.2` publishes version `0.1.2`
 
 ## Commit Convention
 
-When creating commits for a task, include:
+When creating commits for a task, keep the first line as a normal summary and put the Taskr reference in the footer:
 
 ```text
-[taskr:<task-id>]
+Taskr: <task-id>
 ```
 
 Example:
 
 ```text
-feat(invitation): add invitation creation flow [taskr:user-invitation]
+feat(invitation): add invitation creation flow
+
+Taskr: user-invitation
 ```
