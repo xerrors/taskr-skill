@@ -3,6 +3,8 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { boardClientScript } from "../src/board-client.js";
+import { boardStyles } from "../src/board-styles.js";
 import { createBoardModel, renderBoardHtml, startBoardServer } from "../src/board.js";
 import {
   completeTask,
@@ -167,6 +169,8 @@ describe("Taskr protocol", () => {
       model.tasks.find((task) => task.id === "implement-board-visualization")?.sections.Request,
     ).toContain("Implement board visualization");
     expect(html).toContain("Taskr Board");
+    expect(html).toContain(boardStyles);
+    expect(html).toContain(boardClientScript);
     expect(html).toContain("Taskr Kanban board");
     expect(html).toContain("Click any task to open its detail.");
     expect(html).toContain("Refresh");
