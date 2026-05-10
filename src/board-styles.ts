@@ -63,9 +63,10 @@ export const boardStyles = `    :root {
     }
 
     .shell {
-      width: min(1560px, calc(100vw - 32px));
+      width: 100%;
+      max-width: 1440px;
       margin: 0 auto;
-      padding: 16px 0 28px;
+      padding: 16px clamp(16px, 3vw, 64px) 28px;
     }
 
     .masthead {
@@ -1350,7 +1351,7 @@ export const boardStyles = `    :root {
     }
 
     @media (max-width: 640px) {
-      .shell { width: min(100vw - 16px, 1560px); padding-top: 8px; }
+      .shell { padding: 8px 8px 28px; }
       .masthead {
         padding: 16px 0;
         border: 0;

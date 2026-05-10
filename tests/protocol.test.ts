@@ -190,6 +190,8 @@ describe("Taskr protocol", () => {
     expect(html).toContain("sortTasks");
     expect(html).toContain("createdAt");
     expect(html).toContain("border: 0;");
+    expect(html).toContain("max-width: 1440px;");
+    expect(html).toContain("padding: 16px clamp(16px, 3vw, 64px) 28px;");
     expect(html).toContain('statuses: ["in_progress", "pending_confirmation"]');
     expect(html).toContain("Pending Confirmation");
     expect(html).toContain("待确认");

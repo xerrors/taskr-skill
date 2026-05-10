@@ -21,3 +21,6 @@ coverage/
 .vscode/
 .idea/
 .DS_Store
+
+# specific to this project
+taskr_dev/

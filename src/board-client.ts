@@ -51,7 +51,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           board: "Board"
         },
         languageToggle: {
-          label: "🌐 ZH",
+          label: "🇨🇳 ZH",
           aria: "Switch language to Chinese"
         },
         hint: "Click any task to open its detail.",
