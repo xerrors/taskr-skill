@@ -2587,12 +2587,19 @@ function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
   }
 }
 
-function commitFileStatuses(repoRoot: string, commit: string): Map<string, BoardCommitFile["status"]> {
-  const output = execFileSync("git", ["show", "--name-status", "--format=", "--no-renames", commit], {
-    cwd: repoRoot,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+function commitFileStatuses(
+  repoRoot: string,
+  commit: string,
+): Map<string, BoardCommitFile["status"]> {
+  const output = execFileSync(
+    "git",
+    ["show", "--name-status", "--format=", "--no-renames", commit],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
   const statuses = new Map<string, BoardCommitFile["status"]>();
   for (const line of output.trimEnd().split("\n")) {
     if (!line.trim()) {

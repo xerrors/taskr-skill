@@ -493,7 +493,9 @@ function printDoctor(repoRoot: string): number {
   return checks.some((check) => check.level === "error") ? 1 : 0;
 }
 
-function doctorChecks(repoRoot: string): { level: "ok" | "warn" | "error"; label: string; message: string }[] {
+function doctorChecks(
+  repoRoot: string,
+): { level: "ok" | "warn" | "error"; label: string; message: string }[] {
   const checks: { level: "ok" | "warn" | "error"; label: string; message: string }[] = [];
   const taskrDir = resolve(repoRoot, ".taskr");
   const tasksDir = resolve(taskrDir, "tasks");
@@ -504,7 +506,11 @@ function doctorChecks(repoRoot: string): { level: "ok" | "warn" | "error"; label
   checks.push(nodeCheck());
 
   if (!existsSync(taskrDir)) {
-    checks.push({ level: "error", label: "Protocol", message: ".taskr/ is missing. Run `taskr init`." });
+    checks.push({
+      level: "error",
+      label: "Protocol",
+      message: ".taskr/ is missing. Run `taskr init`.",
+    });
     return checks;
   }
 
@@ -530,7 +536,11 @@ function doctorChecks(repoRoot: string): { level: "ok" | "warn" | "error"; label
   checks.push(
     issues.length === 0
       ? { level: "ok", label: "Validation", message: "Task files pass validation." }
-      : { level: "error", label: "Validation", message: `${issues.length} issue${issues.length === 1 ? "" : "s"} found.` },
+      : {
+          level: "error",
+          label: "Validation",
+          message: `${issues.length} issue${issues.length === 1 ? "" : "s"} found.`,
+        },
   );
 
   const skillPaths = [
