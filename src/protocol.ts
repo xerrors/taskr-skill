@@ -699,9 +699,7 @@ export function installAgentSkill(
     throw new TaskrError(`Skill already exists: ${skillFile}. Use --force to replace it.`);
   }
 
-  const source = fileURLToPath(
-    new URL("../resources/claude/skills/taskr/SKILL.md", import.meta.url),
-  );
+  const source = fileURLToPath(new URL("../resources/skills/taskr/SKILL.md", import.meta.url));
   copyFileSync(source, skillFile);
   return skillFile;
 }

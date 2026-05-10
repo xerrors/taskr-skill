@@ -24,7 +24,7 @@ taskr install-skill codex
 taskr install-skill codex --scope user
 ```
 
-If the CLI is unavailable, copy this same `SKILL.md` to the platform-specific path above.
+If the CLI is unavailable, copy this shared skill file to the platform-specific path above.
 
 ## Trigger Policy
 
