@@ -3,11 +3,26 @@
   "version": "0.1.2",
   "description": "Repo-local task protocol for AI-assisted software development.",
   "license": "MIT",
+  "author": "xerrors",
+  "homepage": "https://github.com/xerrors/taskr#readme",
+  "bugs": {
+    "url": "https://github.com/xerrors/taskr/issues"
+  },
   "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xerrors/taskr.git"
   },
+  "keywords": [
+    "taskr",
+    "ai",
+    "agents",
+    "task-management",
+    "markdown",
+    "cli",
+    "kanban"
+  ],
+  "packageManager": "npm@10.9.2",
   "main": "./dist/protocol.js",
   "types": "./dist/protocol.d.ts",
   "exports": {

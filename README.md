@@ -1,17 +1,24 @@
 # Taskr
 
+[中文说明](README.zh-CN.md)
+
 Taskr is a repo-local task protocol for AI-assisted software development.
 
-It lets coding agents create, track, update, and summarize implementation tasks inside your existing Git repository.
+It gives coding agents a durable place to record the request, acceptance criteria, plan, progress, verification, related files, and completion summary for each task. Everything lives in your Git repository as Markdown.
 
-No SaaS. No database. No project management ceremony. Just `.taskr/`.
+No SaaS. No database. No project-management ceremony. Just `.taskr/`.
 
-## Usage
+## Why Taskr
 
-### Install the Skill
+- Keeps agent work tied to explicit task files instead of chat memory alone.
+- Works with Claude and Codex through the same shared Skill body.
+- Uses a small four-state model: `planned`, `in_progress`, `implemented`, `blocked`.
+- Includes a local board for scanning tasks, reviewing commits, and editing task sections.
+- Ships as an npm CLI, so setup is one `npx` command.
 
-For normal use, install the Taskr Skill once and then ask your agent to use Taskr.
-The installer creates the required skill folder for you.
+## Install The Skill
+
+For normal use, install the Taskr Skill once and then ask your agent to use Taskr. The installer creates the required skill folder for you.
 
 Install for Claude Code across your projects:
 
@@ -31,108 +38,62 @@ Codex uses the same flow:
 npx @xerrors/taskr install-skill codex --scope user
 ```
 
-After installation, you can invoke the skill from your agent, for example:
+After installation, you can invoke the skill from your agent:
 
 ```text
 /taskr implement user invitation flow
 ```
 
-You do not need to manually create `.taskr/`, check whether it already exists, or inspect the skill installation directory during the normal setup path. The skill guides the agent to initialize `.taskr/` in a repository when Taskr is first used for tracked work.
+The skill guides the agent to initialize `.taskr/` when Taskr is first used for tracked work.
 
-### Use the CLI Directly
+## CLI Quick Start
 
-Use the CLI directly when you are scripting Taskr, troubleshooting setup, or managing task files yourself:
+Use the CLI directly when scripting Taskr, troubleshooting setup, or managing task files yourself:
 
 ```bash
 npx @xerrors/taskr init
 npx @xerrors/taskr new "implement user invitation flow" --status in_progress
 npx @xerrors/taskr list
+npx @xerrors/taskr doctor
 npx @xerrors/taskr board
 npx @xerrors/taskr validate
 ```
 
+Get help for any command:
+
+```bash
+npx @xerrors/taskr --help
+npx @xerrors/taskr new --help
+npx @xerrors/taskr complete --help
+```
+
 The npm package is scoped to the `xerrors` npm account and exposes a `taskr` binary.
 
-### While Developing Taskr
+## Doctor
 
-Inside this repository, install dependencies and run the TypeScript CLI:
+`taskr doctor` checks the current repository for:
 
-```bash
-npm install
-npm run build
-node dist/cli.js install-skill claude
-node dist/cli.js install-skill codex
-node dist/cli.js init
-node dist/cli.js new "implement user invitation flow" --status in_progress
-node dist/cli.js list
-node dist/cli.js board
-node dist/cli.js validate
-```
+- `.taskr/` initialization.
+- Config, schema, and task directory presence.
+- Task Markdown validation.
+- Project-level Claude/Codex skill installation clues.
+- Local Node runtime compatibility.
 
-Run checks with:
+It is a quick first stop when setup feels off:
 
 ```bash
-npm run check
+npx @xerrors/taskr doctor
 ```
 
-### Release to npm
+## Board
 
-Releases are published by the GitHub Actions workflow in
-`.github/workflows/publish.yml` when a GitHub Release is published.
-
-Before the first automated release, configure npm Trusted Publishing for the
-`@xerrors/taskr` package:
-
-- Publisher: GitHub Actions
-- Owner: `xerrors`
-- Repository: `taskr`
-- Workflow filename: `publish.yml`
-- Environment name: leave empty unless the workflow is later changed to use one
-
-The workflow uses npm's OIDC-based Trusted Publishing path, so it does not need
-an `NPM_TOKEN` secret. After Trusted Publishing is configured once, any machine
-that can push to the GitHub repository can start a release by pushing the
-matching tag and publishing a GitHub Release for that tag.
-
-To publish a new version:
+Use `taskr board` to serve a repo-local task board for `.taskr/tasks/*.md`.
 
 ```bash
-npm version <version> --no-git-tag-version
-npm run check
-git add package.json package-lock.json README.md .github/workflows/publish.yml
-git commit -m "chore(release): prepare v<version>"
-git tag v<version>
-git push origin main
-git push origin v<version>
-gh release create v<version> --verify-tag --title "v<version>" --notes ""
+npx @xerrors/taskr board --open
 ```
 
-The release tag must match `package.json`, so `v0.1.2` publishes version
-`0.1.2`. If publishing fails after the package has not been published, fix the
-problem and publish a GitHub Release for the same tag again. If npm already
-accepted the version, prepare and release a new patch version instead because
-npm package versions are immutable.
-
-### Try Taskr in Another Project Locally
-
-Build a local npm package tarball from this repository:
-
-```bash
-cd /path/to/taskr
-npm pack
-```
-
-Then use that package from any other Git repository:
-
-```bash
-cd /path/to/your-project
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr install-skill claude
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr init
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr new "implement user invitation flow" --status in_progress
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr validate
-```
-
-The target project does not need to add Taskr as a dependency; `npx` executes the package in a temporary npm environment.
+The board opens in table view by default for quick scanning. It can switch to a status-oriented Kanban view, expands a detail drawer when you click a task, shows commit status and file-level diff stats, supports manual refresh, renders lightweight Markdown in task sections, and can edit sections back into the original task files.
 
 ## What Gets Created
 
@@ -143,7 +104,7 @@ The target project does not need to add Taskr as a dependency; `npx` executes th
 ├── templates/
 │   └── task.md
 └── tasks/
-    └── implement-user-invitation-flow.md
+    └── 2026-05-10-implement-user-invitation-flow.md
 
 .claude/
 └── skills/
@@ -158,32 +119,9 @@ The target project does not need to add Taskr as a dependency; `npx` executes th
 
 `taskr` treats `.taskr/tasks/*.md` as the source of truth. The board reads task Markdown files directly and does not require an index cache.
 
-`taskr install-skill <target>` installs the same Taskr Skill content for each
-agent platform. For project scope, Claude uses `.claude/skills/taskr/SKILL.md`
-and Codex uses `.codex/skills/taskr/SKILL.md`. For user scope, Claude uses
-`~/.claude/skills/taskr/SKILL.md`; Codex uses
-`$CODEX_HOME/skills/taskr/SKILL.md` when `CODEX_HOME` is set, otherwise
-`~/.codex/skills/taskr/SKILL.md`.
+`taskr install-skill <target>` installs the same Taskr Skill content for each agent platform. For project scope, Claude uses `.claude/skills/taskr/SKILL.md` and Codex uses `.codex/skills/taskr/SKILL.md`. For user scope, Claude uses `~/.claude/skills/taskr/SKILL.md`; Codex uses `$CODEX_HOME/skills/taskr/SKILL.md` when `CODEX_HOME` is set, otherwise `~/.codex/skills/taskr/SKILL.md`.
 
-New task ids generated by `taskr new` are prefixed with the local date, such as
-`2026-05-10-implement-user-invitation-flow`, so `.taskr/tasks/` remains easy to
-scan from the filesystem. Explicit `--id` values are preserved as long as they
-use lower-kebab-case.
-
-## Board
-
-Use `taskr board` to serve a repo-local task board for `.taskr/tasks/*.md`.
-
-```bash
-node dist/cli.js board --open
-```
-
-The board opens in table view by default for quick scanning, can switch back to
-the status-oriented Kanban view, expands a task detail drawer when you click a
-task, shows associated commit status, branch, commit IDs, and added/deleted line
-counts, supports manual refresh, and can edit task sections back into the
-original Markdown files. It intentionally does not include drag-and-drop or full
-Markdown rendering.
+New task ids generated by `taskr new` are prefixed with the local date, such as `2026-05-10-implement-user-invitation-flow`, so `.taskr/tasks/` remains easy to scan from the filesystem. Explicit `--id` values are preserved as long as they use lower-kebab-case.
 
 ## Task States
 
@@ -194,9 +132,79 @@ implemented
 blocked
 ```
 
-`implemented` means an agent completed a round of implementation. It does not imply the change has been reviewed, merged, deployed, or even fully tested.
+`implemented` means an agent completed a round of implementation. It does not imply the change has been reviewed, merged, deployed, or fully tested.
 
-The board shows these states as four columns: Planned, In Progress, Implemented, and Blocked. Legacy `closed` task files are treated as completed in the board view, but `closed` is no longer a valid protocol status.
+The board shows these states as four columns. Legacy `closed` task files are treated as completed in the board view, but `closed` is no longer a valid protocol status.
+
+## Local Development
+
+Inside this repository, install dependencies and run the TypeScript CLI:
+
+```bash
+npm install
+npm run build
+node dist/cli.js install-skill claude
+node dist/cli.js install-skill codex
+node dist/cli.js init
+node dist/cli.js new "implement user invitation flow" --status in_progress
+node dist/cli.js list
+node dist/cli.js doctor
+node dist/cli.js board
+node dist/cli.js validate
+```
+
+Run checks with:
+
+```bash
+npm run check
+```
+
+Build a local npm package tarball:
+
+```bash
+npm pack
+```
+
+Then use that package from another Git repository:
+
+```bash
+cd /path/to/your-project
+npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr install-skill claude
+npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr init
+npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr new "implement user invitation flow" --status in_progress
+npx --package /path/to/taskr/xerrors-taskr-0.1.2.tgz taskr doctor
+```
+
+The target project does not need to add Taskr as a dependency; `npx` executes the package in a temporary npm environment.
+
+## Release To npm
+
+Releases are published by the GitHub Actions workflow in `.github/workflows/publish.yml` when a GitHub Release is published.
+
+Before the first automated release, configure npm Trusted Publishing for the `@xerrors/taskr` package:
+
+- Publisher: GitHub Actions
+- Owner: `xerrors`
+- Repository: `taskr`
+- Workflow filename: `publish.yml`
+- Environment name: leave empty unless the workflow is later changed to use one
+
+The workflow uses npm's OIDC-based Trusted Publishing path, so it does not need an `NPM_TOKEN` secret. After Trusted Publishing is configured once, any machine that can push to the GitHub repository can start a release by pushing the matching tag and publishing a GitHub Release for that tag.
+
+To publish a new version:
+
+```bash
+npm version <version> --no-git-tag-version
+npm run check
+git add package.json package-lock.json README.md README.zh-CN.md .github/workflows/publish.yml
+git commit -m "chore(release): prepare v<version>"
+git tag v<version>
+git push origin main
+git push origin v<version>
+gh release create v<version> --verify-tag --title "v<version>" --notes ""
+```
+
+The release tag must match `package.json`, so `v0.1.2` publishes version `0.1.2`. If publishing fails after the package has not been published, fix the problem and publish a GitHub Release for the same tag again. If npm already accepted the version, prepare and release a new patch version because npm package versions are immutable.
 
 ## Commit Convention
 

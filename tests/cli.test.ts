@@ -30,6 +30,32 @@ describe("Taskr CLI", () => {
     expect(console.log).toHaveBeenLastCalledWith(`taskr ${PACKAGE_VERSION}`);
   });
 
+  it("prints command-specific help", () => {
+    expect(run(["new", "--help"])).toBe(0);
+    expect(console.log).toHaveBeenLastCalledWith(expect.stringContaining("Usage: taskr new"));
+    expect(console.log).toHaveBeenLastCalledWith(expect.stringContaining("--request"));
+
+    expect(run(["help", "doctor"])).toBe(0);
+    expect(console.log).toHaveBeenLastCalledWith(expect.stringContaining("Usage: taskr doctor"));
+  });
+
+  it("reports doctor status for initialized and missing protocols", () => {
+    const repo = mkdtempSync(resolve(tmpdir(), "taskr-cli-"));
+    process.chdir(repo);
+
+    expect(run(["doctor"])).toBe(1);
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining("[error] Protocol: .taskr/ is missing."),
+    );
+
+    expect(run(["init"])).toBe(0);
+    expect(run(["doctor"])).toBe(0);
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining("[ok] Protocol: .taskr/ is initialized."),
+    );
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("[warn] Tasks: 0 Markdown"));
+  });
+
   it("runs the init-to-complete workflow", () => {
     const repo = mkdtempSync(resolve(tmpdir(), "taskr-cli-"));
     process.chdir(repo);
