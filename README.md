@@ -8,6 +8,51 @@ No SaaS. No database. No project management ceremony. Just `.taskr/`.
 
 ## Usage
 
+### Install the Skill
+
+For normal use, install the Taskr Skill once and then ask your agent to use Taskr.
+The installer creates the required skill folder for you.
+
+Install for Claude Code across your projects:
+
+```bash
+npx @xerrors/taskr install-skill claude --scope user
+```
+
+Or install it only in the current repository:
+
+```bash
+npx @xerrors/taskr install-skill claude
+```
+
+Codex uses the same flow:
+
+```bash
+npx @xerrors/taskr install-skill codex --scope user
+```
+
+After installation, you can invoke the skill from your agent, for example:
+
+```text
+/taskr implement user invitation flow
+```
+
+You do not need to manually create `.taskr/`, check whether it already exists, or inspect the skill installation directory during the normal setup path. The skill guides the agent to initialize `.taskr/` in a repository when Taskr is first used for tracked work.
+
+### Use the CLI Directly
+
+Use the CLI directly when you are scripting Taskr, troubleshooting setup, or managing task files yourself:
+
+```bash
+npx @xerrors/taskr init
+npx @xerrors/taskr new "implement user invitation flow" --status in_progress
+npx @xerrors/taskr list
+npx @xerrors/taskr board
+npx @xerrors/taskr validate
+```
+
+The npm package is scoped to the `xerrors` npm account and exposes a `taskr` binary.
+
 ### While Developing Taskr
 
 Inside this repository, install dependencies and run the TypeScript CLI:
@@ -15,9 +60,9 @@ Inside this repository, install dependencies and run the TypeScript CLI:
 ```bash
 npm install
 npm run build
-node dist/cli.js init
 node dist/cli.js install-skill claude
 node dist/cli.js install-skill codex
+node dist/cli.js init
 node dist/cli.js new "implement user invitation flow" --status in_progress
 node dist/cli.js list
 node dist/cli.js board
@@ -43,30 +88,13 @@ Then use that package from any other Git repository:
 
 ```bash
 cd /path/to/your-project
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr init
 npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr install-skill claude
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr install-skill codex
+npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr init
 npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr new "implement user invitation flow" --status in_progress
-npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr list
 npx --package /path/to/taskr/xerrors-taskr-0.1.0.tgz taskr validate
 ```
 
-This is the recommended way to test Taskr in a real project before publishing it. The target project does not need to add Taskr as a dependency; `npx` executes the package in a temporary npm environment.
-
-### After Publishing
-
-Once Taskr is published as `@xerrors/taskr`, the same workflow becomes:
-
-```bash
-npx @xerrors/taskr init
-npx @xerrors/taskr install-skill claude
-npx @xerrors/taskr install-skill codex
-npx @xerrors/taskr new "implement user invitation flow" --status in_progress
-npx @xerrors/taskr list
-npx @xerrors/taskr validate
-```
-
-The npm package is scoped to the `xerrors` npm account and exposes a `taskr` binary.
+The target project does not need to add Taskr as a dependency; `npx` executes the package in a temporary npm environment.
 
 ## What Gets Created
 
