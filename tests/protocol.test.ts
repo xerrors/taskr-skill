@@ -141,18 +141,21 @@ describe("Taskr protocol", () => {
     expect(html).toContain("progressbar");
     expect(html).toContain("formatTimestamp");
     expect(html).toContain("commit-panel");
+    expect(html).toContain("commit-files");
     expect(html).toContain("commitDetails");
     expect(html).toContain("commitStatusLabel");
   });
 
-  it("loads diff stats for task commits in the board model", () => {
+  it("loads file-level diff details for task commits in the board model", () => {
     const repo = tempRepo();
     initGitRepo(repo);
     writeFileSync(resolve(repo, "feature.txt"), "old\nremove\n", "utf8");
     git(repo, "add", "feature.txt");
     git(repo, "commit", "-m", "baseline");
     writeFileSync(resolve(repo, "feature.txt"), "old\nnew\n", "utf8");
+    writeFileSync(resolve(repo, "fresh.txt"), "fresh\n", "utf8");
     git(repo, "add", "feature.txt");
+    git(repo, "add", "fresh.txt");
     git(repo, "commit", "-m", "update feature");
     const commit = git(repo, "rev-parse", "HEAD");
 
@@ -171,9 +174,23 @@ describe("Taskr protocol", () => {
     expect(detail.hash).toBe(commit);
     expect(detail.shortHash).toBe(commit.slice(0, 12));
     expect(detail.subject).toBe("update feature");
-    expect(detail.additions).toBe(1);
+    expect(detail.additions).toBe(2);
     expect(detail.deletions).toBe(1);
-    expect(detail.filesChanged).toBe(1);
+    expect(detail.filesChanged).toBe(2);
+    expect(detail.files).toEqual([
+      {
+        path: "feature.txt",
+        status: "M",
+        additions: 1,
+        deletions: 1,
+      },
+      {
+        path: "fresh.txt",
+        status: "U",
+        additions: 1,
+        deletions: 0,
+      },
+    ]);
     expect(detail.error).toBeNull();
   });
 

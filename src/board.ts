@@ -42,7 +42,15 @@ export interface BoardCommitDetail {
   additions: number | null;
   deletions: number | null;
   filesChanged: number | null;
+  files: BoardCommitFile[];
   error: string | null;
+}
+
+export interface BoardCommitFile {
+  path: string;
+  status: "U" | "M" | "D";
+  additions: number;
+  deletions: number;
 }
 
 export interface BoardModel {
@@ -105,6 +113,11 @@ export function renderBoardHtml(model: BoardModel): string {
       --implemented: #22c55e;
       --shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.24);
       --shadow-md: 0 18px 56px rgba(0, 0, 0, 0.34);
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
 
@@ -264,27 +277,29 @@ export function renderBoardHtml(model: BoardModel): string {
     }
 
     .toolbar {
-      display: flex;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) auto auto minmax(180px, auto) minmax(128px, auto);
+      gap: var(--space-2);
       align-items: center;
-      margin: 14px 0 12px;
-      padding: 8px;
+      margin: var(--space-4) 0 var(--space-3);
+      padding: var(--space-2);
       border: 1px solid var(--line);
-      border-radius: 10px;
-      background: rgba(15, 21, 28, 0.66);
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(18, 25, 34, 0.78), rgba(15, 21, 28, 0.68));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
 
     .search-wrap {
       display: flex;
-      gap: 8px;
+      gap: var(--space-2);
       align-items: center;
-      width: min(620px, 100%);
+      min-width: 0;
     }
 
     .view-toggle {
       display: inline-flex;
-      gap: 4px;
-      padding: 4px;
+      gap: var(--space-1);
+      padding: var(--space-1);
       border: 1px solid var(--line);
       border-radius: 8px;
       background: rgba(9, 13, 18, 0.58);
@@ -292,7 +307,7 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .language-button {
       min-width: 58px;
-      padding: 0 12px;
+      padding: 0 var(--space-3);
       color: var(--accent);
     }
 
@@ -303,8 +318,8 @@ export function renderBoardHtml(model: BoardModel): string {
       outline: none;
       border-radius: 8px;
       background: rgba(9, 13, 18, 0.78);
-      min-height: 44px;
-      padding: 10px 13px;
+      min-height: 48px;
+      padding: var(--space-3) var(--space-4);
       transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
     }
 
@@ -319,8 +334,8 @@ export function renderBoardHtml(model: BoardModel): string {
     .icon-button, .section-action {
       display: inline-grid;
       place-items: center;
-      min-width: 44px;
-      min-height: 44px;
+      min-width: 48px;
+      min-height: 48px;
       color: var(--ink);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -331,15 +346,15 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .icon-button {
       width: auto;
-      padding: 0 16px;
+      padding: 0 var(--space-4);
       white-space: nowrap;
       font-weight: 700;
     }
 
     .view-tab {
-      min-height: 36px;
+      min-height: 40px;
       min-width: 72px;
-      padding: 0 12px;
+      padding: 0 var(--space-3);
       color: var(--muted);
       border: 1px solid transparent;
       border-radius: 7px;
@@ -412,11 +427,13 @@ export function renderBoardHtml(model: BoardModel): string {
       min-width: 128px;
       color: var(--muted);
       font-size: 0.82rem;
+      text-align: right;
     }
 
     .hint {
       color: var(--muted);
       font-size: 0.84rem;
+      text-align: right;
     }
 
     .is-hidden {
@@ -700,6 +717,21 @@ export function renderBoardHtml(model: BoardModel): string {
       overflow: hidden;
     }
 
+    html[lang="zh-CN"] .card.card-compact .card-title {
+      font-size: 0.94rem;
+      line-height: 1.42;
+    }
+
+    html[lang="zh-CN"] .card-title {
+      font-size: 1.02rem;
+      line-height: 1.42;
+    }
+
+    html[lang="zh-CN"] .card-request {
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
     .card-footer {
       display: flex;
       flex-wrap: wrap;
@@ -825,15 +857,15 @@ export function renderBoardHtml(model: BoardModel): string {
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      gap: 12px 16px;
       margin-bottom: 16px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(20, 28, 37, 0.56);
     }
 
     .meta {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px;
-      background: rgba(20, 28, 37, 0.66);
       color: var(--ink);
       word-break: break-word;
     }
@@ -883,17 +915,18 @@ export function renderBoardHtml(model: BoardModel): string {
 
     .commit-list {
       display: grid;
-      gap: 8px;
-      padding: 10px;
+      padding: 0 13px 12px;
     }
 
     .commit-row {
       display: grid;
       gap: 8px;
-      padding: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.12);
-      border-radius: 8px;
-      background: rgba(9, 13, 18, 0.32);
+      padding: 12px 0 0;
+    }
+
+    .commit-row + .commit-row {
+      margin-top: 12px;
+      border-top: 1px solid var(--line);
     }
 
     .commit-row-main {
@@ -921,6 +954,67 @@ export function renderBoardHtml(model: BoardModel): string {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
+    }
+
+    .commit-files {
+      display: grid;
+      margin-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .commit-file {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .commit-file + .commit-file {
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .file-status {
+      display: inline-grid;
+      place-items: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      color: var(--ink-strong);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(148, 163, 184, 0.08);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .file-status[data-status="U"] {
+      color: #86efac;
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .file-status[data-status="D"] {
+      color: #fda4af;
+      background: rgba(251, 113, 133, 0.1);
+      border-color: rgba(251, 113, 133, 0.22);
+    }
+
+    .file-path {
+      min-width: 0;
+      color: var(--ink);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .file-lines {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 5px;
+      min-width: 128px;
     }
 
     .diff-add {
@@ -1066,6 +1160,16 @@ export function renderBoardHtml(model: BoardModel): string {
     @media (max-width: 980px) {
       .masthead { grid-template-columns: 1fr; }
       .stats { min-width: 0; }
+      .toolbar {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+      }
+      .hint {
+        grid-column: 1 / 3;
+        text-align: left;
+      }
+      .toolbar-status {
+        text-align: right;
+      }
       .board { grid-template-columns: repeat(4, 280px); }
     }
 
@@ -1081,12 +1185,23 @@ export function renderBoardHtml(model: BoardModel): string {
       .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .stat { padding: 10px; }
       .stat strong { font-size: 1.35rem; }
-      .toolbar { display: grid; }
+      .toolbar { grid-template-columns: 1fr; }
       .search-wrap { width: 100%; }
       .view-toggle { width: 100%; }
       .view-tab { flex: 1; }
       .language-button { width: 100%; }
-      .hint { margin-top: 10px; }
+      .hint, .toolbar-status {
+        grid-column: auto;
+        text-align: left;
+      }
+      .hint { margin-top: 2px; }
+      .commit-file {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      .file-lines {
+        grid-column: 2;
+        justify-content: flex-start;
+      }
       .board {
         grid-template-columns: 1fr;
         overflow: visible;
@@ -1719,10 +1834,9 @@ export function renderBoardHtml(model: BoardModel): string {
       meta.className = "meta-grid";
       meta.append(
         metaItem(t("meta.status"), statusLabel(task.status)),
-        metaItem(t("meta.updated"), formatTimestamp(task.updatedAt)),
         metaItem(t("meta.path"), task.path),
-        progressMeta(task),
-        metaItem(t("meta.relatedFiles"), task.relatedFiles.length ? task.relatedFiles.join("\\n") : t("none"))
+        metaItem(t("meta.updated"), formatTimestamp(task.updatedAt)),
+        progressMeta(task)
       );
       fragment.append(meta);
       fragment.append(commitPanel(task));
@@ -1788,6 +1902,10 @@ export function renderBoardHtml(model: BoardModel): string {
         row.append(subject);
       }
 
+      if (commit.files && commit.files.length > 0) {
+        row.append(commitFileList(commit.files));
+      }
+
       if (commit.error) {
         const error = document.createElement("div");
         error.className = "commit-subject";
@@ -1796,6 +1914,43 @@ export function renderBoardHtml(model: BoardModel): string {
       }
 
       return row;
+    }
+
+    function commitFileList(files) {
+      const list = document.createElement("div");
+      list.className = "commit-files";
+      for (const file of files) {
+        const item = document.createElement("div");
+        item.className = "commit-file";
+
+        const status = document.createElement("span");
+        status.className = "file-status";
+        status.dataset.status = file.status;
+        status.textContent = file.status;
+        status.title = fileStatusTitle(file.status);
+
+        const path = document.createElement("div");
+        path.className = "file-path";
+        path.textContent = file.path;
+
+        const lines = document.createElement("div");
+        lines.className = "file-lines";
+        const added = pill(t("linesAdded").replace("{count}", String(file.additions)));
+        added.classList.add("diff-add");
+        const deleted = pill(t("linesDeleted").replace("{count}", String(file.deletions)));
+        deleted.classList.add("diff-delete");
+        lines.append(added, deleted);
+
+        item.append(status, path, lines);
+        list.append(item);
+      }
+      return list;
+    }
+
+    function fileStatusTitle(status) {
+      if (status === "U") return "U · Added";
+      if (status === "D") return "D · Deleted";
+      return "M · Modified";
     }
 
     function commitStatPills(commit) {
@@ -2245,17 +2400,43 @@ function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
     const subject = lines[1] || "";
     let additions = 0;
     let deletions = 0;
-    let filesChanged = 0;
+    const filesByPath = new Map<string, BoardCommitFile>();
+    const statuses = commitFileStatuses(repoRoot, commit);
 
     for (const line of lines.slice(2)) {
       if (!line.trim()) {
         continue;
       }
-      const [added, deleted] = line.split("\t");
-      filesChanged += 1;
-      additions += numericDiffStat(added);
-      deletions += numericDiffStat(deleted);
+      const [added, deleted, ...pathParts] = line.split("\t");
+      const path = pathParts.join("\t");
+      if (!path) {
+        continue;
+      }
+      const fileAdditions = numericDiffStat(added);
+      const fileDeletions = numericDiffStat(deleted);
+      additions += fileAdditions;
+      deletions += fileDeletions;
+      filesByPath.set(path, {
+        path,
+        status: statuses.get(path) ?? "M",
+        additions: fileAdditions,
+        deletions: fileDeletions,
+      });
     }
+
+    for (const [path, status] of statuses.entries()) {
+      if (filesByPath.has(path)) {
+        continue;
+      }
+      filesByPath.set(path, {
+        path,
+        status,
+        additions: 0,
+        deletions: 0,
+      });
+    }
+
+    const files = [...filesByPath.values()];
 
     return {
       hash,
@@ -2263,7 +2444,8 @@ function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
       subject,
       additions,
       deletions,
-      filesChanged,
+      filesChanged: files.length,
+      files,
       error: null,
     };
   } catch (error) {
@@ -2274,9 +2456,41 @@ function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
       additions: null,
       deletions: null,
       filesChanged: null,
+      files: [],
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+function commitFileStatuses(repoRoot: string, commit: string): Map<string, BoardCommitFile["status"]> {
+  const output = execFileSync("git", ["show", "--name-status", "--format=", "--no-renames", commit], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const statuses = new Map<string, BoardCommitFile["status"]>();
+  for (const line of output.trimEnd().split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    const [rawStatus, ...pathParts] = line.split("\t");
+    const path = pathParts.join("\t");
+    if (!path) {
+      continue;
+    }
+    statuses.set(path, fileStatusCode(rawStatus));
+  }
+  return statuses;
+}
+
+function fileStatusCode(status: string | undefined): BoardCommitFile["status"] {
+  if (status?.startsWith("A")) {
+    return "U";
+  }
+  if (status?.startsWith("D")) {
+    return "D";
+  }
+  return "M";
 }
 
 function numericDiffStat(value: string | undefined): number {
