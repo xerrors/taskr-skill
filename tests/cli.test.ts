@@ -1,8 +1,12 @@
-import { existsSync, mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { run } from "../src/cli.js";
+
+const PACKAGE_VERSION = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+).version as string;
 
 describe("Taskr CLI", () => {
   let originalCwd: string;
@@ -16,6 +20,14 @@ describe("Taskr CLI", () => {
   afterEach(() => {
     process.chdir(originalCwd);
     vi.restoreAllMocks();
+  });
+
+  it("prints the package version", () => {
+    expect(run(["--version"])).toBe(0);
+    expect(console.log).toHaveBeenLastCalledWith(`taskr ${PACKAGE_VERSION}`);
+
+    expect(run(["version"])).toBe(0);
+    expect(console.log).toHaveBeenLastCalledWith(`taskr ${PACKAGE_VERSION}`);
   });
 
   it("runs the init-to-complete workflow", () => {

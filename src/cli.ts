@@ -23,8 +23,6 @@ import {
   VALID_STATUSES,
 } from "./protocol.js";
 
-const VERSION = "0.1.0";
-
 interface ParsedArgs {
   positionals: string[];
   values: Record<string, string>;
@@ -43,8 +41,8 @@ export function run(argv = process.argv.slice(2)): number {
     return 0;
   }
 
-  if (argv[0] === "--version" || argv[0] === "-V") {
-    console.log(`taskr ${VERSION}`);
+  if (argv[0] === "--version" || argv[0] === "-V" || argv[0] === "version") {
+    console.log(`taskr ${readPackageVersion()}`);
     return 0;
   }
 
@@ -333,12 +331,25 @@ function readTaskFile(path: string): string {
   return readFileSync(path, "utf8");
 }
 
+function readPackageVersion(): string {
+  const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  if (
+    typeof packageJson !== "object" ||
+    packageJson === null ||
+    typeof packageJson.version !== "string"
+  ) {
+    throw new TaskrError("Could not read package version.");
+  }
+  return packageJson.version;
+}
+
 function printHelp(): void {
   console.log(`Usage: taskr <command> [options]
 
 Repo-local task protocol for AI-assisted software development.
 
 Commands:
+  version                      Print the Taskr CLI version.
   init                         Initialize .taskr/ in this repo.
   install-skill <target>       Install a Taskr agent skill. Targets: claude, codex.
   new <title>                  Create a task file.

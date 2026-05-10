@@ -78,7 +78,7 @@ npm run check
 ### Release to npm
 
 Releases are published by the GitHub Actions workflow in
-`.github/workflows/publish.yml` when a version tag is pushed.
+`.github/workflows/publish.yml` when a GitHub Release is published.
 
 Before the first automated release, configure npm Trusted Publishing for the
 `@xerrors/taskr` package:
@@ -90,10 +90,9 @@ Before the first automated release, configure npm Trusted Publishing for the
 - Environment name: leave empty unless the workflow is later changed to use one
 
 The workflow uses npm's OIDC-based Trusted Publishing path, so it does not need
-an `NPM_TOKEN` secret. If Trusted Publishing is not available for the package,
-create a granular npm access token with package publish permissions and a short
-expiration, save it as the GitHub Actions repository secret `NPM_TOKEN`, and add
-`NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` to the publish step environment.
+an `NPM_TOKEN` secret. After Trusted Publishing is configured once, any machine
+that can push to the GitHub repository can start a release by pushing the
+matching tag and publishing a GitHub Release for that tag.
 
 To publish a new version:
 
@@ -105,13 +104,14 @@ git commit -m "chore(release): prepare v<version>"
 git tag v<version>
 git push origin main
 git push origin v<version>
+gh release create v<version> --verify-tag --title "v<version>" --notes ""
 ```
 
-The pushed tag must match `package.json`, so `v0.1.1` publishes version
-`0.1.1`. If publishing fails after the package has not been published, fix the
-problem and push the same tag again after deleting or moving the failed remote
-tag. If npm already accepted the version, prepare and tag a new patch version
-instead because npm package versions are immutable.
+The release tag must match `package.json`, so `v0.1.2` publishes version
+`0.1.2`. If publishing fails after the package has not been published, fix the
+problem and publish a GitHub Release for the same tag again. If npm already
+accepted the version, prepare and release a new patch version instead because
+npm package versions are immutable.
 
 ### Try Taskr in Another Project Locally
 
