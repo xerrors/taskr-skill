@@ -13,11 +13,17 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     const toolbarStatus = document.querySelector("#toolbarStatus");
     const masthead = document.querySelector(".masthead");
     const languageStorageKey = "taskr-board-language";
+    const autoRefreshIntervalMs = 5000;
+    let modelSignature = boardModelSignature(model);
     let activeId = null;
     let currentView = "table";
     let sortBy = "updatedAt";
     let language = preferredLanguage();
     let statusTimer = null;
+    let autoRefreshTimer = null;
+    let refreshInFlight = false;
+    let pendingManualRefresh = false;
+    let latestRefreshFailed = false;
     let headerCompact = false;
     let headerFrame = null;
 
@@ -1059,25 +1065,94 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       return model.tasks.find((task) => task.id === id) || null;
     }
 
-    async function loadTasks() {
-      refreshButton.disabled = true;
-      setToolbarStatus(t("statusMessages.refreshing"));
+    async function loadTasks(options = {}) {
+      const source = options.source === "auto" ? "auto" : "manual";
+      const isManual = source === "manual";
+
+      if (refreshInFlight) {
+        if (isManual) {
+          pendingManualRefresh = true;
+          refreshButton.disabled = true;
+          setToolbarStatus(t("statusMessages.refreshing"));
+        }
+        return;
+      }
+
+      refreshInFlight = true;
+      if (isManual) {
+        refreshButton.disabled = true;
+        setToolbarStatus(t("statusMessages.refreshing"));
+      }
       try {
         const response = await fetch("/api/tasks", { headers: { accept: "application/json" } });
         const data = await parseJson(response);
         if (!response.ok) {
           throw new Error(data && data.error ? data.error : t("statusMessages.refreshFailed"));
         }
-        model = data;
+        applyBoardModel(data);
+        if (isManual) {
+          setToolbarStatus(t("statusMessages.refreshed"));
+        } else if (latestRefreshFailed) {
+          setToolbarStatus("");
+        }
+        latestRefreshFailed = false;
+      } catch (error) {
+        latestRefreshFailed = true;
+        setToolbarStatus(t("statusMessages.refreshFailed") + ": " + errorMessage(error), true);
+      } finally {
+        refreshInFlight = false;
+        if (!pendingManualRefresh) {
+          refreshButton.disabled = false;
+        }
+        if (pendingManualRefresh) {
+          pendingManualRefresh = false;
+          void loadTasks({ source: "manual" });
+        }
+      }
+    }
+
+    function shouldAutoRefresh() {
+      if (document.hidden || detail.querySelector("textarea")) return false;
+      const activeElement = document.activeElement;
+      return !(
+        activeElement &&
+        detail.contains(activeElement) &&
+        activeElement.matches("select, input:not([type='checkbox'])")
+      );
+    }
+
+    function startAutoRefresh() {
+      if (autoRefreshTimer !== null) return;
+      autoRefreshTimer = setInterval(() => {
+        if (shouldAutoRefresh()) {
+          void loadTasks({ source: "auto" });
+        }
+      }, autoRefreshIntervalMs);
+    }
+
+    function boardModelSignature(value) {
+      try {
+        return JSON.stringify({
+          repoRoot: value.repoRoot,
+          statuses: value.statuses,
+          tasks: value.tasks
+        });
+      } catch {
+        return "";
+      }
+    }
+
+    function applyBoardModel(data, options = {}) {
+      const nextSignature = boardModelSignature(data);
+      const changed = options.force === true || nextSignature !== modelSignature;
+      model = data;
+      modelSignature = nextSignature;
+      if (changed) {
         updateStats();
         render();
         syncDetail();
-        setToolbarStatus(t("statusMessages.refreshed"));
-      } catch (error) {
-        setToolbarStatus(t("statusMessages.refreshFailed") + ": " + errorMessage(error), true);
-      } finally {
-        refreshButton.disabled = false;
       }
+      return changed;
     }
 
     async function saveStatus(id, status, statusNode, saveButton) {
@@ -1096,10 +1171,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         if (!response.ok) {
           throw new Error(data && data.error ? data.error : t("statusMessages.saveFailed"));
         }
-        model = data;
-        updateStats();
-        render();
-        syncDetail();
+        applyBoardModel(data, { force: true });
         setToolbarStatus(t("statusMessages.saved"));
       } catch (error) {
         statusNode.textContent = t("statusMessages.saveFailed") + ": " + errorMessage(error);
@@ -1126,10 +1198,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         if (!response.ok) {
           throw new Error(data && data.error ? data.error : t("statusMessages.saveFailed"));
         }
-        model = data;
-        updateStats();
-        render();
-        syncDetail();
+        applyBoardModel(data, { force: true });
         setToolbarStatus(t("statusMessages.saved"));
       } catch (error) {
         statusNode.textContent = t("statusMessages.saveFailed");
@@ -1153,6 +1222,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           throw new Error(data && data.error ? data.error : t("statusMessages.deleteFailed"));
         }
         model = data;
+        modelSignature = boardModelSignature(data);
         updateStats();
         setToolbarStatus(t("statusMessages.deleted"));
         closeDetail();
@@ -1223,7 +1293,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     closeButton.addEventListener("click", closeDetail);
     backdrop.addEventListener("click", closeDetail);
     search.addEventListener("input", render);
-    refreshButton.addEventListener("click", loadTasks);
+    refreshButton.addEventListener("click", () => loadTasks({ source: "manual" }));
     sortSelect.addEventListener("change", () => {
       sortBy = sortSelect.value === "createdAt" ? "createdAt" : "updatedAt";
       render();
@@ -1232,6 +1302,11 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     boardViewButton.addEventListener("click", () => setView("board"));
     languageToggle.addEventListener("click", () => setLanguage(language === "en" ? "zh" : "en"));
     window.addEventListener("scroll", syncHeader, { passive: true });
+    document.addEventListener("visibilitychange", () => {
+      if (shouldAutoRefresh()) {
+        void loadTasks({ source: "auto" });
+      }
+    });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && detail.classList.contains("is-open")) {
         if (closeDeleteConfirm()) return;
@@ -1242,4 +1317,5 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     applyLanguage();
     updateStats();
     syncHeader();
-    render();`;
+    render();
+    startAutoRefresh();`;

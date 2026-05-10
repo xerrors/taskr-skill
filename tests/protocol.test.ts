@@ -183,6 +183,12 @@ describe("Taskr protocol", () => {
     expect(html).toContain("🌐 EN");
     expect(html).toContain("toolbar-primary");
     expect(html).toContain("toolbar-secondary");
+    expect(html).toContain("autoRefreshIntervalMs = 5000");
+    expect(html).toContain("boardModelSignature");
+    expect(html).toContain('loadTasks({ source: "auto" })');
+    expect(html).toContain("document.hidden");
+    expect(html).toContain('detail.querySelector("textarea")');
+    expect(html).toContain("activeElement.matches");
     expect(html).toContain("sortSelect");
     expect(html).toContain("Sort tasks");
     expect(html).toContain("Created");
