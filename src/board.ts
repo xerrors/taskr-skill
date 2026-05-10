@@ -4,8 +4,10 @@ import {
   extractSections,
   listTasks,
   loadTaskById,
+  normalizeCommitIds,
   relative,
   replaceSection,
+  shortCommitId,
   TaskrError,
   taskId,
   taskStatus,
@@ -72,7 +74,9 @@ export interface BoardServer {
 }
 
 export function createBoardModel(repoRoot: string): BoardModel {
-  const tasks = listTasks(repoRoot).map((task) => boardTask(task, repoRoot));
+  const documents = listTasks(repoRoot);
+  syncTaskCommitsFromGitLog(repoRoot, documents);
+  const tasks = documents.map((task) => boardTask(task, repoRoot));
   return {
     generatedAt: new Date().toISOString(),
     repoRoot,
@@ -2094,7 +2098,7 @@ export function renderBoardHtml(model: BoardModel): string {
     function commitSummary(task) {
       const status = commitStatusLabel(task.commitStatus);
       if (!task.commits.length) return status || t("commitUnknown");
-      return status + " · " + task.commits[0].slice(0, 12);
+      return status + " · " + task.commits[0].slice(0, 7);
     }
 
     function formatTimestamp(value) {
@@ -2362,7 +2366,7 @@ function sendJson(response: ServerResponse, status: number, value: unknown): voi
 function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
   const sections = extractSections(document.body);
   const originalStatus = taskStatus(document) || "planned";
-  const commits = asStringArray(document.metadata.commits);
+  const commits = normalizeCommitIds(asStringArray(document.metadata.commits));
   return {
     id: taskId(document),
     title: taskTitle(document),
@@ -2379,6 +2383,63 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
     sections,
     criteria: countCriteria(sections["Acceptance Criteria"] ?? ""),
   };
+}
+
+function syncTaskCommitsFromGitLog(repoRoot: string, documents: TaskDocument[]): void {
+  if (documents.length === 0) {
+    return;
+  }
+
+  const commitsByTask = taskCommitsFromGitLog(repoRoot);
+
+  for (const document of documents) {
+    const discoveredCommits = commitsByTask.get(taskId(document)) ?? [];
+    const existingCommits = asStringArray(document.metadata.commits);
+    const mergedCommits = normalizeCommitIds([...existingCommits, ...discoveredCommits]);
+    const shouldUpdateCommits = !stringArraysEqual(mergedCommits, existingCommits);
+    const shouldUpdateStatus =
+      mergedCommits.length > 0 && document.metadata.commit_status !== "created";
+
+    if (!shouldUpdateCommits && !shouldUpdateStatus) {
+      continue;
+    }
+
+    document.metadata.commits = mergedCommits;
+    document.metadata.commit_status = "created";
+    writeTask(document);
+  }
+}
+
+function taskCommitsFromGitLog(repoRoot: string): Map<string, string[]> {
+  const commitsByTask = new Map<string, string[]>();
+  let output: string;
+  try {
+    output = execFileSync("git", ["log", "--all", "--format=%H%x1f%B%x1e"], {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch {
+    return commitsByTask;
+  }
+
+  for (const record of output.split("\x1e")) {
+    const separatorIndex = record.indexOf("\x1f");
+    if (separatorIndex === -1) {
+      continue;
+    }
+    const hash = record.slice(0, separatorIndex).trim();
+    const message = record.slice(separatorIndex + 1);
+    if (!hash) {
+      continue;
+    }
+    for (const match of message.matchAll(/\[taskr:([a-z0-9]+(?:-[a-z0-9]+)*)\]/g)) {
+      const id = match[1];
+      commitsByTask.set(id, normalizeCommitIds([...(commitsByTask.get(id) ?? []), hash]));
+    }
+  }
+
+  return commitsByTask;
 }
 
 function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
@@ -2440,7 +2501,7 @@ function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
 
     return {
       hash,
-      shortHash: hash.slice(0, 12),
+      shortHash: shortCommitId(hash),
       subject,
       additions,
       deletions,
@@ -2451,7 +2512,7 @@ function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
   } catch (error) {
     return {
       hash: commit,
-      shortHash: commit.slice(0, 12),
+      shortHash: shortCommitId(commit),
       subject: "",
       additions: null,
       deletions: null,
@@ -2518,6 +2579,10 @@ function countCriteria(value: string): { checked: number; total: number } {
 
 function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String) : [];
+}
+
+function stringArraysEqual(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

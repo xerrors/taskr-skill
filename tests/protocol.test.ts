@@ -171,8 +171,9 @@ describe("Taskr protocol", () => {
     const model = createBoardModel(repo);
     const detail = model.tasks[0].commitDetails[0];
 
+    expect(model.tasks[0].commits).toEqual([commit.slice(0, 7)]);
     expect(detail.hash).toBe(commit);
-    expect(detail.shortHash).toBe(commit.slice(0, 12));
+    expect(detail.shortHash).toBe(commit.slice(0, 7));
     expect(detail.subject).toBe("update feature");
     expect(detail.additions).toBe(2);
     expect(detail.deletions).toBe(1);
@@ -192,6 +193,59 @@ describe("Taskr protocol", () => {
       },
     ]);
     expect(detail.error).toBeNull();
+  });
+
+  it("discovers task commits from git log and writes them back to the task file", () => {
+    const repo = tempRepo();
+    initGitRepo(repo);
+    initProtocol(repo);
+    createTask(repo, "Recover commit from log", { taskId: "recover-commit-from-log" });
+
+    writeFileSync(resolve(repo, "feature.txt"), "implemented\n", "utf8");
+    git(repo, "add", "feature.txt");
+    git(repo, "commit", "-m", "implement feature [taskr:recover-commit-from-log]");
+    const commit = git(repo, "rev-parse", "HEAD");
+
+    const model = createBoardModel(repo);
+    const task = model.tasks[0];
+    const taskContent = readFileSync(taskPath(repo, "recover-commit-from-log"), "utf8");
+
+    expect(task.commits).toEqual([commit.slice(0, 7)]);
+    expect(task.commitStatus).toBe("created");
+    expect(task.commitDetails[0].subject).toBe(
+      "implement feature [taskr:recover-commit-from-log]",
+    );
+    expect(taskContent).toContain(`  - ${commit.slice(0, 7)}`);
+    expect(taskContent).not.toContain(commit);
+    expect(taskContent).toContain("commit_status: created");
+  });
+
+  it("deduplicates short and full task commit ids by the first seven characters", () => {
+    const repo = tempRepo();
+    initGitRepo(repo);
+    initProtocol(repo);
+    createTask(repo, "Deduplicate commit ids", { taskId: "deduplicate-commit-ids" });
+
+    writeFileSync(resolve(repo, "feature.txt"), "implemented\n", "utf8");
+    git(repo, "add", "feature.txt");
+    git(repo, "commit", "-m", "implement feature [taskr:deduplicate-commit-ids]");
+    const commit = git(repo, "rev-parse", "HEAD");
+    const shortCommit = commit.slice(0, 7);
+
+    completeTask(repo, "deduplicate-commit-ids", {
+      summary: "Implemented the feature.",
+      commits: [shortCommit, commit],
+      relatedFiles: ["feature.txt"],
+      checkCriteria: true,
+    });
+
+    const model = createBoardModel(repo);
+    const taskContent = readFileSync(taskPath(repo, "deduplicate-commit-ids"), "utf8");
+
+    expect(model.tasks[0].commits).toEqual([shortCommit]);
+    expect(model.tasks[0].commitDetails[0].shortHash).toBe(shortCommit);
+    expect(taskContent).toContain(`  - ${shortCommit}`);
+    expect(taskContent).not.toContain(commit);
   });
 
   it("maps legacy and unknown statuses into the four board columns", () => {

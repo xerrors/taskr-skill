@@ -71,6 +71,14 @@ export function taskStatus(document: TaskDocument): string {
   return String(document.metadata.status ?? "");
 }
 
+export function shortCommitId(commit: string): string {
+  return commit.trim().slice(0, 7);
+}
+
+export function normalizeCommitIds(commits: string[]): string[] {
+  return unique(commits.map(shortCommitId).filter(Boolean));
+}
+
 export function findRepoRoot(start = process.cwd()): string {
   const cwd = resolve(start);
   try {
@@ -514,12 +522,12 @@ export function completeTask(
   }
 
   const document = loadTaskById(repoRoot, id);
-  const commitList = unique(commits ?? []);
+  const commitList = normalizeCommitIds(commits ?? []);
   const fileList = unique(relatedFiles ?? []);
 
-  const existingCommits = asStringArray(document.metadata.commits);
+  const existingCommits = normalizeCommitIds(asStringArray(document.metadata.commits));
   const existingFiles = asStringArray(document.metadata.related_files);
-  const mergedCommits = unique([...existingCommits, ...commitList]);
+  const mergedCommits = normalizeCommitIds([...existingCommits, ...commitList]);
   document.metadata.commits = mergedCommits;
   document.metadata.commit_status =
     commitStatus ?? (mergedCommits.length > 0 ? "created" : "not_created");
