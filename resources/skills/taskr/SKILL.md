@@ -16,15 +16,21 @@ Taskr uses one Skill body across supported agent platforms. Do not maintain sepa
 - Codex project install: `.codex/skills/taskr/SKILL.md`
 - Codex user install: `$CODEX_HOME/skills/taskr/SKILL.md` when `CODEX_HOME` is set, otherwise `~/.codex/skills/taskr/SKILL.md`
 
-Prefer `taskr install-skill <target>` when the CLI is available:
+Taskr is distributed through npm. In ordinary target repositories, do not assume the user has installed a global `taskr` binary or added Taskr as a project dependency. Prefer `npx` commands:
 
 ```bash
-taskr install-skill claude
-taskr install-skill codex
-taskr install-skill codex --scope user
+npx --yes @xerrors/taskr install-skill claude
+npx --yes @xerrors/taskr install-skill codex
+npx --yes @xerrors/taskr install-skill codex --scope user
 ```
 
-If the CLI is unavailable, copy this shared skill file to the platform-specific path above.
+If npm cannot infer the scoped package binary in a particular shell, use the explicit package form:
+
+```bash
+npx --yes --package @xerrors/taskr taskr install-skill codex
+```
+
+Use a bare `taskr ...` command only when the current environment explicitly provides that binary. If `npx` and the CLI are unavailable, copy this shared skill file to the platform-specific path above.
 
 ## Trigger Policy
 
@@ -47,20 +53,22 @@ Taskr should add useful friction before code changes, not ceremony everywhere.
 
 ## CLI Policy
 
-Prefer the `taskr` CLI when available:
+Prefer the npm CLI through `npx`; target repositories should not need a global install or a local Taskr dependency:
 
 ```bash
-taskr init
-taskr new "implement user invitation flow" --status in_progress
-taskr status 2026-05-10-user-invitation in_progress
-taskr note 2026-05-10-user-invitation "Found existing workspace role model."
-taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow; waiting for user confirmation." --file path/to/file.py --check-criteria
-taskr validate 2026-05-10-user-invitation
+npx --yes @xerrors/taskr init
+npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
+npx --yes @xerrors/taskr status 2026-05-10-user-invitation in_progress
+npx --yes @xerrors/taskr note 2026-05-10-user-invitation "Found existing workspace role model."
+npx --yes @xerrors/taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow; waiting for user confirmation." --file path/to/file.py --check-criteria
+npx --yes @xerrors/taskr validate 2026-05-10-user-invitation
 ```
 
-If `taskr` is unavailable but this repo contains the Taskr package source, use the repo's documented local command instead. In the TypeScript Taskr package, build first when needed and use `node dist/cli.js ...`.
+If npm cannot infer the scoped package binary, use `npx --yes --package @xerrors/taskr taskr ...` with the same arguments.
 
-If the CLI is unavailable, edit `.taskr/tasks/<task-id>.md` directly according to the format below.
+If you are working inside the Taskr package source itself and need to validate unpublished local changes, use the repo's documented development command instead. In the TypeScript Taskr package, build first when needed and use `node dist/cli.js ...`.
+
+If `npx` or the CLI is unavailable, edit `.taskr/tasks/<task-id>.md` directly according to the format below.
 
 ## Task Workflow
 
@@ -126,7 +134,7 @@ During work:
 - Commit after each completed task when the user requests task-by-task commits.
 - Use a normal first-line summary. Put the Taskr reference in the commit message footer, for example `Taskr: 2026-05-10-user-invitation`.
 - Legacy `[taskr:<task-id>]` messages may still be read by older tooling, but new commits should prefer the footer.
-- After the commit succeeds, record the commit hash in the task metadata and set status to `implemented`; if using the CLI, run `taskr complete --commit <hash> ...` to record metadata, then `taskr status <task-id> implemented` after user confirmation.
+- After the commit succeeds, record the commit hash in the task metadata and set status to `implemented`; if using the CLI, run `npx --yes @xerrors/taskr complete --commit <hash> ...` to record metadata, then `npx --yes @xerrors/taskr status <task-id> implemented` after user confirmation.
 - If `.taskr/` is ignored by Git, still update it locally; the Markdown task files remain the working record even when they are not committed.
 
 After implementation and verification:
@@ -138,7 +146,7 @@ After implementation and verification:
 5. Check acceptance criteria that are satisfied.
 6. Record verification commands or checks and result in `verification`.
 7. Set status to `implemented` only after the user confirms submission/completion unless the work is blocked.
-8. Run `taskr validate <task-id>` when possible.
+8. Run `npx --yes @xerrors/taskr validate <task-id>` when possible.
 
 ## Task File Contract
 

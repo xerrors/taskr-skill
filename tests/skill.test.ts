@@ -22,4 +22,13 @@ describe("Taskr skill guidance", () => {
     expect(SKILL).toContain("Use `implemented` only after the user confirms");
     expect(SKILL).toContain("failure or unable-to-run reason");
   });
+
+  it("uses npx instead of assuming a globally installed taskr binary", () => {
+    expect(SKILL).toContain("npx --yes @xerrors/taskr init");
+    expect(SKILL).toContain("npx --yes @xerrors/taskr install-skill codex");
+    expect(SKILL).toContain("npx --yes --package @xerrors/taskr taskr");
+    expect(SKILL).toContain("do not assume the user has installed a global `taskr` binary");
+    expect(SKILL).not.toContain("Prefer the `taskr` CLI when available");
+    expect(SKILL).not.toMatch(/^taskr init$/m);
+  });
 });
