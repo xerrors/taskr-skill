@@ -1,6 +1,7 @@
 # Taskr
 
 [![npm package](https://img.shields.io/npm/v/%40xerrors%2Ftaskr?label=npm)](https://www.npmjs.com/package/@xerrors/taskr)
+[![npm downloads](https://img.shields.io/npm/dm/%40xerrors%2Ftaskr?label=downloads)](https://www.npmjs.com/package/@xerrors/taskr)
 [![Node.js >=20](https://img.shields.io/badge/node-%3E%3D20-339933)](https://nodejs.org/)
 
 [English README](README.md)
