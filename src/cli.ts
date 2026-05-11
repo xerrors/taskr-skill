@@ -9,12 +9,10 @@ import {
   createTask,
   findRepoRoot,
   initProtocol,
-  installAgentSkill,
   listTasks,
   loadTaskById,
   relative,
   setStatus,
-  SKILL_TARGETS,
   TaskrError,
   taskId,
   taskStatus,
@@ -94,17 +92,12 @@ export function run(argv = process.argv.slice(2)): number {
         force: {},
       });
       const target = requiredPositional(parsed, 0, "target");
-      requireChoices(target, [...SKILL_TARGETS], "target");
+      requireChoices(target, ["claude", "codex"], "target");
       requirePositionalCount(parsed, 1);
       const scope = parsed.values.scope ?? "project";
       requireChoices(scope, ["project", "user"], "scope");
-      const installed = installAgentSkill(repoRoot, {
-        target: target as (typeof SKILL_TARGETS)[number],
-        scope: scope as "project" | "user",
-        force: parsed.flags.has("force"),
-      });
-      console.log(`installed ${scope === "project" ? relative(installed, repoRoot) : installed}`);
-      return 0;
+      console.error(deprecatedInstallSkillMessage(target, scope));
+      return 1;
     }
 
     if (command === "new") {
@@ -365,6 +358,20 @@ function readPackageVersion(): string {
   return packageJson.version;
 }
 
+function deprecatedInstallSkillMessage(target: string, scope: string): string {
+  const agent = target === "claude" ? "claude-code" : "codex";
+  const scopeFlag = scope === "user" ? " --global" : "";
+  return [
+    "`taskr install-skill` is deprecated.",
+    "Taskr Skill now lives at `skills/taskr/` and is installed with the standalone skills CLI.",
+    "",
+    "Use:",
+    `  npx --yes skills add xerrors/taskr --skill taskr --agent ${agent}${scopeFlag}`,
+    "",
+    "The `@xerrors/taskr` package remains the CLI for Taskr tasks, validation, and the local board.",
+  ].join("\n");
+}
+
 function printHelp(): void {
   console.log(`Usage: taskr <command> [options]
 
@@ -373,7 +380,7 @@ Repo-local task protocol for AI-assisted software development.
 Commands:
   version                         Print the Taskr CLI version.
   init                            Initialize .taskr/ in this repo.
-  install-skill <target>          Install a Taskr agent skill. Targets: claude, codex.
+  install-skill <target>          Deprecated. Use the standalone skills installer.
   new <title>                     Create a task file.
   list                            List tasks.
   show <task_id>                  Print a task file.
@@ -404,14 +411,20 @@ Options:
 `,
     "install-skill": `Usage: taskr install-skill <target> [--scope project|user] [--force]
 
-Install the shared Taskr Skill for an agent platform.
+Deprecated compatibility command. Taskr Skill is distributed from the repository
+root under skills/taskr/ and should be installed with the standalone skills CLI.
 
 Arguments:
   target     claude or codex.
 
 Options:
-  --scope    Install in this repo or in the user skill directory. Default: project.
-  --force    Replace an existing skill file.
+  --scope    Show project or user install guidance. Default: project.
+  --force    Accepted for old scripts, but no longer used.
+
+Recommended:
+  npx --yes skills add xerrors/taskr --skill taskr --agent claude-code
+  npx --yes skills add xerrors/taskr --skill taskr --agent codex
+  npx --yes skills add xerrors/taskr --skill taskr --agent codex --global
 `,
     new: `Usage: taskr new <title> [--id task-id] [--status status] [--request text]
 

@@ -1,6 +1,6 @@
 {
   "name": "@xerrors/taskr",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Repo-local task protocol for AI-assisted software development.",
   "license": "MIT",
   "author": "xerrors",
@@ -36,7 +36,6 @@
   },
   "files": [
     "dist",
-    "resources",
     "README.md"
   ],
   "scripts": {

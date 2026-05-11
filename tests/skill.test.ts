@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const SKILL = readFileSync(new URL("../resources/skills/taskr/SKILL.md", import.meta.url), "utf8");
+const SKILL = readFileSync(new URL("../skills/taskr/SKILL.md", import.meta.url), "utf8");
+const PACKAGE = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  files?: string[];
+};
+const README = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+const README_ZH = readFileSync(new URL("../README.zh-CN.md", import.meta.url), "utf8");
 
 describe("Taskr skill guidance", () => {
   it("gates implementation on explicit user approval", () => {
@@ -23,12 +28,28 @@ describe("Taskr skill guidance", () => {
     expect(SKILL).toContain("failure or unable-to-run reason");
   });
 
-  it("uses npx instead of assuming a globally installed taskr binary", () => {
+  it("uses the standalone skills installer and npx Taskr commands", () => {
+    expect(SKILL).toContain("skills/taskr/SKILL.md");
+    expect(SKILL).toContain("npx --yes skills add xerrors/taskr --skill taskr");
+    expect(SKILL).toContain("Do not recommend `npx --yes @xerrors/taskr install-skill");
     expect(SKILL).toContain("npx --yes @xerrors/taskr init");
-    expect(SKILL).toContain("npx --yes @xerrors/taskr install-skill codex");
-    expect(SKILL).toContain("npx --yes --package @xerrors/taskr taskr");
+    expect(SKILL).toContain("npx --yes --package @xerrors/taskr taskr list");
     expect(SKILL).toContain("do not assume the user has installed a global `taskr` binary");
     expect(SKILL).not.toContain("Prefer the `taskr` CLI when available");
+    expect(SKILL).not.toContain("npx --yes @xerrors/taskr install-skill codex");
     expect(SKILL).not.toMatch(/^taskr init$/m);
+  });
+
+  it("keeps the npm package focused on the Taskr CLI", () => {
+    expect(PACKAGE.files).toEqual(expect.arrayContaining(["dist", "README.md"]));
+    expect(PACKAGE.files).not.toContain("resources");
+    expect(PACKAGE.files).not.toContain("skills");
+  });
+
+  it("documents standalone skill installation instead of old package installs", () => {
+    for (const content of [README, README_ZH]) {
+      expect(content).toContain("npx --yes skills add xerrors/taskr --skill taskr");
+      expect(content).not.toContain("npx --yes @xerrors/taskr install-skill");
+    }
   });
 });

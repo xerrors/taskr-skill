@@ -5,7 +5,7 @@
 
 [English README](README.md)
 
-Taskr 是一个面向 AI 辅助开发的仓库本地任务协议、Skill 和本地看板。
+Taskr 是一个面向 AI 辅助开发的仓库本地任务协议、独立 Skill 和本地看板。
 
 它让编码智能体把聊天里的需求转成仓库里的持久 Markdown 任务文件：需求、验收标准、实现计划、清单进度、可选备注、验证记录、相关文件、提交和完成总结都留在同一个地方。
 
@@ -13,33 +13,33 @@ Taskr 是一个面向 AI 辅助开发的仓库本地任务协议、Skill 和本�
 
 ## Taskr 提供什么
 
-- 一份 Claude 或 Codex Skill，让智能体知道什么时候、用什么方式跟踪工作。
+- 一份独立的 Claude 或 Codex Skill，让智能体知道什么时候、用什么方式跟踪工作。
 - 存放在 `.taskr/tasks/*.md` 下的人类可读任务文件。
 - 一套适合智能体协作的小工作流：`planned`、`in_progress`、`pending_confirmation`、`implemented`、`blocked`。
 - 一个本地看板，用来浏览任务、切换表格和 Kanban、查看提交上下文、编辑任务小节。
-- 通过 npm 分发的 CLI，可直接用 `npx` 运行，目标仓库不需要把 Taskr 加为依赖。
+- 通过 npm 分发的 CLI，用于 Taskr 协议命令和本地看板。
 
 ## 快速开始
 
-先安装一次 Skill，然后在需要跟踪实现工作时让智能体使用 Taskr。
+先用独立的 skills 安装器安装一次 Skill，然后在需要跟踪实现工作时让智能体使用 Taskr。
 
 安装到 Claude Code 的用户级目录：
 
 ```bash
-npx --yes @xerrors/taskr install-skill claude --scope user
+npx --yes skills add xerrors/taskr --skill taskr --agent claude-code --global
 ```
 
 安装到 Codex 的用户级目录：
 
 ```bash
-npx --yes @xerrors/taskr install-skill codex --scope user
+npx --yes skills add xerrors/taskr --skill taskr --agent codex --global
 ```
 
-如果只想安装到当前仓库，在仓库目录中运行不带 `--scope user` 的命令：
+如果只想安装到当前仓库，在仓库目录中运行不带 `--global` 的命令：
 
 ```bash
-npx --yes @xerrors/taskr install-skill claude
-npx --yes @xerrors/taskr install-skill codex
+npx --yes skills add xerrors/taskr --skill taskr --agent claude-code
+npx --yes skills add xerrors/taskr --skill taskr --agent codex
 ```
 
 之后可以这样让智能体开始跟踪任务：
@@ -48,7 +48,7 @@ npx --yes @xerrors/taskr install-skill codex
 /taskr implement user invitation flow
 ```
 
-第一次在仓库中使用 Taskr 时，Skill 会引导智能体初始化 `.taskr/`。
+第一次在仓库中使用 Taskr 时，Skill 会引导智能体初始化 `.taskr/`。Skill 会使用 `@xerrors/taskr` CLI 管理任务文件、验证和看板；CLI 包本身不再作为 Skill 安装器。
 
 ## 智能体工作流
 
@@ -133,21 +133,11 @@ npx --yes @xerrors/taskr doctor
 │   └── task.md
 └── tasks/
     └── 2026-05-10-implement-user-invitation-flow.md
-
-.claude/
-└── skills/
-    └── taskr/
-        └── SKILL.md
-
-.codex/
-└── skills/
-    └── taskr/
-        └── SKILL.md
 ```
 
 `taskr` 把 `.taskr/tasks/*.md` 视为唯一事实来源。看板直接读取任务 Markdown 文件，不需要 index 缓存。
 
-`taskr install-skill <target>` 会为不同智能体平台安装同一份 Taskr Skill。项目级安装时，Claude 使用 `.claude/skills/taskr/SKILL.md`，Codex 使用 `.codex/skills/taskr/SKILL.md`。用户级安装时，Claude 使用 `~/.claude/skills/taskr/SKILL.md`；Codex 优先使用 `$CODEX_HOME/skills/taskr/SKILL.md`，否则使用 `~/.codex/skills/taskr/SKILL.md`。
+Taskr Skill 源文件位于本仓库的 `skills/taskr/SKILL.md`。请用 `npx --yes skills add xerrors/taskr --skill taskr ...` 安装，具体目标目录由安装器根据智能体平台处理。`taskr install-skill <target>` 现在只是弃用的兼容命令，会打印迁移提示，不再作为主要安装路径。
 
 `taskr new` 生成的新任务 id 会带本地日期前缀，例如 `2026-05-10-implement-user-invitation-flow`，方便直接浏览 `.taskr/tasks/`。显式传入的 `--id` 会保留，只要它符合 lower-kebab-case。
 
@@ -172,8 +162,6 @@ blocked
 ```bash
 npm install
 npm run build
-node dist/cli.js install-skill claude
-node dist/cli.js install-skill codex
 node dist/cli.js init
 node dist/cli.js board
 node dist/cli.js validate

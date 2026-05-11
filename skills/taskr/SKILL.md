@@ -9,28 +9,35 @@ Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep imple
 
 ## Installation Policy
 
-Taskr uses one Skill body across supported agent platforms. Do not maintain separate Claude and Codex versions of this Skill unless the platform formats diverge in a way the shared Markdown cannot express. The normal difference is the destination path:
+Taskr Skill is distributed independently from the `@xerrors/taskr` npm CLI package. The canonical Skill source lives in this repository at `skills/taskr/SKILL.md` so standalone skill installers can discover it from the repository root.
 
-- Claude project install: `.claude/skills/taskr/SKILL.md`
-- Claude user install: `~/.claude/skills/taskr/SKILL.md`
-- Codex project install: `.codex/skills/taskr/SKILL.md`
-- Codex user install: `$CODEX_HOME/skills/taskr/SKILL.md` when `CODEX_HOME` is set, otherwise `~/.codex/skills/taskr/SKILL.md`
-
-Taskr is distributed through npm. In ordinary target repositories, do not assume the user has installed a global `taskr` binary or added Taskr as a project dependency. Prefer `npx` commands:
+Use the open skills installer for new installs:
 
 ```bash
-npx --yes @xerrors/taskr install-skill claude
-npx --yes @xerrors/taskr install-skill codex
-npx --yes @xerrors/taskr install-skill codex --scope user
+npx --yes skills add xerrors/taskr --skill taskr --agent claude-code
+npx --yes skills add xerrors/taskr --skill taskr --agent codex
+npx --yes skills add xerrors/taskr --skill taskr --agent codex --global
 ```
 
-If npm cannot infer the scoped package binary in a particular shell, use the explicit package form:
+Project installs are written into the target repository's agent-specific skill directory. Global installs use the selected agent's user-level skill directory. Use `--copy` with the skills installer when a real copied file is preferred over a symlink.
+
+Do not recommend `npx --yes @xerrors/taskr install-skill ...` for new installs. That command is retained only as a deprecated compatibility command that points users to the standalone skills installer.
+
+The Taskr CLI is still distributed through npm. In ordinary target repositories, do not assume the user has installed a global `taskr` binary or added Taskr as a project dependency. Prefer `npx` commands for task operations:
 
 ```bash
-npx --yes --package @xerrors/taskr taskr install-skill codex
+npx --yes @xerrors/taskr init
+npx --yes @xerrors/taskr list
+npx --yes @xerrors/taskr board --open
 ```
 
-Use a bare `taskr ...` command only when the current environment explicitly provides that binary. If `npx` and the CLI are unavailable, copy this shared skill file to the platform-specific path above.
+If npm cannot infer the scoped package binary for Taskr task operations in a particular shell, use the explicit package form:
+
+```bash
+npx --yes --package @xerrors/taskr taskr list
+```
+
+Use a bare `taskr ...` command only when the current environment explicitly provides that binary. If `npx` and the CLI are unavailable, edit `.taskr/tasks/<task-id>.md` directly according to the format below.
 
 ## Trigger Policy
 

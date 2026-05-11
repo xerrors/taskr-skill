@@ -1,7 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -9,9 +8,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { homedir } from "node:os";
 import { relative as pathRelative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { dump, JSON_SCHEMA, load } from "js-yaml";
 
 export const TASKR_DIR = ".taskr";
@@ -662,60 +659,40 @@ export function installClaudeSkill(
   repoRoot: string,
   {
     scope = "project",
-    force = false,
   }: {
     scope?: SkillScope;
     force?: boolean;
   } = {},
-): string {
-  return installAgentSkill(repoRoot, { target: "claude", scope, force });
+): never {
+  return installAgentSkill(repoRoot, { target: "claude", scope });
 }
 
 export function installAgentSkill(
-  repoRoot: string,
+  _repoRoot: string,
   {
     target,
     scope = "project",
-    force = false,
   }: {
     target: SkillTarget;
     scope?: SkillScope;
     force?: boolean;
   },
-): string {
+): never {
   if (!SKILL_TARGETS.includes(target)) {
     throw new TaskrError(`Skill target must be one of ${SKILL_TARGETS.join(", ")}.`);
   }
   if (scope !== "project" && scope !== "user") {
     throw new TaskrError("Skill scope must be `project` or `user`.");
   }
-
-  const destination = skillDestination(repoRoot, target, scope);
-
-  mkdirSync(destination, { recursive: true });
-  const skillFile = resolve(destination, "SKILL.md");
-  if (existsSync(skillFile) && !force) {
-    throw new TaskrError(`Skill already exists: ${skillFile}. Use --force to replace it.`);
-  }
-
-  const source = fileURLToPath(new URL("../resources/skills/taskr/SKILL.md", import.meta.url));
-  copyFileSync(source, skillFile);
-  return skillFile;
-}
-
-export function skillDestination(repoRoot: string, target: SkillTarget, scope: SkillScope): string {
-  if (target === "claude") {
-    return scope === "project"
-      ? resolve(repoRoot, ".claude", "skills", "taskr")
-      : resolve(homedir(), ".claude", "skills", "taskr");
-  }
-
-  const codexHome = process.env.CODEX_HOME
-    ? resolve(process.env.CODEX_HOME)
-    : resolve(homedir(), ".codex");
-  return scope === "project"
-    ? resolve(repoRoot, ".codex", "skills", "taskr")
-    : resolve(codexHome, "skills", "taskr");
+  const agent = target === "claude" ? "claude-code" : "codex";
+  const scopeFlag = scope === "user" ? " --global" : "";
+  throw new TaskrError(
+    [
+      "`taskr install-skill` is deprecated.",
+      "Install Taskr Skill with the standalone skills CLI instead:",
+      `npx --yes skills add xerrors/taskr --skill taskr --agent ${agent}${scopeFlag}`,
+    ].join("\n"),
+  );
 }
 
 export function relative(path: string, root: string): string {

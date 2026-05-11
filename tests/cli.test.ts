@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -65,8 +65,6 @@ describe("Taskr CLI", () => {
     process.chdir(repo);
 
     expect(run(["init"])).toBe(0);
-    expect(run(["install-skill", "claude"])).toBe(0);
-    expect(run(["install-skill", "codex"])).toBe(0);
     expect(
       run([
         "new",
@@ -103,7 +101,18 @@ describe("Taskr CLI", () => {
         "utf8",
       ),
     ).toContain("status: pending_confirmation");
-    expect(existsSync(resolve(repo, ".claude/skills/taskr/SKILL.md"))).toBe(true);
-    expect(existsSync(resolve(repo, ".codex/skills/taskr/SKILL.md"))).toBe(true);
+  });
+
+  it("keeps install-skill as deprecated migration guidance", () => {
+    const repo = mkdtempSync(resolve(tmpdir(), "taskr-cli-"));
+    process.chdir(repo);
+
+    expect(run(["install-skill", "codex", "--scope", "user"])).toBe(1);
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("is deprecated"));
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "npx --yes skills add xerrors/taskr --skill taskr --agent codex --global",
+      ),
+    );
   });
 });
