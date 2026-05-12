@@ -4,14 +4,14 @@
   "description": "Repo-local task protocol for AI-assisted software development.",
   "license": "MIT",
   "author": "xerrors",
-  "homepage": "https://github.com/xerrors/taskr#readme",
+  "homepage": "https://github.com/xerrors/taskr-skill#readme",
   "bugs": {
-    "url": "https://github.com/xerrors/taskr/issues"
+    "url": "https://github.com/xerrors/taskr-skill/issues"
   },
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xerrors/taskr.git"
+    "url": "git+https://github.com/xerrors/taskr-skill.git"
   },
   "keywords": [
     "taskr",

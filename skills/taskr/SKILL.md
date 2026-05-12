@@ -14,9 +14,9 @@ Taskr Skill is distributed independently from the `@xerrors/taskr` npm CLI packa
 Use the open skills installer for new installs:
 
 ```bash
-npx --yes skills add xerrors/taskr --skill taskr --agent claude-code
-npx --yes skills add xerrors/taskr --skill taskr --agent codex
-npx --yes skills add xerrors/taskr --skill taskr --agent codex --global
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent claude-code
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex --global
 ```
 
 Project installs are written into the target repository's agent-specific skill directory. Global installs use the selected agent's user-level skill directory. Use `--copy` with the skills installer when a real copied file is preferred over a symlink.

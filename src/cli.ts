@@ -364,7 +364,7 @@ function deprecatedInstallSkillMessage(target: string, scope: string): string {
     "Taskr Skill now lives at `skills/taskr/` and is installed with the standalone skills CLI.",
     "",
     "Use:",
-    `  npx --yes skills add xerrors/taskr --skill taskr --agent ${agent}${scopeFlag}`,
+    `  npx --yes skills add xerrors/taskr-skill --skill taskr --agent ${agent}${scopeFlag}`,
     "",
     "The `@xerrors/taskr` package remains the CLI for Taskr tasks, validation, and the local board.",
   ].join("\n");
@@ -420,9 +420,9 @@ Options:
   --force    Accepted for old scripts, but no longer used.
 
 Recommended:
-  npx --yes skills add xerrors/taskr --skill taskr --agent claude-code
-  npx --yes skills add xerrors/taskr --skill taskr --agent codex
-  npx --yes skills add xerrors/taskr --skill taskr --agent codex --global
+  npx --yes skills add xerrors/taskr-skill --skill taskr --agent claude-code
+  npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex
+  npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex --global
 `,
     new: `Usage: taskr new <title> [--id task-id] [--status status] [--request text]
 

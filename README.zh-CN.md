@@ -27,20 +27,20 @@ Taskr 是一个面向 AI 辅助开发的仓库本地任务协议、独立 Skill 
 安装到 Claude Code 的用户级目录：
 
 ```bash
-npx --yes skills add xerrors/taskr --skill taskr --agent claude-code --global
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent claude-code --global
 ```
 
 安装到 Codex 的用户级目录：
 
 ```bash
-npx --yes skills add xerrors/taskr --skill taskr --agent codex --global
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex --global
 ```
 
 如果只想安装到当前仓库，在仓库目录中运行不带 `--global` 的命令：
 
 ```bash
-npx --yes skills add xerrors/taskr --skill taskr --agent claude-code
-npx --yes skills add xerrors/taskr --skill taskr --agent codex
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent claude-code
+npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex
 ```
 
 之后可以这样让智能体开始跟踪任务：
@@ -138,7 +138,7 @@ npx --yes @xerrors/taskr doctor
 
 `taskr` 把 `.taskr/tasks/*.md` 视为唯一事实来源。看板直接读取任务 Markdown 文件，不需要 index 缓存。
 
-Taskr Skill 源文件位于本仓库的 `skills/taskr/SKILL.md`。请用 `npx --yes skills add xerrors/taskr --skill taskr ...` 安装，具体目标目录由安装器根据智能体平台处理。`taskr install-skill <target>` 现在只是弃用的兼容命令，会打印迁移提示，不再作为主要安装路径。
+Taskr Skill 源文件位于本仓库的 `skills/taskr/SKILL.md`。请用 `npx --yes skills add xerrors/taskr-skill --skill taskr ...` 安装，具体目标目录由安装器根据智能体平台处理。`taskr install-skill <target>` 现在只是弃用的兼容命令，会打印迁移提示，不再作为主要安装路径。
 
 `taskr new` 生成的新任务 id 会带本地日期前缀，例如 `2026-05-10-implement-user-invitation-flow`，方便直接浏览 `.taskr/tasks/`。显式传入的 `--id` 会保留，只要它符合 lower-kebab-case。
 

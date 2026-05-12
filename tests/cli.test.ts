@@ -109,7 +109,7 @@ describe("Taskr CLI", () => {
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining("is deprecated"));
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining(
-        "npx --yes skills add xerrors/taskr --skill taskr --agent codex --global",
+        "npx --yes skills add xerrors/taskr-skill --skill taskr --agent codex --global",
       ),
     );
   });

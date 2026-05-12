@@ -669,7 +669,7 @@ export function installAgentSkill(
     [
       "`taskr install-skill` is deprecated.",
       "Install Taskr Skill with the standalone skills CLI instead:",
-      `npx --yes skills add xerrors/taskr --skill taskr --agent ${agent}${scopeFlag}`,
+      `npx --yes skills add xerrors/taskr-skill --skill taskr --agent ${agent}${scopeFlag}`,
     ].join("\n"),
   );
 }

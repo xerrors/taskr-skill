@@ -30,7 +30,7 @@ describe("Taskr skill guidance", () => {
 
   it("uses the standalone skills installer and npx Taskr commands", () => {
     expect(SKILL).toContain("skills/taskr/SKILL.md");
-    expect(SKILL).toContain("npx --yes skills add xerrors/taskr --skill taskr");
+    expect(SKILL).toContain("npx --yes skills add xerrors/taskr-skill --skill taskr");
     expect(SKILL).toContain("Do not recommend `npx --yes @xerrors/taskr install-skill");
     expect(SKILL).toContain("npx --yes @xerrors/taskr init");
     expect(SKILL).toContain("npx --yes --package @xerrors/taskr taskr list");
@@ -48,7 +48,7 @@ describe("Taskr skill guidance", () => {
 
   it("documents standalone skill installation instead of old package installs", () => {
     for (const content of [README, README_ZH]) {
-      expect(content).toContain("npx --yes skills add xerrors/taskr --skill taskr");
+      expect(content).toContain("npx --yes skills add xerrors/taskr-skill --skill taskr");
       expect(content).not.toContain("npx --yes @xerrors/taskr install-skill");
     }
   });
