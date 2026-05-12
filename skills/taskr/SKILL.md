@@ -139,8 +139,8 @@ During work:
 
 - Do not create a git commit without explicit user confirmation. A current user request to implement, verify, and submit completed tasks counts as confirmation.
 - Commit after each completed task when the user requests task-by-task commits.
-- Use a normal first-line summary. Put the Taskr reference in the commit message footer, for example `Taskr: 2026-05-10-user-invitation`.
-- Legacy `[taskr:<task-id>]` messages may still be read by older tooling, but new commits should prefer the footer.
+- Use a normal first-line summary. Put the Taskr reference in the commit message footer, for example `Taskr: 2026-05-10-user-invitation`. New commits should use only this `Taskr: <task-id>` footer form.
+- Legacy `[taskr:<task-id>]` messages may still be read for older git history, but new commits must not use the bracketed subject-line form.
 - After the commit succeeds, record the commit hash in the task metadata and set status to `implemented`; if using the CLI, run `npx --yes @xerrors/taskr complete --commit <hash> ...` to record metadata, then `npx --yes @xerrors/taskr status <task-id> implemented` after user confirmation.
 - If `.taskr/` is ignored by Git, still update it locally; the Markdown task files remain the working record even when they are not committed.
 

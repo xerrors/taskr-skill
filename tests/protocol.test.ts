@@ -315,7 +315,7 @@ describe("Taskr protocol", () => {
 
     writeFileSync(resolve(repo, "feature.txt"), "implemented\n", "utf8");
     git(repo, "add", "feature.txt");
-    git(repo, "commit", "-m", "implement feature [taskr:deduplicate-commit-ids]");
+    git(repo, "commit", "-m", "implement feature", "-m", "Taskr: deduplicate-commit-ids");
     const commit = git(repo, "rev-parse", "HEAD");
     const shortCommit = commit.slice(0, 7);
 

@@ -176,11 +176,13 @@ npm run check
 
 ## Commit Convention
 
-When creating commits for a task, keep the first line as a normal summary and put the Taskr reference in the footer:
+When creating commits for a task, keep the first line as a normal summary and put the Taskr reference in the footer. New commits should use only this form:
 
 ```text
 Taskr: <task-id>
 ```
+
+Taskr still recognizes legacy `[taskr:<task-id>]` references when reading older git history, but new commits should not use the bracketed subject-line form.
 
 Example:
 

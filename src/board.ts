@@ -273,7 +273,7 @@ function taskCommitsFromGitLog(repoRoot: string): Map<string, string[]> {
       continue;
     }
     for (const match of message.matchAll(taskReferencePattern())) {
-      const id = match[1];
+      const id = match[1] ?? match[2];
       commitsByTask.set(id, normalizeCommitIds([...(commitsByTask.get(id) ?? []), hash]));
     }
   }
@@ -282,7 +282,8 @@ function taskCommitsFromGitLog(repoRoot: string): Map<string, string[]> {
 }
 
 function taskReferencePattern(): RegExp {
-  return /(?:\[taskr:|^Taskr:\s*)([a-z0-9]+(?:-[a-z0-9]+)*)(?:\])?/gim;
+  const taskIdPattern = "([a-z0-9]+(?:-[a-z0-9]+)*)";
+  return new RegExp(`^Taskr:\\s*${taskIdPattern}\\s*$|\\[taskr:${taskIdPattern}\\]`, "gim");
 }
 
 function commitDetail(repoRoot: string, commit: string): BoardCommitDetail {
