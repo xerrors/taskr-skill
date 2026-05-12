@@ -10,7 +10,6 @@ export interface BoardTask {
   commitStatus: string;
   commits: string[];
   commitDetails: BoardCommitDetail[];
-  relatedFiles: string[];
   verification: unknown;
   sections: Record<string, string>;
   criteria: {

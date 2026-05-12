@@ -217,7 +217,6 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
     commitStatus: String(document.metadata.commit_status ?? "not_created"),
     commits,
     commitDetails: commits.map((commit) => commitDetail(repoRoot, commit)),
-    relatedFiles: asStringArray(document.metadata.related_files),
     verification: document.metadata.verification ?? null,
     sections,
     criteria: countCriteria(sections["Acceptance Criteria"] ?? ""),

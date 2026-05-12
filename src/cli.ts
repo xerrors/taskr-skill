@@ -224,7 +224,6 @@ export function run(argv = process.argv.slice(2)): number {
         summary: { takesValue: true },
         commit: { takesValue: true, multiple: true },
         "commit-status": { takesValue: true },
-        file: { takesValue: true, multiple: true },
         test: { takesValue: true, multiple: true },
         result: { takesValue: true },
         "check-criteria": {},
@@ -242,7 +241,6 @@ export function run(argv = process.argv.slice(2)): number {
       const task = completeTask(repoRoot, id, {
         summary,
         commits: parsed.lists.commit ?? [],
-        relatedFiles: parsed.lists.file ?? [],
         testsRun: parsed.lists.test,
         verificationResult: parsed.values.result,
         commitStatus: commitStatus as (typeof VALID_COMMIT_STATUSES)[number] | undefined,
@@ -483,7 +481,6 @@ Options:
   --summary text           Required completion summary.
   --commit hash            Record a commit. Can be repeated.
   --commit-status status   created, not_created, or not_applicable.
-  --file path              Record a related file. Can be repeated.
   --test command           Record a verification command/check. Can be repeated.
   --result result          Verification result summary.
   --check-criteria         Mark acceptance checklist items checked.

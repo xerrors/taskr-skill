@@ -5,7 +5,7 @@ description: Repo-local task tracking workflow for agent implementation work. Us
 
 # Taskr
 
-Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep implementation intent, checklist progress, optional progress notes, related files, verification, and commits in human-readable Markdown.
+Taskr is a repo-local task protocol stored under `.taskr/`. Use it to keep implementation intent, checklist progress, optional progress notes, verification, and commits in human-readable Markdown.
 
 ## Installation Policy
 
@@ -67,7 +67,7 @@ npx --yes @xerrors/taskr init
 npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
 npx --yes @xerrors/taskr status 2026-05-10-user-invitation in_progress
 npx --yes @xerrors/taskr note 2026-05-10-user-invitation "Found existing workspace role model."
-npx --yes @xerrors/taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow; waiting for user confirmation." --file path/to/file.py --check-criteria
+npx --yes @xerrors/taskr complete 2026-05-10-user-invitation --summary "Implemented invitation flow; waiting for user confirmation." --check-criteria
 npx --yes @xerrors/taskr validate 2026-05-10-user-invitation
 ```
 
@@ -112,8 +112,7 @@ During work:
 1. Re-read the task before significant edits.
 2. Update checklist items when they become true.
 3. Use `## Progress Log` only for long-running work, handoff context, blockers, repeated failed attempts, or notable state changes that are not already obvious from the checklist/status.
-4. Add discovered files to `related_files`.
-5. Use `blocked` when missing context, dependencies, or errors prevent progress.
+4. Use `blocked` when missing context, dependencies, or errors prevent progress.
 
 ### Verification Policy
 
@@ -148,12 +147,11 @@ After implementation and verification:
 
 1. Set the task to `pending_confirmation` after implementation and verification are done but before user confirmation.
 2. Update `## Completion Summary` before or when moving into `pending_confirmation`.
-3. Record changed files in `related_files`, or add `no_related_files_reason`.
-4. Record commits when created and set `commit_status` to `created`, `not_created`, or `not_applicable`.
-5. Check acceptance criteria that are satisfied.
-6. Record verification commands or checks and result in `verification`.
-7. Set status to `implemented` only after the user confirms submission/completion unless the work is blocked.
-8. Run `npx --yes @xerrors/taskr validate <task-id>` when possible.
+3. Record commits when created and set `commit_status` to `created`, `not_created`, or `not_applicable`.
+4. Check acceptance criteria that are satisfied.
+5. Record verification commands or checks and result in `verification`.
+6. Set status to `implemented` only after the user confirms submission/completion unless the work is blocked.
+7. Run `npx --yes @xerrors/taskr validate <task-id>` when possible.
 
 ## Task File Contract
 
@@ -197,4 +195,4 @@ not_created
 not_applicable
 ```
 
-`pending_confirmation` and `implemented` tasks must have a completion summary, checked acceptance criteria, an explicit commit status, and either `related_files` or `no_related_files_reason`.
+`pending_confirmation` and `implemented` tasks must have a completion summary, checked acceptance criteria, and an explicit commit status.

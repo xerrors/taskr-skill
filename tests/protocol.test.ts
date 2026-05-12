@@ -106,7 +106,7 @@ describe("Taskr protocol", () => {
     expect(sections["Progress Log"]).toBe("Empty.");
   });
 
-  it("requires summary and files for tasks awaiting confirmation", () => {
+  it("requires summary for tasks awaiting confirmation", () => {
     const repo = tempRepo();
     initProtocol(repo);
     createTask(repo, "Implement billing webhook", { taskId: "implement-billing-webhook" });
@@ -123,9 +123,6 @@ describe("Taskr protocol", () => {
     expect(messages).toContain(
       "`pending_confirmation` and `implemented` tasks need a Completion Summary.",
     );
-    expect(messages).toContain(
-      "`pending_confirmation` and `implemented` tasks need `related_files` or `no_related_files_reason`.",
-    );
   });
 
   it("can produce a valid task awaiting confirmation", () => {
@@ -135,7 +132,6 @@ describe("Taskr protocol", () => {
 
     completeTask(repo, "implement-billing-webhook", {
       summary: "Implemented the billing webhook handler.",
-      relatedFiles: ["src/billing.ts"],
       testsRun: ["npm test"],
       verificationResult: "passed",
       checkCriteria: true,
@@ -253,7 +249,6 @@ describe("Taskr protocol", () => {
     completeTask(repo, "display-commit-stats", {
       summary: "Displayed commit stats.",
       commits: [commit],
-      relatedFiles: ["src/board.ts"],
       checkCriteria: true,
     });
 
@@ -322,7 +317,6 @@ describe("Taskr protocol", () => {
     completeTask(repo, "deduplicate-commit-ids", {
       summary: "Implemented the feature.",
       commits: [shortCommit, commit],
-      relatedFiles: ["feature.txt"],
       checkCriteria: true,
     });
 

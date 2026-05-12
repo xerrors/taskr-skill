@@ -85,8 +85,6 @@ describe("Taskr CLI", () => {
         "2026-05-10-implement-user-invitation-flow",
         "--summary",
         "Implemented the invitation flow.",
-        "--file",
-        "src/invitations.ts",
         "--test",
         "npm test",
         "--result",

@@ -8,7 +8,7 @@
 
 Taskr is a repo-local task protocol, standalone Skill, and local board for AI-assisted software development.
 
-It gives coding agents a durable way to turn chat requests into tracked Markdown task files inside your repository: request, acceptance criteria, implementation plan, checklist progress, optional notes, verification, related files, commits, and completion summary.
+It gives coding agents a durable way to turn chat requests into tracked Markdown task files inside your repository: request, acceptance criteria, implementation plan, checklist progress, optional notes, verification, commits, and completion summary.
 
 No SaaS. No database. No project-management ceremony. Just `.taskr/`.
 

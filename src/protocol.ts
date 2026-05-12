@@ -152,7 +152,6 @@ export function defaultSchema(): TaskMetadata {
         "branch",
         "commits",
         "commit_status",
-        "related_files",
         "verification",
       ],
       statuses: [...VALID_STATUSES],
@@ -173,7 +172,6 @@ updated_at: 2026-05-09T14:30:00+08:00
 branch: null
 commits: []
 commit_status: not_created
-related_files: []
 verification:
   tests_run: []
   result: not_run
@@ -268,7 +266,6 @@ export function renderTask({
     branch: null,
     commits: [],
     commit_status: "not_created",
-    related_files: [],
     verification: {
       tests_run: [],
       result: "not_run",
@@ -485,7 +482,6 @@ export function completeTask(
   {
     summary,
     commits,
-    relatedFiles,
     testsRun,
     verificationResult,
     commitStatus,
@@ -493,7 +489,6 @@ export function completeTask(
   }: {
     summary: string;
     commits?: string[];
-    relatedFiles?: string[];
     testsRun?: string[];
     verificationResult?: string;
     commitStatus?: CommitStatus;
@@ -506,15 +501,12 @@ export function completeTask(
 
   const document = loadTaskById(repoRoot, id);
   const commitList = normalizeCommitIds(commits ?? []);
-  const fileList = unique(relatedFiles ?? []);
 
   const existingCommits = normalizeCommitIds(asStringArray(document.metadata.commits));
-  const existingFiles = asStringArray(document.metadata.related_files);
   const mergedCommits = normalizeCommitIds([...existingCommits, ...commitList]);
   document.metadata.commits = mergedCommits;
   document.metadata.commit_status =
     commitStatus ?? (mergedCommits.length > 0 ? "created" : "not_created");
-  document.metadata.related_files = unique([...existingFiles, ...fileList]);
   document.metadata.status = "pending_confirmation";
   if (testsRun !== undefined || verificationResult !== undefined) {
     document.metadata.verification = {
@@ -587,9 +579,6 @@ export function validateTaskFile(path: string): ValidationIssue[] {
   if (!Array.isArray(metadata.commits ?? [])) {
     issues.push({ path, message: "`commits` must be a list." });
   }
-  if (!Array.isArray(metadata.related_files ?? [])) {
-    issues.push({ path, message: "`related_files` must be a list." });
-  }
 
   const sections = extractSections(document.body);
   for (const section of REQUIRED_SECTIONS) {
@@ -610,16 +599,6 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     const commits = asStringArray(metadata.commits);
     if (commitStatus === "created" && commits.length === 0) {
       issues.push({ path, message: "`commit_status: created` requires at least one commit." });
-    }
-
-    const relatedFiles = asStringArray(metadata.related_files);
-    const noFilesReason = metadata.no_related_files_reason;
-    if (relatedFiles.length === 0 && !noFilesReason) {
-      issues.push({
-        path,
-        message:
-          "`pending_confirmation` and `implemented` tasks need `related_files` or `no_related_files_reason`.",
-      });
     }
 
     const criteria = sections["Acceptance Criteria"] ?? "";
@@ -745,7 +724,7 @@ function taskTemplateCopy(language: TaskLanguage): {
         "检查相关代码和既有模式。",
         "实现最小且有用的改动。",
         "运行合适的验证，或记录无法运行的原因。",
-        "更新本任务的进展、相关文件和完成说明。",
+        "更新本任务的进展和完成说明。",
       ],
       empty: "暂无。",
     };
@@ -760,7 +739,7 @@ function taskTemplateCopy(language: TaskLanguage): {
       "Inspect the relevant code and existing patterns.",
       "Implement the smallest useful change.",
       "Run appropriate validation or record why it was not run.",
-      "Update this task with progress, related files, and completion notes.",
+      "Update this task with progress and completion notes.",
     ],
     empty: "Empty.",
   };

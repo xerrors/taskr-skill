@@ -39,7 +39,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         },
         search: {
           aria: "Filter tasks",
-          placeholder: "Filter by title, id, request, or file..."
+          placeholder: "Filter by title, id, request, or commit..."
         },
         refresh: {
           label: "Refresh",
@@ -81,16 +81,12 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           one: "1 changed file",
           many: "{count} changed files"
         },
-        files: {
-          one: "1 file",
-          many: "{count} files"
-        },
         commitStatuses: {
           created: "Created",
           not_created: "Not created",
           not_applicable: "Not applicable"
         },
-        tableHeaders: ["Task", "Status", "Criteria", "Updated", "Files", "Commit"],
+        tableHeaders: ["Task", "Status", "Criteria", "Updated", "Commit"],
         statuses: {
           planned: "Planned",
           in_progress: "In Progress",
@@ -105,7 +101,6 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           path: "Path",
           branch: "Branch",
           criteria: "Criteria",
-          relatedFiles: "Related files",
           commits: "Commits",
           commitId: "Commit ID",
           diff: "Diff",
@@ -206,16 +201,12 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           one: "1 个变更文件",
           many: "{count} 个变更文件"
         },
-        files: {
-          one: "1 个文件",
-          many: "{count} 个文件"
-        },
         commitStatuses: {
           created: "Created",
           not_created: "Not created",
           not_applicable: "Not applicable"
         },
-        tableHeaders: ["任务", "状态", "验收项", "更新于", "文件", "提交"],
+        tableHeaders: ["任务", "状态", "验收项", "更新于", "提交"],
         statuses: {
           planned: "已规划",
           in_progress: "进行中",
@@ -230,7 +221,6 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           path: "路径",
           branch: "分支",
           criteria: "验收项",
-          relatedFiles: "相关文件",
           commits: "提交",
           commitId: "提交 ID",
           diff: "增删行",
@@ -321,11 +311,6 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
 
     function sectionLabel(sectionName) {
       return translateRecord("sections", sectionName, sectionName);
-    }
-
-    function formatFileCount(count) {
-      if (count === 1) return t("files.one");
-      return t("files.many").replace("{count}", String(count));
     }
 
     function formatChangedFileCount(count) {
@@ -488,13 +473,10 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       const updated = document.createElement("td");
       updated.textContent = formatTimestamp(task.updatedAt);
 
-      const files = document.createElement("td");
-      files.textContent = String(task.relatedFiles.length);
-
       const commit = document.createElement("td");
       commit.textContent = commitSummary(task);
 
-      row.append(title, status, criteria, updated, files, commit);
+      row.append(title, status, criteria, updated, commit);
       return row;
     }
 
@@ -608,8 +590,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       }
       footer.append(
         criteriaPill(task),
-        pill(commitSummary(task)),
-        pill(formatFileCount(task.relatedFiles.length))
+        pill(commitSummary(task))
       );
 
       button.append(id, title, request, footer);
@@ -1070,8 +1051,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         task.title,
         task.path,
         task.sections.Request,
-        task.commits.join(" "),
-        task.relatedFiles.join(" ")
+        task.commits.join(" ")
       ].join(" ").toLowerCase().includes(query);
     }
 
