@@ -157,6 +157,8 @@ After implementation and verification:
 
 Task files live at `.taskr/tasks/<task-id>.md`. Markdown files are the source of truth.
 
+Task markdown supports inline HTML fragments for structured content when plain markdown is insufficient. HTML is sanitized before rendering — dangerous tags (`script`, `iframe`, `form`, etc.) and event-handler attributes (`on*`) are stripped. Safe tags like `section`, `div`, `span`, `ul`, `ol`, `li`, `h1`–`h6`, `strong`, `em`, `code`, `pre`, `blockquote`, `table`, and their common attributes (e.g., `class`, `id`) are preserved. Edit mode always shows the raw markdown/HTML without transformation.
+
 Required sections:
 
 ```md

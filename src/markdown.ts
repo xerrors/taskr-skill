@@ -1,3 +1,5 @@
+const HTML_FRAGMENT_PATTERN = /^[\s]*<[a-z][^>]*>/i;
+
 export function renderMarkdownHtml(markdown: string): string {
   const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
   const blocks: string[] = [];
@@ -6,6 +8,13 @@ export function renderMarkdownHtml(markdown: string): string {
   while (index < lines.length) {
     const line = lines[index];
     if (line.trim() === "") {
+      index += 1;
+      continue;
+    }
+
+    // Detect standalone HTML fragment lines (lines that start with an HTML tag) and pass them through safely
+    if (HTML_FRAGMENT_PATTERN.test(line)) {
+      blocks.push(sanitizeHtml(line.trim()));
       index += 1;
       continue;
     }
@@ -133,6 +142,47 @@ function unorderedItem(line: string): string | null {
 function orderedItem(line: string): string | null {
   const match = /^\s*\d+[.)]\s+(.+?)\s*$/.exec(line);
   return match ? match[1] : null;
+}
+
+// Allowed HTML tags for task markdown fragments
+const ALLOWED_TAGS = new Set([
+  "section", "div", "span", "p", "br", "hr",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "ul", "ol", "li",
+  "strong", "em", "b", "i", "u", "s",
+  "code", "pre",
+  "a", "img",
+  "table", "thead", "tbody", "tr", "th", "td",
+  "blockquote",
+]);
+
+// Dangerous tag patterns that indicate potential script injection
+const DANGEROUS_TAGS = /^(script|iframe|object|embed|form|input|button|select|textarea|style|link|meta)$/i;
+
+// Dangerous attribute patterns
+const DANGEROUS_ATTR_PATTERN = /^(on\w+|style|href|src)$/i;
+
+function sanitizeHtml(html: string): string {
+  // Basic tag name extraction for validation
+  const tagMatch = /^<(\w+)/.exec(html);
+  if (tagMatch) {
+    const tagName = tagMatch[1].toLowerCase();
+    // Reject dangerous tags
+    if (DANGEROUS_TAGS.test(tagName)) {
+      return escapeHtml(html);
+    }
+  }
+
+  // Remove dangerous event handlers and problematic attributes while preserving safe ones
+  // This regex removes attributes that match dangerous patterns
+  const sanitized = html.replace(/\s+([a-zA-Z:_][\w:.]*)=(?:"[^"]*"|'[^']*')/g, (match, attr) => {
+    if (DANGEROUS_ATTR_PATTERN.test(attr)) {
+      return ""; // Remove dangerous attribute
+    }
+    return match; // Keep safe attribute
+  });
+
+  return sanitized;
 }
 
 function escapeHtml(value: string): string {

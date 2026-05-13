@@ -36,4 +36,36 @@ describe("Taskr Markdown renderer", () => {
   it("emits a browser script with the renderer entrypoint", () => {
     expect(markdownBrowserScript()).toContain("window.renderTaskrMarkdown = renderMarkdownHtml");
   });
+
+  it("renders standalone HTML fragments with allowed tags", () => {
+    const html = renderMarkdownHtml('<section class="demo">HTML content</section>');
+    expect(html).toContain('<section class="demo">HTML content</section>');
+  });
+
+  it("escapes dangerous HTML tags like script", () => {
+    const html = renderMarkdownHtml("<script>alert('x')</script>");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  it("removes dangerous attributes like onclick while preserving safe ones", () => {
+    const html = renderMarkdownHtml('<div class="test" onclick="alert(1)" style="color:red">Content</div>');
+    expect(html).toContain('class="test"');
+    expect(html).not.toContain("onclick");
+    expect(html).not.toContain("style");
+  });
+
+  it("escapes iframe and other embedding tags", () => {
+    const html = renderMarkdownHtml("<iframe src='evil.com'></iframe>");
+    expect(html).toContain("&lt;iframe");
+    expect(html).not.toContain("<iframe");
+  });
+
+  it("renders multiple HTML fragments in sequence", () => {
+    const html = renderMarkdownHtml(
+      '<section class="a">First</section>\n<section class="b">Second</section>',
+    );
+    expect(html).toContain('<section class="a">First</section>');
+    expect(html).toContain('<section class="b">Second</section>');
+  });
 });
