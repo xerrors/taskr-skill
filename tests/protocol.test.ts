@@ -279,9 +279,15 @@ describe("Taskr protocol", () => {
     expect(html).toContain("activeElement.matches");
     expect(html).toContain("sortSelect");
     expect(html).toContain("Sort tasks");
+    expect(html).toContain('let sortBy = "progress"');
+    expect(html).toContain('<option value="progress">Progress</option>');
+    expect(html).toContain("Progress");
+    expect(html).toContain("进度");
     expect(html).toContain("Created");
     expect(html).toContain("更新时间");
     expect(html).toContain("sortTasks");
+    expect(html).toContain("progressValue");
+    expect(html).toContain("compareTimestamp(right.updatedAt, left.updatedAt)");
     expect(html).toContain("createdAt");
     expect(html).toContain("border: 0;");
     expect(html).toContain("max-width: 1440px;");

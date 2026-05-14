@@ -48,6 +48,7 @@ ${boardStyles}
         <label class="sort-control">
           <span id="sortLabel">Sort</span>
           <select id="sortSelect" aria-label="Sort tasks">
+            <option value="progress">Progress</option>
             <option value="updatedAt">Updated</option>
             <option value="createdAt">Created</option>
           </select>

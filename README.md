@@ -71,7 +71,7 @@ Open a local board for the current repository:
 npx --yes @xerrors/taskr board --open
 ```
 
-The board reads `.taskr/tasks/*.md` directly. It supports automatic local-file refresh, search, table and Kanban views, sorting by created or updated time, status summaries, commit and file diff context, manual refresh, section editing, lightweight Markdown rendering, and confirmed task deletion.
+The board reads `.taskr/tasks/*.md` directly. It supports automatic local-file refresh, search, table and Kanban views, default sorting by acceptance progress with updated time as the tie-breaker, optional sorting by created or updated time, status summaries, commit and file diff context, manual refresh, section editing, lightweight Markdown rendering, and confirmed task deletion.
 
 ### Table View
 

@@ -17,7 +17,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     let modelSignature = boardModelSignature(model);
     let activeId = null;
     let currentView = "table";
-    let sortBy = "updatedAt";
+    let sortBy = "progress";
     let language = preferredLanguage();
     let statusTimer = null;
     let autoRefreshTimer = null;
@@ -48,6 +48,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         sort: {
           label: "Sort",
           aria: "Sort tasks",
+          progress: "Progress",
           created: "Created",
           updated: "Updated"
         },
@@ -169,6 +170,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         sort: {
           label: "排序",
           aria: "任务排序",
+          progress: "进度",
           created: "创建时间",
           updated: "更新时间"
         },
@@ -337,8 +339,9 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       document.querySelector("#sortLabel").textContent = t("sort.label");
       sortSelect.setAttribute("aria-label", t("sort.aria"));
       sortSelect.title = t("sort.aria");
-      sortSelect.options[0].textContent = t("sort.updated");
-      sortSelect.options[1].textContent = t("sort.created");
+      sortSelect.options[0].textContent = t("sort.progress");
+      sortSelect.options[1].textContent = t("sort.updated");
+      sortSelect.options[2].textContent = t("sort.created");
       document.querySelector(".view-toggle").setAttribute("aria-label", t("view.aria"));
       tableViewButton.textContent = t("view.table");
       boardViewButton.textContent = t("view.board");
@@ -385,11 +388,24 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
 
     function sortTasks(tasks) {
       return [...tasks].sort((left, right) => {
-        const field = sortBy === "createdAt" ? "createdAt" : "updatedAt";
-        const compared = compareTimestamp(right[field], left[field]);
-        if (compared !== 0) return compared;
+        if (sortBy === "progress") {
+          const byProgress = progressValue(right) - progressValue(left);
+          if (byProgress !== 0) return byProgress;
+          const byUpdated = compareTimestamp(right.updatedAt, left.updatedAt);
+          if (byUpdated !== 0) return byUpdated;
+        } else {
+          const field = sortBy === "createdAt" ? "createdAt" : "updatedAt";
+          const compared = compareTimestamp(right[field], left[field]);
+          if (compared !== 0) return compared;
+        }
         return left.title.localeCompare(right.title) || left.id.localeCompare(right.id);
       });
+    }
+
+    function progressValue(task) {
+      const total = Number(task.criteria && task.criteria.total) || 0;
+      if (total <= 0) return 0;
+      return (Number(task.criteria.checked) || 0) / total;
     }
 
     function compareTimestamp(left, right) {
@@ -1301,7 +1317,8 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     search.addEventListener("input", render);
     refreshButton.addEventListener("click", () => loadTasks({ source: "manual" }));
     sortSelect.addEventListener("change", () => {
-      sortBy = sortSelect.value === "createdAt" ? "createdAt" : "updatedAt";
+      const value = sortSelect.value;
+      sortBy = value === "createdAt" || value === "updatedAt" ? value : "progress";
       render();
     });
     tableViewButton.addEventListener("click", () => setView("table"));
