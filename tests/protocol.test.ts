@@ -267,6 +267,7 @@ describe("Taskr protocol", () => {
     expect(html).toContain("commitStatusLabel");
     expect(html).toContain("renderTaskrMarkdown");
     expect(html).toContain("markdown-content");
+    expect(html).toContain("detailSectionNames");
     expect(html).toContain("grid-template-columns: auto minmax(0, 1fr);");
     expect(html).toContain("appearance: none;");
     expect(html).toContain("border-color: rgba(34, 197, 94, 0.72);");

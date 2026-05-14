@@ -644,11 +644,17 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         fragment.append(commitPanel(task));
       }
 
-      for (const name of ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"]) {
+      for (const name of detailSectionNames(task)) {
         fragment.append(section(name, task.sections[name] || t("empty")));
       }
       fragment.append(dangerZone(task));
       return fragment;
+    }
+
+    function detailSectionNames(task) {
+      const coreSections = ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"];
+      const extraSections = Object.keys(task.sections || {}).filter((name) => !coreSections.includes(name));
+      return [...coreSections, ...extraSections];
     }
 
     function dangerZone(task) {
