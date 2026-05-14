@@ -14,8 +14,24 @@ export function renderMarkdownHtml(markdown: string): string {
 
     // Detect standalone HTML fragment lines (lines that start with an HTML tag) and pass them through safely
     if (HTML_FRAGMENT_PATTERN.test(line)) {
-      blocks.push(sanitizeHtml(line.trim()));
+      // Collect multi-line HTML blocks by looking for continuation lines
+      const fragmentLines: string[] = [line.trim()];
       index += 1;
+      while (index < lines.length) {
+        const nextLine = lines[index];
+        // Empty line ends the HTML block
+        if (nextLine.trim() === "") {
+          break;
+        }
+        // Indented lines or lines starting with closing tag or opening tag are continuations
+        if (/^\s+/.test(nextLine) || /^\s*<\/?/.test(nextLine)) {
+          fragmentLines.push(nextLine.trim());
+          index += 1;
+        } else {
+          break;
+        }
+      }
+      blocks.push(sanitizeHtml(fragmentLines.join("\n")));
       continue;
     }
 
@@ -84,11 +100,15 @@ export function markdownBrowserScript(): string {
 
 function browserScriptSource(): string {
   return `(() => {
+const HTML_FRAGMENT_PATTERN = /^[\\s]*<[a-z][^>]*>/i;
+const DANGEROUS_TAGS = /^(script|iframe|object|embed|form|input|button|select|textarea|style|link|meta)$/i;
+const DANGEROUS_ATTR_PATTERN = /^(on\\w+|style|href|src)$/i;
 ${renderMarkdownHtml.toString()}
 ${renderInline.toString()}
 ${todoItem.toString()}
 ${unorderedItem.toString()}
 ${orderedItem.toString()}
+${sanitizeHtml.toString()}
 ${escapeHtml.toString()}
 window.renderTaskrMarkdown = renderMarkdownHtml;
 })();`;
