@@ -8,11 +8,12 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { relative as pathRelative, resolve } from "node:path";
+import { dirname, relative as pathRelative, resolve } from "node:path";
 import { dump, JSON_SCHEMA, load } from "js-yaml";
 
 export const TASKR_DIR = ".taskr";
 export const TASKS_DIR = "tasks";
+export const RESEARCH_DIR = "research";
 export const TEMPLATES_DIR = "templates";
 export const TASK_TEMPLATE = "task.md";
 
@@ -103,6 +104,10 @@ export function taskrRoot(repoRoot: string): string {
 
 export function tasksRoot(repoRoot: string): string {
   return resolve(taskrRoot(repoRoot), TASKS_DIR);
+}
+
+export function researchRoot(repoRoot: string): string {
+  return resolve(taskrRoot(repoRoot), RESEARCH_DIR);
 }
 
 export function nowIso(): string {
@@ -395,6 +400,38 @@ export function deleteTask(repoRoot: string, id: string): TaskDocument {
   return document;
 }
 
+export function createResearchFile(
+  repoRoot: string,
+  id: string,
+  filename: string,
+  content = "",
+): string {
+  const document = loadTaskById(repoRoot, id);
+  const safeFilename = normalizeResearchFilename(filename);
+  const relativePath = `${TASKR_DIR}/${RESEARCH_DIR}/${taskId(document)}/${safeFilename}`;
+  const absolutePath = resolve(repoRoot, relativePath);
+  if (existsSync(absolutePath)) {
+    throw new TaskrError(`Research file already exists: ${relativePath}`);
+  }
+
+  mkdirSync(resolve(researchRoot(repoRoot), taskId(document)), { recursive: true });
+  writeFileSync(absolutePath, researchFileContent(document, safeFilename, content), "utf8");
+
+  const existing = taskResearchFiles(document);
+  document.metadata.research_files = unique([...existing, relativePath]);
+  document.body = appendToSection(
+    document.body,
+    "Agent Notes",
+    `- Research file: \`${relativePath}\``,
+  );
+  writeTask(document);
+  return absolutePath;
+}
+
+export function taskResearchFiles(document: TaskDocument): string[] {
+  return asStringArray(document.metadata.research_files);
+}
+
 export function writeTask(document: TaskDocument): void {
   document.metadata.updated_at = nowIso();
   writeFileSync(document.path, renderDocument(document.metadata, document.body), "utf8");
@@ -580,6 +617,16 @@ export function validateTaskFile(path: string): ValidationIssue[] {
     issues.push({ path, message: "`commits` must be a list." });
   }
 
+  if ("research_files" in metadata) {
+    if (!Array.isArray(metadata.research_files)) {
+      issues.push({ path, message: "`research_files` must be a list of .taskr/research paths." });
+    } else {
+      for (const researchPath of metadata.research_files.map(String)) {
+        issues.push(...validateResearchFilePath(path, researchPath));
+      }
+    }
+  }
+
   const sections = extractSections(document.body);
   for (const section of REQUIRED_SECTIONS) {
     if (!(section in sections)) {
@@ -700,6 +747,61 @@ function isCommitStatus(value: unknown): value is CommitStatus {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeResearchFilename(filename: string): string {
+  const value = filename.trim();
+  if (!value.endsWith(".md")) {
+    throw new TaskrError("Research file name must end with .md.");
+  }
+  if (value === ".md" || value.startsWith("/") || value.includes("\\") || value.includes("..")) {
+    throw new TaskrError("Research file name must be a safe relative Markdown filename.");
+  }
+  if (!/^[a-z0-9][a-z0-9._-]*\.md$/.test(value)) {
+    throw new TaskrError(
+      "Research file name must use lowercase letters, numbers, dots, dashes, or underscores.",
+    );
+  }
+  return value;
+}
+
+function researchFileContent(document: TaskDocument, filename: string, content: string): string {
+  const trimmed = content.trim();
+  if (trimmed) {
+    return `${trimmed}\n`;
+  }
+  return `# ${filename.slice(0, -3)}
+
+Task: ${taskId(document)}
+
+`;
+}
+
+function validateResearchFilePath(taskFilePath: string, researchPath: string): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  if (
+    !researchPath.startsWith(`${TASKR_DIR}/${RESEARCH_DIR}/`) ||
+    researchPath.startsWith("/") ||
+    researchPath.includes("\\") ||
+    researchPath.split("/").includes("..") ||
+    !researchPath.endsWith(".md")
+  ) {
+    issues.push({
+      path: taskFilePath,
+      message: "`research_files` entries must be Markdown paths under `.taskr/research/`.",
+    });
+    return issues;
+  }
+
+  const repoRoot = resolve(dirname(taskFilePath), "../..");
+  const absolutePath = resolve(repoRoot, researchPath);
+  if (!existsSync(absolutePath)) {
+    issues.push({
+      path: taskFilePath,
+      message: `Research file does not exist: ${researchPath}`,
+    });
+  }
+  return issues;
 }
 
 type TaskLanguage = "en" | "zh";

@@ -8,6 +8,7 @@ import { boardStyles } from "../src/board-styles.js";
 import { createBoardModel, renderBoardHtml, startBoardServer } from "../src/board.js";
 import {
   completeTask,
+  createResearchFile,
   createTask,
   defaultTaskId,
   addNote,
@@ -16,6 +17,7 @@ import {
   loadTask,
   slugify,
   taskPath,
+  taskResearchFiles,
   VALID_STATUSES,
   validate,
 } from "../src/protocol.js";
@@ -104,6 +106,55 @@ describe("Taskr protocol", () => {
 
     expect(sections["Agent Notes"]).toContain("- Found the relevant parser behavior.");
     expect(sections["Progress Log"]).toBe("Empty.");
+  });
+
+  it("creates opt-in research report files and records task references", () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Research storage pattern", {
+      taskId: "2026-05-14-research-storage-pattern",
+    });
+
+    const reportPath = createResearchFile(
+      repo,
+      "2026-05-14-research-storage-pattern",
+      "overview.md",
+      "# Overview\n\nDetailed notes.",
+    );
+    const document = loadTask(taskPath(repo, "2026-05-14-research-storage-pattern"));
+
+    expect(reportPath).toBe(
+      resolve(repo, ".taskr/research/2026-05-14-research-storage-pattern/overview.md"),
+    );
+    expect(readFileSync(reportPath, "utf8")).toBe("# Overview\n\nDetailed notes.\n");
+    expect(taskResearchFiles(document)).toEqual([
+      ".taskr/research/2026-05-14-research-storage-pattern/overview.md",
+    ]);
+    expect(document.body).toContain(
+      "Research file: `.taskr/research/2026-05-14-research-storage-pattern/overview.md`",
+    );
+    expect(validate(repo, "2026-05-14-research-storage-pattern")).toEqual([]);
+  });
+
+  it("validates declared research report file paths", () => {
+    const repo = tempRepo();
+    initProtocol(repo);
+    createTask(repo, "Broken research reference", { taskId: "broken-research-reference" });
+    const path = taskPath(repo, "broken-research-reference");
+    const content = readFileSync(path, "utf8").replace(
+      "verification:\n  tests_run: []\n  result: not_run\n  reason: Not run yet.\n",
+      "verification:\n  tests_run: []\n  result: not_run\n  reason: Not run yet.\nresearch_files:\n  - notes.md\n  - .taskr/research/broken-research-reference/missing.md\n",
+    );
+    writeFileSync(path, content, "utf8");
+
+    const messages = validate(repo, "broken-research-reference").map((issue) => issue.message);
+
+    expect(messages).toContain(
+      "`research_files` entries must be Markdown paths under `.taskr/research/`.",
+    );
+    expect(messages).toContain(
+      "Research file does not exist: .taskr/research/broken-research-reference/missing.md",
+    );
   });
 
   it("requires summary for tasks awaiting confirmation", () => {

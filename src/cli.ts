@@ -6,6 +6,7 @@ import { createBoardModel, renderBoardHtml, startBoardServer } from "./board.js"
 import {
   addNote,
   completeTask,
+  createResearchFile,
   createTask,
   findRepoRoot,
   initProtocol,
@@ -150,6 +151,18 @@ export function run(argv = process.argv.slice(2)): number {
       requirePositionalCount(parsed, 1);
       const task = loadTaskById(repoRoot, id);
       process.stdout.write(readTaskFile(task.path));
+      return 0;
+    }
+
+    if (command === "research") {
+      const parsed = parseArgs(argv.slice(1), {
+        content: { takesValue: true },
+      });
+      const id = requiredPositional(parsed, 0, "task_id");
+      const filename = requiredPositional(parsed, 1, "file.md");
+      requirePositionalCount(parsed, 2);
+      const path = createResearchFile(repoRoot, id, filename, parsed.values.content);
+      console.log(`created ${relative(path, repoRoot)}`);
       return 0;
     }
 
@@ -382,6 +395,7 @@ Commands:
   new <title>                     Create a task file.
   list                            List tasks.
   show <task_id>                  Print a task file.
+  research <task_id> <file.md>    Create an opt-in research report file.
   board                           Serve a Kanban board.
   validate [task_id]              Validate Taskr task files.
   doctor                          Check protocol, task, skill, and environment status.
@@ -443,6 +457,14 @@ Options:
     show: `Usage: taskr show <task_id>
 
 Print one task Markdown file.
+`,
+    research: `Usage: taskr research <task_id> <file.md> [--content text]
+
+Create an opt-in Markdown research report under .taskr/research/<task_id>/
+and record the path in the task frontmatter as research_files.
+
+Options:
+  --content text    Initial Markdown content for the research file.
 `,
     board: `Usage: taskr board [--host host] [--port port] [--open] [--html]
 

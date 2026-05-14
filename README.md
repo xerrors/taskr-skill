@@ -96,6 +96,7 @@ Use the CLI directly when you want to initialize Taskr, create tasks yourself, i
 npx --yes @xerrors/taskr init
 npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
 npx --yes @xerrors/taskr list
+npx --yes @xerrors/taskr research 2026-05-10-topic overview.md
 npx --yes @xerrors/taskr doctor
 npx --yes @xerrors/taskr validate
 ```
@@ -130,6 +131,9 @@ npx --yes @xerrors/taskr doctor
 
 ```text
 .taskr/
+├── research/
+│   └── 2026-05-10-topic/
+│       └── overview.md
 ├── templates/
 │   └── task.md
 └── tasks/
@@ -137,6 +141,14 @@ npx --yes @xerrors/taskr doctor
 ```
 
 `taskr` treats `.taskr/tasks/*.md` as the source of truth. The board reads task Markdown files directly and does not require an index cache.
+
+Research report files are opt-in. Create them only when a task needs a longer report:
+
+```bash
+npx --yes @xerrors/taskr research 2026-05-10-topic overview.md
+```
+
+The CLI writes `.taskr/research/<task-id>/<file>.md` and records that path in the task frontmatter as `research_files`. A task can reference multiple report files.
 
 The Taskr Skill source lives in this repository at `skills/taskr/SKILL.md`. Install it with `npx --yes skills add xerrors/taskr-skill --skill taskr ...`; the installer handles the destination for each agent. `taskr install-skill <target>` is now a deprecated compatibility command that prints migration guidance instead of being the primary install path.
 

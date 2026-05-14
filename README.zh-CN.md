@@ -96,6 +96,7 @@ npx --yes @xerrors/taskr board --open
 npx --yes @xerrors/taskr init
 npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
 npx --yes @xerrors/taskr list
+npx --yes @xerrors/taskr research 2026-05-10-topic overview.md
 npx --yes @xerrors/taskr doctor
 npx --yes @xerrors/taskr validate
 ```
@@ -130,6 +131,9 @@ npx --yes @xerrors/taskr doctor
 
 ```text
 .taskr/
+├── research/
+│   └── 2026-05-10-topic/
+│       └── overview.md
 ├── templates/
 │   └── task.md
 └── tasks/
@@ -137,6 +141,14 @@ npx --yes @xerrors/taskr doctor
 ```
 
 `taskr` 把 `.taskr/tasks/*.md` 视为唯一事实来源。看板直接读取任务 Markdown 文件，不需要 index 缓存。
+
+调研报告文件是显式 opt-in 功能。只有任务需要更长报告时才创建：
+
+```bash
+npx --yes @xerrors/taskr research 2026-05-10-topic overview.md
+```
+
+CLI 会写入 `.taskr/research/<task-id>/<file>.md`，并在任务 frontmatter 中用 `research_files` 记录路径。一个任务可以引用多份报告文件。
 
 Taskr Skill 源文件位于本仓库的 `skills/taskr/SKILL.md`。请用 `npx --yes skills add xerrors/taskr-skill --skill taskr ...` 安装，具体目标目录由安装器根据智能体平台处理。`taskr install-skill <target>` 现在只是弃用的兼容命令，会打印迁移提示，不再作为主要安装路径。
 

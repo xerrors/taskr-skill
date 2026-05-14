@@ -101,6 +101,36 @@ describe("Taskr CLI", () => {
     ).toContain("status: pending_confirmation");
   });
 
+  it("creates opt-in research report files from the CLI", () => {
+    const repo = mkdtempSync(resolve(tmpdir(), "taskr-cli-"));
+    process.chdir(repo);
+
+    expect(run(["init"])).toBe(0);
+    expect(run(["new", "research storage", "--id", "research-storage"])).toBe(0);
+    expect(
+      run([
+        "research",
+        "research-storage",
+        "overview.md",
+        "--content",
+        "# Overview\n\nDetailed notes.",
+      ]),
+    ).toBe(0);
+
+    const task = readFileSync(resolve(repo, ".taskr/tasks/research-storage.md"), "utf8");
+    const report = readFileSync(
+      resolve(repo, ".taskr/research/research-storage/overview.md"),
+      "utf8",
+    );
+
+    expect(task).toContain("research_files:");
+    expect(task).toContain(".taskr/research/research-storage/overview.md");
+    expect(report).toBe("# Overview\n\nDetailed notes.\n");
+    expect(console.log).toHaveBeenLastCalledWith(
+      "created .taskr/research/research-storage/overview.md",
+    );
+  });
+
   it("keeps install-skill as deprecated migration guidance", () => {
     const repo = mkdtempSync(resolve(tmpdir(), "taskr-cli-"));
     process.chdir(repo);
