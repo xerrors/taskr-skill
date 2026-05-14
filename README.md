@@ -95,11 +95,13 @@ Use the CLI directly when you want to initialize Taskr, create tasks yourself, i
 ```bash
 npx --yes @xerrors/taskr init
 npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
-npx --yes @xerrors/taskr list
+npx --yes @xerrors/taskr list -n 10
 npx --yes @xerrors/taskr research 2026-05-10-topic overview.md
 npx --yes @xerrors/taskr doctor
 npx --yes @xerrors/taskr validate
 ```
+
+`taskr list` prints tasks in stable status order and shows 10 tasks by default. Pass `-n N` to change the count, or `--status planned` to filter.
 
 Get help for any command:
 

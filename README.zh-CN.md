@@ -95,11 +95,13 @@ npx --yes @xerrors/taskr board --open
 ```bash
 npx --yes @xerrors/taskr init
 npx --yes @xerrors/taskr new "implement user invitation flow" --status in_progress
-npx --yes @xerrors/taskr list
+npx --yes @xerrors/taskr list -n 10
 npx --yes @xerrors/taskr research 2026-05-10-topic overview.md
 npx --yes @xerrors/taskr doctor
 npx --yes @xerrors/taskr validate
 ```
+
+`taskr list` 会按稳定的状态顺序输出任务，默认展示 10 条。传入 `-n N` 可以调整数量，也可以用 `--status planned` 按状态过滤。
 
 查看任意命令的帮助：
 

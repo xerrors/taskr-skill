@@ -122,24 +122,33 @@ export function run(argv = process.argv.slice(2)): number {
 
     if (command === "list") {
       const parsed = parseArgs(argv.slice(1), {
+        n: { takesValue: true },
+        number: { takesValue: true },
         status: { takesValue: true },
       });
       requireNoPositionals(parsed);
       if (parsed.values.status !== undefined) {
         requireChoices(parsed.values.status, [...VALID_STATUSES], "status");
       }
+      const limit = parseTaskLimit(parsed.values.n ?? parsed.values.number ?? "10");
       let tasks = listTasks(repoRoot);
       if (parsed.values.status) {
         tasks = tasks.filter((task) => taskStatus(task) === parsed.values.status);
       }
+      tasks = sortTasksForList(tasks).slice(0, limit);
       if (tasks.length === 0) {
         console.log("No tasks found.");
         return 0;
       }
-      const width = Math.max(...tasks.map((task) => taskId(task).length));
+      const idWidth = Math.max(...tasks.map((task) => taskId(task).length));
+      const statusWidth = Math.max(
+        ...tasks.map((task) => taskStatus(task).length),
+        "status".length,
+      );
       for (const task of tasks) {
+        const updatedAt = String(task.metadata.updated_at ?? "");
         console.log(
-          `${taskId(task).padEnd(width)}  ${taskStatus(task).padEnd(11)}  ${taskTitle(task)}`,
+          `${taskStatus(task).padEnd(statusWidth)}  ${taskId(task).padEnd(idWidth)}  ${updatedAt}  ${taskTitle(task)}`,
         );
       }
       return 0;
@@ -284,20 +293,25 @@ function parseArgs(argv: string[], specs: Record<string, OptionSpec>): ParsedArg
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (!arg.startsWith("--")) {
+    if (!arg.startsWith("-") || arg === "-") {
       parsed.positionals.push(arg);
       continue;
     }
 
-    const [rawName, inlineValue] = arg.slice(2).split(/=(.*)/s, 2);
+    const isLongOption = arg.startsWith("--");
+    const [rawName, inlineValue] = isLongOption
+      ? arg.slice(2).split(/=(.*)/s, 2)
+      : [arg.slice(1), undefined];
     const spec = specs[rawName];
     if (!spec) {
-      throw new TaskrError(`Unknown option: --${rawName}`);
+      throw new TaskrError(`Unknown option: ${isLongOption ? "--" : "-"}${rawName}`);
     }
 
     if (!spec.takesValue) {
       if (inlineValue !== undefined) {
-        throw new TaskrError(`Option does not take a value: --${rawName}`);
+        throw new TaskrError(
+          `Option does not take a value: ${isLongOption ? "--" : "-"}${rawName}`,
+        );
       }
       parsed.flags.add(rawName);
       continue;
@@ -305,7 +319,7 @@ function parseArgs(argv: string[], specs: Record<string, OptionSpec>): ParsedArg
 
     const value = inlineValue ?? argv[index + 1];
     if (value === undefined || value.startsWith("--")) {
-      throw new TaskrError(`Missing value for option: --${rawName}`);
+      throw new TaskrError(`Missing value for option: ${isLongOption ? "--" : "-"}${rawName}`);
     }
     if (inlineValue === undefined) {
       index += 1;
@@ -351,6 +365,37 @@ function parsePort(value: string): number {
     throw new TaskrError("port must be an integer between 0 and 65535.");
   }
   return port;
+}
+
+function parseTaskLimit(value: string): number {
+  const limit = Number(value);
+  if (!Number.isInteger(limit) || limit < 1) {
+    throw new TaskrError("n must be a positive integer.");
+  }
+  return limit;
+}
+
+function sortTasksForList<T extends { metadata: Record<string, unknown>; path: string }>(
+  tasks: T[],
+): T[] {
+  const statusRank = new Map<string, number>(
+    VALID_STATUSES.map((status, index) => [status, index]),
+  );
+  return [...tasks].sort((left, right) => {
+    const leftStatus = String(left.metadata.status ?? "");
+    const rightStatus = String(right.metadata.status ?? "");
+    const byStatus = (statusRank.get(leftStatus) ?? 99) - (statusRank.get(rightStatus) ?? 99);
+    if (byStatus !== 0) {
+      return byStatus;
+    }
+    const byUpdated = String(right.metadata.updated_at ?? "").localeCompare(
+      String(left.metadata.updated_at ?? ""),
+    );
+    if (byUpdated !== 0) {
+      return byUpdated;
+    }
+    return left.path.localeCompare(right.path);
+  });
 }
 
 function readTaskFile(path: string): string {
@@ -447,11 +492,12 @@ Options:
   --status    Initial status: planned, in_progress, pending_confirmation, implemented, or blocked.
   --request   Original request text to place in the task body.
 `,
-    list: `Usage: taskr list [--status status]
+    list: `Usage: taskr list [-n count] [--status status]
 
-List Taskr tasks.
+List Taskr tasks by status order.
 
 Options:
+  -n, --number  Number of tasks to show. Default: 10.
   --status    Filter by status: planned, in_progress, pending_confirmation, implemented, or blocked.
 `,
     show: `Usage: taskr show <task_id>
