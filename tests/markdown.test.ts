@@ -49,7 +49,9 @@ describe("Taskr Markdown renderer", () => {
   });
 
   it("removes dangerous attributes like onclick while preserving safe ones", () => {
-    const html = renderMarkdownHtml('<div class="test" onclick="alert(1)" style="color:red">Content</div>');
+    const html = renderMarkdownHtml(
+      '<div class="test" onclick="alert(1)" style="color:red">Content</div>',
+    );
     expect(html).toContain('class="test"');
     expect(html).not.toContain("onclick");
     expect(html).not.toContain("style");

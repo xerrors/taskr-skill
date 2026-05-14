@@ -146,18 +146,43 @@ function orderedItem(line: string): string | null {
 
 // Allowed HTML tags for task markdown fragments
 const ALLOWED_TAGS = new Set([
-  "section", "div", "span", "p", "br", "hr",
-  "h1", "h2", "h3", "h4", "h5", "h6",
-  "ul", "ol", "li",
-  "strong", "em", "b", "i", "u", "s",
-  "code", "pre",
-  "a", "img",
-  "table", "thead", "tbody", "tr", "th", "td",
+  "section",
+  "div",
+  "span",
+  "p",
+  "br",
+  "hr",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "ul",
+  "ol",
+  "li",
+  "strong",
+  "em",
+  "b",
+  "i",
+  "u",
+  "s",
+  "code",
+  "pre",
+  "a",
+  "img",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "th",
+  "td",
   "blockquote",
 ]);
 
 // Dangerous tag patterns that indicate potential script injection
-const DANGEROUS_TAGS = /^(script|iframe|object|embed|form|input|button|select|textarea|style|link|meta)$/i;
+const DANGEROUS_TAGS =
+  /^(script|iframe|object|embed|form|input|button|select|textarea|style|link|meta)$/i;
 
 // Dangerous attribute patterns
 const DANGEROUS_ATTR_PATTERN = /^(on\w+|style|href|src)$/i;
