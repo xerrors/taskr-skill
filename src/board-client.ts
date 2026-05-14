@@ -112,7 +112,8 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           "Implementation Plan": "Implementation Plan",
           "Progress Log": "Progress Log",
           "Agent Notes": "Agent Notes",
-          "Completion Summary": "Completion Summary"
+          "Completion Summary": "Completion Summary",
+          "Unparsed Content": "Additional content"
         },
         actions: {
           edit: "Edit",
@@ -232,7 +233,8 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
           "Implementation Plan": "实现计划",
           "Progress Log": "进度日志",
           "Agent Notes": "代理备注",
-          "Completion Summary": "完成总结"
+          "Completion Summary": "完成总结",
+          "Unparsed Content": "其他内容"
         },
         actions: {
           edit: "编辑",
@@ -644,17 +646,20 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         fragment.append(commitPanel(task));
       }
 
-      for (const name of detailSectionNames(task)) {
-        fragment.append(section(name, task.sections[name] || t("empty")));
+      for (const name of coreSectionNames()) {
+        if (Object.prototype.hasOwnProperty.call(task.sections || {}, name)) {
+          fragment.append(section(name, task.sections[name] || t("empty")));
+        }
+      }
+      if (task.unsectionedBody && task.unsectionedBody.trim()) {
+        fragment.append(section("Unparsed Content", task.unsectionedBody));
       }
       fragment.append(dangerZone(task));
       return fragment;
     }
 
-    function detailSectionNames(task) {
-      const coreSections = ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"];
-      const extraSections = Object.keys(task.sections || {}).filter((name) => !coreSections.includes(name));
-      return [...coreSections, ...extraSections];
+    function coreSectionNames() {
+      return ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"];
     }
 
     function dangerZone(task) {

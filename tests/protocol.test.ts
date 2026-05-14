@@ -13,6 +13,7 @@ import {
   defaultTaskId,
   addNote,
   extractSections,
+  extractUnsectionedBody,
   initProtocol,
   loadTask,
   slugify,
@@ -106,6 +107,45 @@ describe("Taskr protocol", () => {
 
     expect(sections["Agent Notes"]).toContain("- Found the relevant parser behavior.");
     expect(sections["Progress Log"]).toBe("Empty.");
+  });
+
+  it("keeps content outside protocol sections available for detail rendering", () => {
+    const body = [
+      "# Task title already shown in detail header",
+      "",
+      "Intro note before sections.",
+      "",
+      "## Request",
+      "",
+      "Do the work.",
+      "",
+      "## Test HTML Fragments",
+      "",
+      '<section class="demo">',
+      "  <h3>Rendered</h3>",
+      "</section>",
+      "",
+      "## Acceptance Criteria",
+      "",
+      "- [ ] It works.",
+    ].join("\n");
+
+    expect(extractSections(body)).toMatchObject({
+      Request: "Do the work.",
+      "Acceptance Criteria": "- [ ] It works.",
+      "Test HTML Fragments": '<section class="demo">\n  <h3>Rendered</h3>\n</section>',
+    });
+    expect(extractUnsectionedBody(body)).toBe(
+      [
+        "Intro note before sections.",
+        "",
+        "## Test HTML Fragments",
+        "",
+        '<section class="demo">',
+        "  <h3>Rendered</h3>",
+        "</section>",
+      ].join("\n"),
+    );
   });
 
   it("creates opt-in research report files and records task references", () => {
@@ -215,6 +255,7 @@ describe("Taskr protocol", () => {
     expect(
       model.tasks.find((task) => task.id === "implement-board-visualization")?.sections.Request,
     ).toContain("Implement board visualization");
+    expect(model.tasks[0].unsectionedBody).toBe("");
     expect(model.tasks[0].createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(html).toContain("Taskr Board");
     expect(html).toContain(boardStyles);
@@ -267,7 +308,7 @@ describe("Taskr protocol", () => {
     expect(html).toContain("commitStatusLabel");
     expect(html).toContain("renderTaskrMarkdown");
     expect(html).toContain("markdown-content");
-    expect(html).toContain("detailSectionNames");
+    expect(html).toContain("coreSectionNames");
     expect(html).toContain("grid-template-columns: auto minmax(0, 1fr);");
     expect(html).toContain("appearance: none;");
     expect(html).toContain("border-color: rgba(34, 197, 94, 0.72);");

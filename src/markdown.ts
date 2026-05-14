@@ -12,6 +12,13 @@ export function renderMarkdownHtml(markdown: string): string {
       continue;
     }
 
+    const heading = headingItem(line);
+    if (heading) {
+      blocks.push(`<h${heading.level}>${renderInline(heading.text)}</h${heading.level}>`);
+      index += 1;
+      continue;
+    }
+
     // Detect standalone HTML fragment lines (lines that start with an HTML tag) and pass them through safely
     if (HTML_FRAGMENT_PATTERN.test(line)) {
       // Collect multi-line HTML blocks by looking for continuation lines
@@ -83,7 +90,8 @@ export function renderMarkdownHtml(markdown: string): string {
       lines[index].trim() !== "" &&
       !todoItem(lines[index]) &&
       !unorderedItem(lines[index]) &&
-      !orderedItem(lines[index])
+      !orderedItem(lines[index]) &&
+      !headingItem(lines[index])
     ) {
       paragraph.push(lines[index]);
       index += 1;
@@ -108,6 +116,7 @@ ${renderInline.toString()}
 ${todoItem.toString()}
 ${unorderedItem.toString()}
 ${orderedItem.toString()}
+${headingItem.toString()}
 ${sanitizeHtml.toString()}
 ${escapeHtml.toString()}
 window.renderTaskrMarkdown = renderMarkdownHtml;
@@ -162,6 +171,15 @@ function unorderedItem(line: string): string | null {
 function orderedItem(line: string): string | null {
   const match = /^\s*\d+[.)]\s+(.+?)\s*$/.exec(line);
   return match ? match[1] : null;
+}
+
+function headingItem(line: string): { level: number; text: string } | null {
+  const match = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
+  if (!match) return null;
+  return {
+    level: match[1].length,
+    text: match[2],
+  };
 }
 
 // Allowed HTML tags for task markdown fragments

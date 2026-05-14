@@ -33,6 +33,12 @@ describe("Taskr Markdown renderer", () => {
     expect(html).toContain("<ol><li>First</li><li>Second</li></ol>");
   });
 
+  it("renders Markdown headings", () => {
+    const html = renderMarkdownHtml("## Test HTML Fragments");
+
+    expect(html).toBe("<h2>Test HTML Fragments</h2>");
+  });
+
   it("emits a browser script with the renderer entrypoint", () => {
     const script = markdownBrowserScript();
 

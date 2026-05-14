@@ -12,6 +12,7 @@ export interface BoardTask {
   commitDetails: BoardCommitDetail[];
   verification: unknown;
   sections: Record<string, string>;
+  unsectionedBody: string;
   criteria: {
     checked: number;
     total: number;

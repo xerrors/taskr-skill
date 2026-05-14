@@ -465,6 +465,45 @@ export function extractSections(body: string): Record<string, string> {
   return sections;
 }
 
+export function extractUnsectionedBody(
+  body: string,
+  sectionNames: readonly string[] = REQUIRED_SECTIONS,
+): string {
+  const knownSections = new Set(sectionNames);
+  const matches = [...body.matchAll(SECTION_RE)];
+  if (matches.length === 0) {
+    return stripLeadingDocumentTitle(body).trim();
+  }
+
+  const chunks: string[] = [];
+  const preambleEnd = matches[0].index ?? 0;
+  const preamble = stripLeadingDocumentTitle(body.slice(0, preambleEnd)).trim();
+  if (preamble) {
+    chunks.push(preamble);
+  }
+
+  for (let index = 0; index < matches.length; index += 1) {
+    const match = matches[index];
+    const title = match[1].trim();
+    if (knownSections.has(title)) {
+      continue;
+    }
+    const start = match.index ?? 0;
+    const end =
+      index + 1 < matches.length ? (matches[index + 1].index ?? body.length) : body.length;
+    const chunk = body.slice(start, end).trim();
+    if (chunk) {
+      chunks.push(chunk);
+    }
+  }
+
+  return chunks.join("\n\n").trim();
+}
+
+function stripLeadingDocumentTitle(body: string): string {
+  return body.replace(/^\s*# [^\n]*(?:\n+|$)/, "");
+}
+
 export function replaceSection(body: string, section: string, content: string): string {
   const matches = [...body.matchAll(SECTION_RE)];
   for (let index = 0; index < matches.length; index += 1) {

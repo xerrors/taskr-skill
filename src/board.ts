@@ -4,6 +4,7 @@ import { renderBoardHtml } from "./board-template.js";
 import {
   deleteTask,
   extractSections,
+  extractUnsectionedBody,
   listTasks,
   loadTaskById,
   normalizeCommitIds,
@@ -219,6 +220,7 @@ function boardTask(document: TaskDocument, repoRoot: string): BoardTask {
     commitDetails: commits.map((commit) => commitDetail(repoRoot, commit)),
     verification: document.metadata.verification ?? null,
     sections,
+    unsectionedBody: extractUnsectionedBody(document.body),
     criteria: countCriteria(sections["Acceptance Criteria"] ?? ""),
   };
 }
