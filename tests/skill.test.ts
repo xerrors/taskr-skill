@@ -28,6 +28,14 @@ describe("Taskr skill guidance", () => {
     expect(SKILL).toContain("failure or unable-to-run reason");
   });
 
+  it("reconciles pending-confirmation task commits after completion", () => {
+    expect(SKILL).toContain("reconcile pending-confirmation tasks with Git commits after completion");
+    expect(SKILL).toContain("inspect current `pending_confirmation` tasks and the Git state");
+    expect(SKILL).toContain("git diff -- .taskr/tasks");
+    expect(SKILL).toContain('git log --grep "Taskr: <task-id>"');
+    expect(SKILL).toContain("Do not assign a commit to a task solely because both are recent");
+  });
+
   it("uses the standalone skills installer and npx Taskr commands", () => {
     expect(SKILL).toContain("skills/taskr/SKILL.md");
     expect(SKILL).toContain("npx --yes skills add xerrors/taskr-skill --skill taskr");

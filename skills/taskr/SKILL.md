@@ -1,6 +1,6 @@
 ---
 name: taskr
-description: Repo-local task tracking workflow for agent implementation work. Use when the user invokes /taskr or asks to track, implement, fix, refactor, investigate, or plan code changes with Taskr in a Git repository; if .taskr exists, use it for substantial code changes.
+description: Repo-local task tracking workflow for agent implementation work. Use when the user invokes /taskr or asks to track, implement, fix, refactor, investigate, or plan code changes with Taskr in a Git repository; if .taskr exists, use it for substantial code changes and reconcile pending-confirmation tasks with Git commits after completion.
 ---
 
 # Taskr
@@ -150,8 +150,11 @@ After implementation and verification:
 3. Record commits when created and set `commit_status` to `created`, `not_created`, or `not_applicable`.
 4. Check acceptance criteria that are satisfied.
 5. Record verification commands or checks and result in `verification`.
-6. Set status to `implemented` only after the user confirms submission/completion unless the work is blocked.
-7. Run `npx --yes @xerrors/taskr validate <task-id>` when possible.
+6. Before the final response, inspect current `pending_confirmation` tasks and the Git state. Some waiting tasks may already have been committed out of band.
+7. Use `git diff -- .taskr/tasks` to distinguish task metadata backfills from source changes, and use `git log --grep "Taskr: <task-id>"` or equivalent board discovery to backfill missing commit ids into `pending_confirmation` tasks when the commit reference or changed files clearly match the task.
+8. Do not assign a commit to a task solely because both are recent; leave `commit_status: not_created` when the Git evidence is ambiguous or the relevant work is still only present in the current diff.
+9. Set status to `implemented` only after the user confirms submission/completion unless the work is blocked.
+10. Run `npx --yes @xerrors/taskr validate <task-id>` when possible.
 
 ## Task File Contract
 
