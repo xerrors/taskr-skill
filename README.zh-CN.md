@@ -73,6 +73,17 @@ npx --yes @xerrors/taskr board --open
 
 看板直接读取 `.taskr/tasks/*.md`。它支持本地文件自动刷新、搜索、表格和 Kanban 视图、默认按验收进度排序并用更新时间兜底，也可以切换为按创建或更新时间排序、状态统计、提交和文件 diff 上下文、手动刷新、任务小节编辑、轻量 Markdown 渲染，以及需要确认的任务删除。
 
+### VS Code 侧边栏
+
+本仓库也包含一个位于 `vscode-extension/` 的本地 VS Code 插件原型。它在侧边栏 Webview 中复用同一套 board 模型，监听 `.taskr/tasks/*.md`，支持从 VS Code 刷新，并能在任务详情中打开对应的 Markdown 文件。
+
+本地运行：
+
+```bash
+npm run build
+code --extensionDevelopmentPath="$PWD/vscode-extension" "$PWD"
+```
+
 ### 表格视图
 
 ![Taskr 表格视图](docs/assets/taskr-table-view.png)

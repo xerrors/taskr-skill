@@ -1,6 +1,6 @@
 {
   "name": "@xerrors/taskr",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "Repo-local task protocol for AI-assisted software development.",
   "license": "MIT",
   "author": "xerrors",
@@ -29,6 +29,10 @@
     ".": {
       "types": "./dist/protocol.d.ts",
       "import": "./dist/protocol.js"
+    },
+    "./board": {
+      "types": "./dist/board.d.ts",
+      "import": "./dist/board.js"
     }
   },
   "bin": {
@@ -39,13 +43,17 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build": "npm run clean && tsc",
+    "clean": "node -e \"const fs=require('node:fs'); fs.rmSync('dist', { recursive: true, force: true }); fs.rmSync('vscode-extension/dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc && npm run typecheck:vscode && npm run build:vscode-assets && npm run build:vscode",
+    "build:vscode-assets": "node scripts/build-vscode-assets.mjs",
+    "build:vscode": "esbuild vscode-extension/src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=vscode-extension/dist/extension.cjs",
+    "typecheck:vscode": "tsc -p tsconfig.vscode.json --noEmit",
     "test": "vitest run",
     "check": "npm run build && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "package:vscode": "npm run build && cd vscode-extension && npx --no-install vsce package --out ../taskr-vscode-${npm_package_version}.vsix"
   },
   "engines": {
     "node": ">=20"
@@ -59,6 +67,9 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.3",
+    "@types/vscode": "1.90.0",
+    "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.27.7",
     "prettier": "^3.8.3",
     "typescript": "^5.8.3",
     "vitest": "^3.1.3"

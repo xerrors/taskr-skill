@@ -48,6 +48,31 @@ export function createBoardModel(repoRoot: string): BoardModel {
   };
 }
 
+export function updateBoardTaskStatus(repoRoot: string, id: string, status: string): BoardModel {
+  if (!VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+    throw new TaskrError(`Status must be one of ${VALID_STATUSES.join(", ")}.`);
+  }
+  setStatus(repoRoot, id, status as (typeof VALID_STATUSES)[number]);
+  return createBoardModel(repoRoot);
+}
+
+export function updateBoardTaskSection(
+  repoRoot: string,
+  id: string,
+  section: string,
+  content: string,
+): BoardModel {
+  const document = loadTaskById(repoRoot, id);
+  document.body = replaceSection(document.body, section, content);
+  writeTask(document);
+  return createBoardModel(repoRoot);
+}
+
+export function deleteBoardTask(repoRoot: string, id: string): BoardModel {
+  deleteTask(repoRoot, id);
+  return createBoardModel(repoRoot);
+}
+
 export function startBoardServer(
   repoRoot: string,
   options: BoardServerOptions,
@@ -94,14 +119,8 @@ async function handleBoardRequest(
       sendJson(response, 400, { error: "Request body must include string field `status`." });
       return;
     }
-    if (!VALID_STATUSES.includes(payload.status as (typeof VALID_STATUSES)[number])) {
-      sendJson(response, 400, { error: `Status must be one of ${VALID_STATUSES.join(", ")}.` });
-      return;
-    }
-
     try {
-      setStatus(repoRoot, id, payload.status as (typeof VALID_STATUSES)[number]);
-      sendJson(response, 200, createBoardModel(repoRoot));
+      sendJson(response, 200, updateBoardTaskStatus(repoRoot, id, payload.status));
     } catch (error) {
       if (error instanceof TaskrError) {
         const status = error.message.startsWith("Task not found") ? 404 : 400;
@@ -124,10 +143,7 @@ async function handleBoardRequest(
     }
 
     try {
-      const document = loadTaskById(repoRoot, id);
-      document.body = replaceSection(document.body, section, payload.content);
-      writeTask(document);
-      sendJson(response, 200, createBoardModel(repoRoot));
+      sendJson(response, 200, updateBoardTaskSection(repoRoot, id, section, payload.content));
     } catch (error) {
       if (error instanceof TaskrError) {
         const status = error.message.startsWith("Task not found") ? 404 : 400;
@@ -143,8 +159,7 @@ async function handleBoardRequest(
   if (request.method === "DELETE" && taskMatch) {
     const id = decodeURIComponent(taskMatch[1]);
     try {
-      deleteTask(repoRoot, id);
-      sendJson(response, 200, createBoardModel(repoRoot));
+      sendJson(response, 200, deleteBoardTask(repoRoot, id));
     } catch (error) {
       if (error instanceof TaskrError) {
         const status = error.message.startsWith("Task not found")

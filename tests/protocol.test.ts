@@ -7,6 +7,11 @@ import { boardClientScript } from "../src/board-client.js";
 import { boardStyles } from "../src/board-styles.js";
 import { createBoardModel, renderBoardHtml, startBoardServer } from "../src/board.js";
 import {
+  renderVsCodeBoardHtml,
+  vscodeBoardClientScript,
+  vscodeBoardStyles,
+} from "../src/vscode-board-template.js";
+import {
   completeTask,
   createResearchFile,
   createTask,
@@ -298,6 +303,8 @@ describe("Taskr protocol", () => {
     expect(html).toContain("Taskr 看板");
     expect(html).toContain("点击任意任务查看详情。");
     expect(html).toContain('let currentView = "table"');
+    expect(html).not.toContain("acquireVsCodeApi");
+    expect(html).not.toContain("taskr.request");
     expect(html).toContain("window.scrollY > 88");
     expect(html).toContain("window.scrollY > 16");
     expect(html).toContain("compact-meta");
@@ -328,6 +335,39 @@ describe("Taskr protocol", () => {
     expect(html).toContain("手动修改状态");
     expect(html).toContain("status-editor");
     expect(html).toContain("/status");
+
+    const webviewHtml = renderVsCodeBoardHtml(model, {
+      cspSource: "vscode-resource:",
+      nonce: "test-nonce",
+      assets: {
+        stylesUri: "vscode-resource:/vscode-board.css",
+        markdownScriptUri: "vscode-resource:/markdown.js",
+        clientScriptUri: "vscode-resource:/vscode-board-client.js",
+      },
+    });
+    expect(webviewHtml).toContain("Taskr");
+    expect(webviewHtml).toContain("Taskr tasks");
+    expect(webviewHtml).toContain("Content-Security-Policy");
+    expect(webviewHtml).toContain("'nonce-test-nonce'");
+    expect(webviewHtml).toContain('nonce="test-nonce"');
+    expect(webviewHtml).toContain(
+      '<link rel="stylesheet" href="vscode-resource:/vscode-board.css">',
+    );
+    expect(webviewHtml).toContain('src="vscode-resource:/vscode-board-client.js"');
+    expect(vscodeBoardClientScript).toContain("acquireVsCodeApi");
+    expect(vscodeBoardClientScript).toContain("taskr.request");
+    expect(vscodeBoardStyles).toContain("--vscode-sideBar-background");
+    expect(vscodeBoardStyles).toContain("--vscode-list-hoverBackground");
+    expect(webviewHtml).toContain("taskr-vscode-view");
+    expect(webviewHtml).toContain("vscode-detail");
+    expect(vscodeBoardClientScript).toContain("vscode-section");
+    expect(vscodeBoardStyles).toContain(".vscode-markdown .task-list-item input");
+    expect(vscodeBoardStyles).not.toMatch(
+      /^\s*\.(detail|section|icon-button|toolbar-button|markdown-content)\b/m,
+    );
+    expect(webviewHtml).not.toMatch(
+      /class="(?:detail|section|icon-button|toolbar-button|markdown-content)"/,
+    );
   });
 
   it("loads file-level diff details for task commits in the board model", () => {

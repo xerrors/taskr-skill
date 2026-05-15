@@ -73,6 +73,17 @@ npx --yes @xerrors/taskr board --open
 
 The board reads `.taskr/tasks/*.md` directly. It supports automatic local-file refresh, search, table and Kanban views, default sorting by acceptance progress with updated time as the tie-breaker, optional sorting by created or updated time, status summaries, commit and file diff context, manual refresh, section editing, lightweight Markdown rendering, and confirmed task deletion.
 
+### VS Code Sidebar
+
+This repository also includes a local VS Code extension prototype under `vscode-extension/`. It reuses the same board model in a sidebar webview, watches `.taskr/tasks/*.md`, refreshes from VS Code, and can open a task Markdown file from the detail drawer.
+
+Run it locally:
+
+```bash
+npm run build
+code --extensionDevelopmentPath="$PWD/vscode-extension" "$PWD"
+```
+
 ### Table View
 
 ![Taskr table view](docs/assets/taskr-table-view.png)

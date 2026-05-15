@@ -26,7 +26,6 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
     let latestRefreshFailed = false;
     let headerCompact = false;
     let headerFrame = null;
-
     const copy = {
       en: {
         appTitle: "Taskr Board",
@@ -1086,6 +1085,44 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       return model.tasks.find((task) => task.id === id) || null;
     }
 
+    async function boardRequest(message) {
+      let response;
+      if (message.action === "getTasks") {
+        response = await fetch("/api/tasks", { headers: { accept: "application/json" } });
+      } else if (message.action === "setStatus") {
+        response = await fetch("/api/tasks/" + encodeURIComponent(message.id) + "/status", {
+          method: "PUT",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({ status: message.status })
+        });
+      } else if (message.action === "saveSection") {
+        response = await fetch("/api/tasks/" + encodeURIComponent(message.id) + "/sections/" + encodeURIComponent(message.sectionTitle), {
+          method: "PUT",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({ content: message.content })
+        });
+      } else if (message.action === "deleteTask") {
+        response = await fetch("/api/tasks/" + encodeURIComponent(message.id), {
+          method: "DELETE",
+          headers: { accept: "application/json" }
+        });
+      } else {
+        throw new Error("Unsupported board action: " + message.action);
+      }
+
+      const data = await parseJson(response);
+      if (!response.ok) {
+        throw new Error(data && data.error ? data.error : "Request failed");
+      }
+      return data;
+    }
+
     async function loadTasks(options = {}) {
       const source = options.source === "auto" ? "auto" : "manual";
       const isManual = source === "manual";
@@ -1105,11 +1142,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
         setToolbarStatus(t("statusMessages.refreshing"));
       }
       try {
-        const response = await fetch("/api/tasks", { headers: { accept: "application/json" } });
-        const data = await parseJson(response);
-        if (!response.ok) {
-          throw new Error(data && data.error ? data.error : t("statusMessages.refreshFailed"));
-        }
+        const data = await boardRequest({ action: "getTasks" });
         applyBoardModel(data);
         if (isManual) {
           setToolbarStatus(t("statusMessages.refreshed"));
@@ -1180,18 +1213,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       saveButton.disabled = true;
       statusNode.textContent = t("statusMessages.saving");
       try {
-        const response = await fetch("/api/tasks/" + encodeURIComponent(id) + "/status", {
-          method: "PUT",
-          headers: {
-            accept: "application/json",
-            "content-type": "application/json"
-          },
-          body: JSON.stringify({ status })
-        });
-        const data = await parseJson(response);
-        if (!response.ok) {
-          throw new Error(data && data.error ? data.error : t("statusMessages.saveFailed"));
-        }
+        const data = await boardRequest({ action: "setStatus", id, status });
         applyBoardModel(data, { force: true });
         setToolbarStatus(t("statusMessages.saved"));
       } catch (error) {
@@ -1207,18 +1229,12 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       saveButton.disabled = true;
       statusNode.textContent = t("statusMessages.saving");
       try {
-        const response = await fetch("/api/tasks/" + encodeURIComponent(activeId) + "/sections/" + encodeURIComponent(sectionTitle), {
-          method: "PUT",
-          headers: {
-            accept: "application/json",
-            "content-type": "application/json"
-          },
-          body: JSON.stringify({ content })
+        const data = await boardRequest({
+          action: "saveSection",
+          id: activeId,
+          sectionTitle,
+          content
         });
-        const data = await parseJson(response);
-        if (!response.ok) {
-          throw new Error(data && data.error ? data.error : t("statusMessages.saveFailed"));
-        }
         applyBoardModel(data, { force: true });
         setToolbarStatus(t("statusMessages.saved"));
       } catch (error) {
@@ -1234,14 +1250,7 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       cancelButton.disabled = true;
       statusNode.textContent = t("statusMessages.deleting");
       try {
-        const response = await fetch("/api/tasks/" + encodeURIComponent(task.id), {
-          method: "DELETE",
-          headers: { accept: "application/json" }
-        });
-        const data = await parseJson(response);
-        if (!response.ok) {
-          throw new Error(data && data.error ? data.error : t("statusMessages.deleteFailed"));
-        }
+        const data = await boardRequest({ action: "deleteTask", id: task.id });
         model = data;
         modelSignature = boardModelSignature(data);
         updateStats();

@@ -1,0 +1,66 @@
+{
+  "name": "taskr-vscode",
+  "displayName": "Taskr",
+  "description": "View repo-local Taskr tasks in a VS Code sidebar.",
+  "version": "0.2.0",
+  "publisher": "WENJIEZHANG",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xerrors/taskr-skill.git"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:taskr.board",
+    "onCommand:taskr.refreshBoard"
+  ],
+  "main": "./dist/extension.cjs",
+  "files": [
+    "dist",
+    "media",
+    "README.md",
+    "LICENSE"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "taskr.refreshBoard",
+        "title": "Taskr: Refresh Board",
+        "category": "Taskr",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "taskr",
+          "title": "Taskr",
+          "icon": "media/taskr.svg"
+        }
+      ]
+    },
+    "views": {
+      "taskr": [
+        {
+          "id": "taskr.board",
+          "name": "Board",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "taskr.refreshBoard",
+          "when": "view == taskr.board",
+          "group": "navigation"
+        }
+      ]
+    }
+  }
+}

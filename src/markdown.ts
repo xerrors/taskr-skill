@@ -102,8 +102,20 @@ export function renderMarkdownHtml(markdown: string): string {
   return blocks.join("");
 }
 
-export function markdownBrowserScript(): string {
-  return `<script>${browserScriptSource()}</script>`;
+export function markdownBrowserScript(nonce?: string): string {
+  return `<script${scriptNonce(nonce)}>${markdownBrowserScriptSource()}</script>`;
+}
+
+export function markdownBrowserScriptSource(): string {
+  return browserScriptSource();
+}
+
+function scriptNonce(nonce: string | undefined): string {
+  return nonce ? ` nonce="${escapeAttribute(nonce)}"` : "";
+}
+
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
 function browserScriptSource(): string {

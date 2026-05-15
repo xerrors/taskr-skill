@@ -862,6 +862,27 @@ export const boardStyles = `    :root {
       overflow-wrap: anywhere;
     }
 
+    .detail-action {
+      justify-self: start;
+      min-height: 30px;
+      padding: 0 10px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(20, 28, 37, 0.88);
+      cursor: pointer;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .detail-action:hover,
+    .detail-action:focus-visible {
+      color: var(--ink-strong);
+      border-color: var(--line-strong);
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
     .close {
       position: absolute;
       top: 14px;
