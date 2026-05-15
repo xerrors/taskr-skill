@@ -77,7 +77,14 @@ The board reads `.taskr/tasks/*.md` directly. It supports automatic local-file r
 
 This repository also includes a local VS Code extension prototype under `vscode-extension/`. It reuses the same board model in a sidebar webview, watches `.taskr/tasks/*.md`, refreshes from VS Code, and can open a task Markdown file from the detail drawer.
 
-Run it locally:
+Install it from a GitHub Release:
+
+1. Download the latest `taskr-vscode-*.vsix` asset from [GitHub Releases](https://github.com/xerrors/taskr-skill/releases).
+2. In VS Code, open Extensions.
+3. Open the Extensions view `...` menu and choose **Install from VSIX...**.
+4. Select the downloaded `.vsix` file, then open the Taskr activity bar item in a repository that has `.taskr/tasks/*.md`.
+
+For extension development, run it locally:
 
 ```bash
 npm run build

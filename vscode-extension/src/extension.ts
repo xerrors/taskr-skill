@@ -153,7 +153,7 @@ class TaskrBoardProvider implements vscode.WebviewViewProvider {
     }
 
     if (action === "deleteTask") {
-      return deleteBoardTask(repoRoot, requiredString(message.id, "id"));
+      return this.deleteTask(repoRoot, requiredString(message.id, "id"));
     }
 
     if (action === "openTask") {
@@ -162,6 +162,23 @@ class TaskrBoardProvider implements vscode.WebviewViewProvider {
     }
 
     throw new Error(`Unsupported board action: ${action}`);
+  }
+
+  private async deleteTask(repoRoot: string, id: string): Promise<BoardModel> {
+    const path = taskPath(repoRoot, id);
+    if (!existsSync(path)) {
+      throw new Error(`Task not found: ${id}`);
+    }
+    const relativePath = vscode.workspace.asRelativePath(path, false);
+    const choice = await vscode.window.showWarningMessage(
+      `Delete Taskr task ${id}? This permanently deletes ${relativePath}.`,
+      { modal: true },
+      "Delete Task",
+    );
+    if (choice !== "Delete Task") {
+      return this.model();
+    }
+    return deleteBoardTask(repoRoot, id);
   }
 
   private async openTask(repoRoot: string, id: string): Promise<void> {

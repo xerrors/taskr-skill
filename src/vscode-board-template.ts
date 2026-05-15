@@ -52,7 +52,13 @@ export function renderVsCodeBoardHtml(
   <aside class="vscode-detail" id="detail" aria-hidden="true" aria-labelledby="detailTitle" inert>
     <header class="vscode-detail-header">
       <button class="vscode-toolbar-button vscode-back-button" id="closeDetail" type="button" aria-label="Back to task list"><span class="vscode-button-icon" aria-hidden="true">${iconSvg("arrow-left")}</span><span>Back</span></button>
-      <button class="vscode-toolbar-button" id="openTask" type="button"><span class="vscode-button-icon" aria-hidden="true">${iconSvg("open")}</span><span>Open File</span></button>
+      <div class="vscode-detail-actions">
+        <button class="vscode-icon-button vscode-detail-actions-button" id="detailActionsButton" type="button" aria-label="Task actions" title="Task actions" aria-haspopup="menu" aria-expanded="false">${iconSvg("ellipsis")}</button>
+        <div class="vscode-detail-actions-menu" id="detailActionsMenu" role="menu" aria-label="Task actions" hidden>
+          <button class="vscode-menu-option" id="openTask" type="button" role="menuitem"><span class="vscode-button-icon" aria-hidden="true">${iconSvg("open")}</span><span>Open File</span></button>
+          <button class="vscode-menu-option vscode-danger-option" id="deleteTask" type="button" role="menuitem"><span class="vscode-button-icon" aria-hidden="true">${iconSvg("trash")}</span><span>Delete Task</span></button>
+        </div>
+      </div>
     </header>
     <div class="vscode-detail-scroll">
       <div class="vscode-detail-kicker" id="detailKicker"></div>
@@ -85,12 +91,18 @@ function escapeHtmlAttribute(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
-function iconSvg(name: "arrow-left" | "open" | "search" | "sort" | "x"): string {
+function iconSvg(
+  name: "arrow-left" | "ellipsis" | "open" | "search" | "sort" | "trash" | "x",
+): string {
   const paths: Record<typeof name, string> = {
     "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+    ellipsis:
+      '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
     open: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     sort: '<path d="M8 7h12"/><path d="M8 12h9"/><path d="M8 17h6"/><path d="m4 6 2 2 2-2"/><path d="M6 8V4"/>',
+    trash:
+      '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-.8 14H5.8L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/>',
     x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   };
   return `<svg class="vscode-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths[name]}</svg>`;

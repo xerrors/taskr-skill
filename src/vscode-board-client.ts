@@ -9,7 +9,10 @@ export const vscodeBoardClientScript = `    let model = window.__TASKR_BOARD__;
     const statusLine = document.querySelector("#statusLine");
     const detail = document.querySelector("#detail");
     const closeDetailButton = document.querySelector("#closeDetail");
+    const detailActionsButton = document.querySelector("#detailActionsButton");
+    const detailActionsMenu = document.querySelector("#detailActionsMenu");
     const openTaskButton = document.querySelector("#openTask");
+    const deleteTaskButton = document.querySelector("#deleteTask");
     let activeId = null;
     let requestSerial = 0;
     const pendingRequests = new Map();
@@ -38,20 +41,37 @@ export const vscodeBoardClientScript = `    let model = window.__TASKR_BOARD__;
     });
     document.addEventListener("click", (event) => {
       const target = event.target instanceof Node ? event.target : null;
-      if (sortMenu.hidden) return;
-      if (target && (sortButton.contains(target) || sortMenu.contains(target))) return;
-      setSortMenuOpen(false);
+      if (!sortMenu.hidden && (!target || (!sortButton.contains(target) && !sortMenu.contains(target)))) {
+        setSortMenuOpen(false);
+      }
+      if (!detailActionsMenu.hidden && (!target || (!detailActionsButton.contains(target) && !detailActionsMenu.contains(target)))) {
+        setDetailActionsMenuOpen(false);
+      }
     });
     closeDetailButton.addEventListener("click", closeDetail);
+    detailActionsButton.addEventListener("click", () => {
+      setDetailActionsMenuOpen(detailActionsMenu.hidden);
+    });
     openTaskButton.addEventListener("click", () => {
       const task = activeTask();
+      setDetailActionsMenuOpen(false);
       if (task) openTask(task.id);
+    });
+    deleteTaskButton.addEventListener("click", () => {
+      const task = activeTask();
+      setDetailActionsMenuOpen(false);
+      if (task) deleteTask(task);
     });
 
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && !sortMenu.hidden) {
         setSortMenuOpen(false);
         sortButton.focus({ preventScroll: true });
+        return;
+      }
+      if (event.key === "Escape" && !detailActionsMenu.hidden) {
+        setDetailActionsMenuOpen(false);
+        detailActionsButton.focus({ preventScroll: true });
         return;
       }
       if (event.key === "Escape" && detail.classList.contains("is-open")) {
@@ -208,6 +228,11 @@ export const vscodeBoardClientScript = `    let model = window.__TASKR_BOARD__;
       sortButton.setAttribute("aria-expanded", String(isOpen));
     }
 
+    function setDetailActionsMenuOpen(isOpen) {
+      detailActionsMenu.hidden = !isOpen;
+      detailActionsButton.setAttribute("aria-expanded", String(isOpen));
+    }
+
     function syncSortOptions() {
       sortOptions.forEach((option) => {
         const isSelected = option.dataset.sort === sortBy;
@@ -236,6 +261,7 @@ export const vscodeBoardClientScript = `    let model = window.__TASKR_BOARD__;
 
     function closeDetail() {
       activeId = null;
+      setDetailActionsMenuOpen(false);
       detail.classList.remove("is-open");
       detail.setAttribute("aria-hidden", "true");
       detail.setAttribute("inert", "");
@@ -298,6 +324,19 @@ export const vscodeBoardClientScript = `    let model = window.__TASKR_BOARD__;
     async function openTask(id) {
       try {
         await request({ action: "openTask", id });
+      } catch (error) {
+        setStatus(errorMessage(error), true);
+      }
+    }
+
+    async function deleteTask(task) {
+      try {
+        const data = await request({ action: "deleteTask", id: task.id });
+        model = data;
+        if (model.tasks.some((current) => current.id === task.id)) {
+          return;
+        }
+        closeDetail();
       } catch (error) {
         setStatus(errorMessage(error), true);
       }

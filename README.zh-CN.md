@@ -77,7 +77,14 @@ npx --yes @xerrors/taskr board --open
 
 本仓库也包含一个位于 `vscode-extension/` 的本地 VS Code 插件原型。它在侧边栏 Webview 中复用同一套 board 模型，监听 `.taskr/tasks/*.md`，支持从 VS Code 刷新，并能在任务详情中打开对应的 Markdown 文件。
 
-本地运行：
+从 GitHub Release 安装：
+
+1. 在 [GitHub Releases](https://github.com/xerrors/taskr-skill/releases) 下载最新的 `taskr-vscode-*.vsix` 文件。
+2. 打开 VS Code 的 Extensions（插件）视图。
+3. 点击 Extensions 视图右上角的 `...` 菜单，选择 **Install from VSIX...**。
+4. 选择刚下载的 `.vsix` 文件安装，然后在包含 `.taskr/tasks/*.md` 的仓库中打开 Taskr 活动栏入口。
+
+如果要开发插件，可以本地运行：
 
 ```bash
 npm run build

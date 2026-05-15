@@ -111,6 +111,7 @@ export const vscodeBoardStyles = `    :root {
 
     .vscode-toolbar-button:focus-visible,
     .vscode-icon-button:focus-visible,
+    .vscode-menu-option:focus-visible,
     .vscode-sort-option:focus-visible,
     .vscode-search-field input:focus-visible,
     .vscode-group-title:focus-visible,
@@ -124,7 +125,7 @@ export const vscodeBoardStyles = `    :root {
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 6px;
       align-items: center;
-      padding: 6px;
+      padding: 6px 20px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -196,10 +197,12 @@ export const vscodeBoardStyles = `    :root {
     }
 
     .vscode-sort-menu[hidden],
+    .vscode-detail-actions-menu[hidden],
     .vscode-clear-search[hidden] {
       display: none;
     }
 
+    .vscode-menu-option,
     .vscode-sort-option {
       position: relative;
       width: 100%;
@@ -214,9 +217,27 @@ export const vscodeBoardStyles = `    :root {
       cursor: pointer;
     }
 
+    .vscode-menu-option {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding-right: 8px;
+      white-space: nowrap;
+    }
+
+    .vscode-menu-option .vscode-icon {
+      width: 13px;
+      height: 13px;
+    }
+
     .vscode-sort-option:hover,
+    .vscode-menu-option:hover,
     .vscode-sort-option.is-selected {
       background: var(--hover);
+    }
+
+    .vscode-danger-option {
+      color: var(--error);
     }
 
     .vscode-sort-option.is-selected::after {
@@ -250,7 +271,7 @@ export const vscodeBoardStyles = `    :root {
     .taskr-vscode-view > .vscode-task-list {
       min-height: 0;
       overflow: auto;
-      padding: 0 0 10px;
+      padding: 0 0 6px;
     }
 
     .vscode-group {
@@ -306,6 +327,7 @@ export const vscodeBoardStyles = `    :root {
     .vscode-count {
       min-width: 0;
       margin-left: auto;
+      margin-right: 12px;
       padding: 0;
       color: var(--muted);
       background: transparent;
@@ -315,7 +337,7 @@ export const vscodeBoardStyles = `    :root {
     }
 
     .vscode-empty {
-      padding: 5px 4px 7px 18px;
+      padding: 5px 4px 7px 20px;
       color: var(--muted);
       font-size: 12px;
     }
@@ -392,6 +414,29 @@ export const vscodeBoardStyles = `    :root {
       padding: 7px 8px;
       border-bottom: 1px solid var(--border);
       background: var(--vscode-sideBarSectionHeader-background, var(--bg));
+    }
+
+    .vscode-detail-actions {
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .vscode-detail-actions-button {
+      color: var(--fg);
+    }
+
+    .vscode-detail-actions-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 30;
+      min-width: 132px;
+      padding: 4px;
+      color: var(--fg);
+      background: var(--menu-bg);
+      border: 1px solid var(--menu-border);
+      border-radius: 5px;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
     }
 
     .vscode-detail-scroll {
