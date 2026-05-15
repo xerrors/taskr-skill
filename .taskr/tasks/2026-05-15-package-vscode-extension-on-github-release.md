@@ -4,10 +4,11 @@ id: 2026-05-15-package-vscode-extension-on-github-release
 title: 在 GitHub Release 中打包 VS Code 插件
 status: implemented
 created_at: 2026-05-15T11:31:34+08:00
-updated_at: 2026-05-15T11:40:20+08:00
+updated_at: 2026-05-15T12:55:32+08:00
 branch: null
 commits:
   - 93b71c4
+  - 02cb28f
 commit_status: created
 verification:
   tests_run:
