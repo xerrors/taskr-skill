@@ -281,12 +281,24 @@ export const vscodeBoardClientScript = `    let model = window.__TASKR_BOARD__;
       );
       const body = document.querySelector("#detailBody");
       const sections = ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"]
-        .filter((name) => Object.prototype.hasOwnProperty.call(task.sections || {}, name))
-        .map((name) => detailSection(name, task.sections[name] || "Empty."));
+        .map((name) => sectionContent(task, name))
+        .filter((section) => section)
+        .map(({ title, content }) => detailSection(title, content));
       if (task.unsectionedBody && task.unsectionedBody.trim()) {
         sections.push(detailSection("Unparsed Content", task.unsectionedBody));
       }
       body.replaceChildren(...sections);
+    }
+
+    function sectionContent(task, name) {
+      if (!Object.prototype.hasOwnProperty.call(task.sections || {}, name)) return null;
+      const content = task.sections[name] || "";
+      return isEmptySectionContent(content) ? null : { title: name, content };
+    }
+
+    function isEmptySectionContent(content) {
+      const value = content.trim();
+      return value === "" || value === "Empty." || value === "暂无。" || value === "空。";
     }
 
     function detailSection(title, value) {

@@ -662,8 +662,9 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
       }
 
       for (const name of coreSectionNames()) {
-        if (Object.prototype.hasOwnProperty.call(task.sections || {}, name)) {
-          fragment.append(section(name, task.sections[name] || t("empty")));
+        const content = sectionContent(task, name);
+        if (!isEmptySectionContent(content)) {
+          fragment.append(section(name, content));
         }
       }
       if (task.unsectionedBody && task.unsectionedBody.trim()) {
@@ -675,6 +676,16 @@ export const boardClientScript = `    let model = window.__TASKR_BOARD__;
 
     function coreSectionNames() {
       return ["Request", "Acceptance Criteria", "Implementation Plan", "Progress Log", "Agent Notes", "Completion Summary"];
+    }
+
+    function sectionContent(task, name) {
+      if (!Object.prototype.hasOwnProperty.call(task.sections || {}, name)) return "";
+      return task.sections[name] || "";
+    }
+
+    function isEmptySectionContent(content) {
+      const value = content.trim();
+      return value === "" || value === "Empty." || value === "暂无。" || value === "空。";
     }
 
     function dangerZone(task) {

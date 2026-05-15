@@ -322,6 +322,9 @@ describe("Taskr protocol", () => {
     expect(html).toContain("renderTaskrMarkdown");
     expect(html).toContain("markdown-content");
     expect(html).toContain("coreSectionNames");
+    expect(html).toContain("sectionContent(task, name)");
+    expect(html).toContain('value === "Empty." || value === "暂无。" || value === "空。"');
+    expect(boardClientScript).not.toContain('section(name, task.sections[name] || t("empty"))');
     expect(html).toContain("grid-template-columns: auto minmax(0, 1fr);");
     expect(html).toContain("appearance: none;");
     expect(html).toContain("border-color: rgba(34, 197, 94, 0.72);");
@@ -358,6 +361,13 @@ describe("Taskr protocol", () => {
     expect(vscodeBoardClientScript).toContain("taskr.request");
     expect(vscodeBoardStyles).toContain("--vscode-sideBar-background");
     expect(vscodeBoardStyles).toContain("--vscode-list-hoverBackground");
+    expect(vscodeBoardClientScript).toContain("sectionContent(task, name)");
+    expect(vscodeBoardClientScript).toContain(
+      'value === "Empty." || value === "暂无。" || value === "空。"',
+    );
+    expect(vscodeBoardClientScript).not.toContain(
+      'detailSection(name, task.sections[name] || "Empty.")',
+    );
     expect(webviewHtml).toContain("taskr-vscode-view");
     expect(webviewHtml).toContain("vscode-detail");
     expect(vscodeBoardClientScript).toContain("vscode-section");

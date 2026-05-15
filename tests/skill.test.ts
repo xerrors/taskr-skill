@@ -29,7 +29,9 @@ describe("Taskr skill guidance", () => {
   });
 
   it("reconciles pending-confirmation task commits after completion", () => {
-    expect(SKILL).toContain("reconcile pending-confirmation tasks with Git commits after completion");
+    expect(SKILL).toContain(
+      "reconcile pending-confirmation tasks with Git commits after completion",
+    );
     expect(SKILL).toContain("inspect current `pending_confirmation` tasks and the Git state");
     expect(SKILL).toContain("git diff -- .taskr/tasks");
     expect(SKILL).toContain('git log --grep "Taskr: <task-id>"');
